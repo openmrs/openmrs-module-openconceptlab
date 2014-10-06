@@ -7,12 +7,18 @@
 	<version>1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Open Concept Lab Module</name>
-	<description>Helps to start writing OpenMRS modules</description>
+	<description>Sustainable solution for using the CIEL dictionary and applying changes over time</description>
 	<url>https://wiki.openmrs.org/display/docs/Open+Concept+Lab+Module+Module</url>
 	
 	<developers>
 		<developer>
 			<name>Nicholas Ingosi Magaja</name>
+			<email>nicotwendelee@gmail.com</email>
+			<organization>I-TECH</organization>
+			<organizationUrl>http://www.go2itech.org/</organizationUrl>
+		</developer>
+		<developer>
+			<name>Rafal Korytkowski</name>
 		</developer>
 	</developers>
 	
