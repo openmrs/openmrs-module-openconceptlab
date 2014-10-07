@@ -1,0 +1,3 @@
+<%
+	ui.decorateWith("openconceptlab", "standardPage")
+%>
