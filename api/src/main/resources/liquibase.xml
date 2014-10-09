@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd
+    http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+	<changeSet author="rkorytkowski" id="20141008-1">
+		<preConditions onFail="MARK_RAN">
+    		<not><tableExists tableName="openconceptlab_update"/></not>
+    	</preConditions>
+        <createTable tableName="openconceptlab_update">
+            <column autoIncrement="true" name="update_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="local_date_started" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="local_date_stopped" type="datetime"/>
+            <column name="ocl_date_started" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet author="rkorytkowski" id="20141008-2">
+    	<preConditions onFail="MARK_RAN">
+    		<not><tableExists tableName="openconceptlab_item"/></not>
+    	</preConditions>
+        <createTable tableName="openconceptlab_item">
+            <column autoIncrement="true" name="item_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="update_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(512)">
+            	<constraints nullable="false"/>
+            </column>
+            <column name="uuid" type="char(38)" />
+            <column name="version_url" type="varchar(1024)">
+            	<constraints nullable="false"/>
+            </column>
+            <column name="state" type="int">
+            	<constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="openconceptlab_item_update" baseTableName="openconceptlab_item" baseColumnNames="update_id" referencedTableName="openconceptlab_update" referencedColumnNames="update_id"/>
+        <createIndex indexName="openconceptlab_item_type_uuid" tableName="openconceptlab_item">
+        	<column name="type" />
+        	<column name="uuid" />
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

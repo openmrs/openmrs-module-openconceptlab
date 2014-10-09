@@ -30,6 +30,10 @@
 	<mappingFiles>
 				
 	</mappingFiles>
+	
+	<packagesWithMappedClasses>
+		org.openmrs.module.openconceptlab
+	</packagesWithMappedClasses>
 
 	<!-- Internationalization -->
 	<!-- All message codes should start with ${project.parent.artifactId}. -->

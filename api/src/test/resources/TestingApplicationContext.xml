@@ -17,6 +17,20 @@
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-	<!-- Add here beans related to the API context -->
-
+	<bean id="sessionFactory" class="org.openmrs.api.db.hibernate.HibernateSessionFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath:hibernate.cfg.xml</value>
+			</list>
+		</property>
+		<property name="mappingJarLocations">
+			<ref bean="mappingJarResources" />
+		</property>
+		<property name="packagesToScan">
+			<list>
+				<value>org.openmrs.module.openconceptlab</value>
+			</list>
+		</property>
+	</bean>
+	
 </beans>
