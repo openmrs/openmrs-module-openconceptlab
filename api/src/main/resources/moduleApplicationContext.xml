@@ -19,16 +19,6 @@
 
 	<!-- Add here beans related to the API context -->
 
-	<!-- ===================== App descriptors ===================== -->
-
-	<bean id="openconceptlab.app.configure" factory-bean="kenyacore.appFactoryBean" factory-method="createInstance">
-		<constructor-arg value="openconceptlab.configure" />
-		<constructor-arg value="Configuration OCL" />
-		<constructor-arg value="openconceptlab/configure.page" />
-		<constructor-arg value="openconceptlab:apps/config-icon.jpg" />
-		<constructor-arg value="100" />
-	</bean>
-
 	<!-- Build properties -->
 
 	<bean id="iso8601DateFactory-ocl" class="java.text.SimpleDateFormat">
