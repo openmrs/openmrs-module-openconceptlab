@@ -22,11 +22,10 @@
 
 	<!-- Add here beans related to the web context -->
 
-	 
-	<!-- Annotation based controllers -->
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-	
-	<context:component-scan base-package="org.openmrs.module.openconceptlab.web.controller" />
+
+	<bean class="org.openmrs.ui.framework.StandardModuleUiConfiguration">
+		<property name="moduleId" value="openconceptlab"/>
+	</bean>
  
 		
 </beans>
