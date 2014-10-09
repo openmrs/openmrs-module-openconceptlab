@@ -18,21 +18,5 @@
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
 	<!-- Add here beans related to the API context -->
-
-	<!-- Build properties -->
-
-	<bean id="iso8601DateFactory-ocl" class="java.text.SimpleDateFormat">
-		<constructor-arg value="yyyy-MM-dd'T'HH:mm:ssZ" />
-	</bean>
-
-	<bean id="openConcepLabBuildProperties" class="org.openmrs.module.openconceptlab.util.BuildProperties">
-		<property name="version" value="${project.version}" />
-		<property name="buildDate">
-			<bean factory-bean="iso8601DateFactory-ocl" factory-method="parse">
-				<constructor-arg value="${moduleBuildDate}" />
-			</bean>
-		</property>
-		<property name="developer" value="${user.name}"/>
-	</bean>
 	
 </beans>

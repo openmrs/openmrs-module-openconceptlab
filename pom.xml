@@ -48,8 +48,6 @@
 		<kenyauiVersion>2.0.3-SNAPSHOT</kenyauiVersion>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-		<moduleBuildDate>${maven.build.timestamp}</moduleBuildDate>
 	</properties>
 
 	<dependencyManagement>
