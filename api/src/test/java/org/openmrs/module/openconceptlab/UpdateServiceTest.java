@@ -41,7 +41,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void getUpdate_shouldReturnUpdateWithId() throws Exception {
 		Update newUpdate = new Update();
-		updateService.scheduleUpdate(newUpdate);
+		updateService.startUpdate(newUpdate);
 		
 		Update update = updateService.getUpdate(newUpdate.getUpdateId());
 		
@@ -66,11 +66,11 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void getUpdatesInOrder_shouldReturnAllUpdatesOrderedDescendingByIds() throws Exception {
 		Update firstUpdate = new Update();
-		updateService.scheduleUpdate(firstUpdate);
+		updateService.startUpdate(firstUpdate);
 		updateService.stopUpdate(firstUpdate);
 		
 		Update secondUpdate = new Update();
-		updateService.scheduleUpdate(secondUpdate);
+		updateService.startUpdate(secondUpdate);
 		
 		List<Update> updatesInOrder = updateService.getUpdatesInOrder();
 		
@@ -78,17 +78,17 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	/**
-     * @see UpdateService#scheduleUpdate(Update)
+     * @see UpdateService#startUpdate(Update)
      * @verifies throw IllegalStateException if another update is in progress
      */
     @Test
     public void scheduleUpdate_shouldThrowIllegalStateExceptionIfAnotherUpdateIsInProgress() throws Exception {
     	Update firstUpdate = new Update();
-    	updateService.scheduleUpdate(firstUpdate);
+    	updateService.startUpdate(firstUpdate);
     	
     	Update secondUpdate = new Update();
     	exception.expect(IllegalStateException.class);
-    	updateService.scheduleUpdate(secondUpdate);
+    	updateService.startUpdate(secondUpdate);
     }
 
 	/**
@@ -109,7 +109,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void stopUpdate_shouldThrowIllegalStateExceptionIfTryingToStopTwice() throws Exception {
     	Update update = new Update();
-    	updateService.scheduleUpdate(update);
+    	updateService.startUpdate(update);
     	updateService.stopUpdate(update);
     	
     	exception.expect(IllegalStateException.class);
