@@ -28,7 +28,7 @@ public class UpdateService {
 	
 	@Autowired
 	SessionFactory sessionFactory;
-	
+		
 	/**
 	 * @should return all updates ordered descending by ids
 	 */
@@ -68,10 +68,10 @@ public class UpdateService {
 	 * @should throw IllegalStateException if another update is in progress
 	 */
 	@Transactional
-	public void scheduleUpdate(Update update) {
+	public void startUpdate(Update update) {
 		Update lastUpdate = getLastUpdate();
 		if (lastUpdate != null && !lastUpdate.isStopped()) {
-			throw new IllegalStateException("Cannot schedule the update, if there is another update in progress.");
+			throw new IllegalStateException("Cannot start the update, if there is another update in progress.");
 		}
 		
 		getSession().save(update);
@@ -98,6 +98,12 @@ public class UpdateService {
 	@Transactional
 	public void saveItem(Item item) {
 		getSession().saveOrUpdate(item);
+	}
+	
+	@Transactional(readOnly = true)
+	public Subscription getSubscription() {
+		Subscription subscription = new Subscription();
+		return subscription;
 	}
 	
 	private Session getSession() {
