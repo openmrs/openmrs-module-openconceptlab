@@ -19,6 +19,9 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
+import org.openmrs.GlobalProperty;
+import org.openmrs.api.AdministrationService;
+import org.openmrs.api.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,5 +111,27 @@ public class UpdateService {
 	
 	private Session getSession() {
 		return sessionFactory.getCurrentSession();
+	}
+
+	public void saveSubscription(Subscription subscription) {
+		AdministrationService service = Context.getAdministrationService();
+
+		GlobalProperty gp_url = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
+		if(gp_url != null) {
+			gp_url.setValue(subscription.getUrl());
+			service.saveGlobalProperty(gp_url);
+		}
+
+		GlobalProperty gp_days = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULE_DAYS);
+		if(gp_days != null) {
+			gp_days.setValue(subscription.getDays());
+			service.saveGlobalProperty(gp_days);
+		}
+
+		GlobalProperty gp_time = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
+		if(gp_time != null) {
+			gp_time.setValue(subscription.getHours() + ":" + subscription.getMinutes());
+			service.saveGlobalProperty(gp_time);
+		}
 	}
 }

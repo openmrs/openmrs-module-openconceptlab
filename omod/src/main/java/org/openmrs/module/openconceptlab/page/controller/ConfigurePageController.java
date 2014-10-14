@@ -1,17 +1,27 @@
 package org.openmrs.module.openconceptlab.page.controller;
 
-import org.openmrs.module.kenyaui.annotation.AppPage;
+import org.openmrs.GlobalProperty;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.ui.framework.page.PageModel;
-import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Configuration page
  */
-@AppPage(OpenConceptLabConstants.APP_OPEN_CONCEPT_LAB)
 public class ConfigurePageController {
-	public void controller(@RequestParam(required = false, value = "stateId") String stateId,
-						   PageModel model) {
-		model.addAttribute("state", stateId);
+	public void controller(PageModel model){
+
+		Boolean checkIfSubscribed = true;
+		String gp_url = getGlobalPropertyUrl();
+
+		if( gp_url == null || gp_url.isEmpty()){
+			checkIfSubscribed = false;
+		}
+		model.addAttribute("checkIfSubscribed", checkIfSubscribed);
+	}
+	private
+	String getGlobalPropertyUrl() {
+		GlobalProperty gp_url = Context.getAdministrationService().getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
+		return gp_url.getPropertyValue();
 	}
 }
