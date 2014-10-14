@@ -15,14 +15,15 @@ package org.openmrs.module.openconceptlab;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
-import org.openmrs.api.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,10 @@ public class UpdateService {
 	
 	@Autowired
 	SessionFactory sessionFactory;
+	
+	@Autowired
+	@Qualifier("adminService")
+	AdministrationService adminService;
 		
 	/**
 	 * @should return all updates ordered descending by ids
@@ -106,6 +111,24 @@ public class UpdateService {
 	@Transactional(readOnly = true)
 	public Subscription getSubscription() {
 		Subscription subscription = new Subscription();
+		subscription.setUrl(adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL));
+		
+		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
+		if (!StringUtils.isBlank(days)) {
+			subscription.setDays(Integer.valueOf(days));
+		}
+		
+		String time = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
+		if (!StringUtils.isBlank(time)) {
+			String[] formattedTime = time.split(":");
+			if (formattedTime.length != 2) {
+				throw new IllegalStateException("Time in the wrong format. Expected 'HH:mm', given: " + time);
+			}
+			
+			subscription.setHours(Integer.valueOf(formattedTime[0]));
+			subscription.setMinutes(Integer.valueOf(formattedTime[1]));
+		}
+		
 		return subscription;
 	}
 	
@@ -113,25 +136,36 @@ public class UpdateService {
 		return sessionFactory.getCurrentSession();
 	}
 
+	@Transactional
 	public void saveSubscription(Subscription subscription) {
-		AdministrationService service = Context.getAdministrationService();
-
-		GlobalProperty gp_url = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
-		if(gp_url != null) {
-			gp_url.setValue(subscription.getUrl());
-			service.saveGlobalProperty(gp_url);
+		GlobalProperty url = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
+		if(url == null) {
+			url = new GlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
 		}
+		url.setPropertyValue(subscription.getUrl());
+		adminService.saveGlobalProperty(url);
 
-		GlobalProperty gp_days = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULE_DAYS);
-		if(gp_days != null) {
-			gp_days.setValue(subscription.getDays());
-			service.saveGlobalProperty(gp_days);
+		GlobalProperty days = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
+		if(days == null) {
+			days = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		}
-
-		GlobalProperty gp_time = service.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
-		if(gp_time != null) {
-			gp_time.setValue(subscription.getHours() + ":" + subscription.getMinutes());
-			service.saveGlobalProperty(gp_time);
+		
+		if (subscription.getDays() != null) {
+			days.setPropertyValue(subscription.getDays().toString());
+		} else {
+			days.setPropertyValue("");
 		}
+		adminService.saveGlobalProperty(days);
+		
+		GlobalProperty time = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
+		if(time == null) {
+			time = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
+		}
+		if (subscription.getHours() != null && subscription.getMinutes() != null) {
+			time.setPropertyValue(subscription.getHours() + ":" + subscription.getMinutes());
+		} else {
+			time.setPropertyValue("");
+		}
+		adminService.saveGlobalProperty(time);
 	}
 }

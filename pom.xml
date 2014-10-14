@@ -52,49 +52,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-		
-			<!--
-			Libraries to add as dependencies with compile or runtime scope:
-			Find matching dependencies in the maven central repository.
-			<dependency>
-				<groupId>org.other.library</groupId>
-				<artifactId>library-name</artifactId>
-				<version>library.version</version>
-				<scope>compile</scope>
-			</dependency>
-			-->
-			<!-- Begin OpenMRS modules -->
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>appframework-api</artifactId>
-				<version>${appframeworkVersion}</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>uiframework-api</artifactId>
-				<version>${uiframeworkVersion}</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>metadatadeploy-api</artifactId>
-				<version>${metadatadeployVersion}</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>kenyaui-api</artifactId>
-				<version>${kenyauiVersion}</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<!-- End OpenMRS modules -->
-			
-
 			<!-- Begin OpenMRS core -->
 			
 			<dependency>
@@ -138,6 +95,46 @@
 			</dependency>
 						
 			<!-- End OpenMRS core -->
+			<!--
+			Libraries to add as dependencies with compile or runtime scope:
+			Find matching dependencies in the maven central repository.
+			<dependency>
+				<groupId>org.other.library</groupId>
+				<artifactId>library-name</artifactId>
+				<version>library.version</version>
+				<scope>compile</scope>
+			</dependency>
+			-->
+			<!-- Begin OpenMRS modules -->
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>appframework-api</artifactId>
+				<version>${appframeworkVersion}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>uiframework-api</artifactId>
+				<version>${uiframeworkVersion}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>metadatadeploy-api</artifactId>
+				<version>${metadatadeployVersion}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>kenyaui-api</artifactId>
+				<version>${kenyauiVersion}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- End OpenMRS modules -->
 			
 			<dependency>
 				<groupId>commons-httpclient</groupId>

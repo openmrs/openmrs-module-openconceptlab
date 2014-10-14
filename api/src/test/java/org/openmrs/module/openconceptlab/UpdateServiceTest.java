@@ -122,13 +122,15 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void saveSubscription_shouldSaveSubscription() throws Exception {
-		Subscription subscription = new Subscription();
-		subscription.setUrl("http://openconceptlab.com/");
-		subscription.setDays(5);
-		subscription.setHours(03);
-		subscription.setMinutes(30);
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://openconceptlab.com/");
+		newSubscription.setDays(5);
+		newSubscription.setHours(3);
+		newSubscription.setMinutes(30);
 
-		//save the subscription
-		updateService.saveSubscription(subscription);
+		updateService.saveSubscription(newSubscription);
+		
+		Subscription subscription = updateService.getSubscription();
+		assertThat(subscription, is(newSubscription));
 	}
 }

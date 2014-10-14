@@ -18,7 +18,7 @@ public class OpenConceptLabMetaData extends AbstractMetadataBundle {
 	public void install() {
 		install(globalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL, "The subscription URL to be persisted is configured ", null));
 
-		install(globalProperty(OpenConceptLabConstants.GP_SCHEDULE_DAYS, "Interval in days when the process is repeated ", null));
+		install(globalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS, "Interval in days when the process is repeated ", null));
 
 		install(globalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME, "The the time when the process should be carried on ", null));
 	}
