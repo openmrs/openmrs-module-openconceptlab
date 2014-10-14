@@ -8,7 +8,7 @@ public class Subscription {
 	private Integer hours;
 	private Integer minutes;
 
-	protected Subscription(){
+	public Subscription(){
 
 	}
 

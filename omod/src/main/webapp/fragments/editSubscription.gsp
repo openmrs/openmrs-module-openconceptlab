@@ -57,7 +57,7 @@
 							<tr>
 								<td align="right">
 									<input type="submit" id="subscribe-id-edit" value="Save changes" name="saveEdit"/>
-									<input type="reset" id="cancel-id-edit" value="Cancel" name="cancelEdit" />
+									<input type="submit" id="cancel-id-edit" value="Cancel" name="cancelEdit" />
 								</td>
 							</tr>
 						</table>

@@ -115,4 +115,20 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     	exception.expect(IllegalStateException.class);
     	updateService.stopUpdate(update);
     }
+
+	/**
+	 * @see UpdateService#saveSubscription(Subscription)
+	 * @Verifies saves the subscription
+	 */
+	@Test
+	public void saveSubscription_shouldSaveSubscription() throws Exception {
+		Subscription subscription = new Subscription();
+		subscription.setUrl("http://openconceptlab.com/");
+		subscription.setDays(5);
+		subscription.setHours(03);
+		subscription.setMinutes(30);
+
+		//save the subscription
+		updateService.saveSubscription(subscription);
+	}
 }

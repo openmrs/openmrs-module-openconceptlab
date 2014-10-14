@@ -1,8 +1,6 @@
 package org.openmrs.module.openconceptlab.fragment.controller;
 
-import org.openmrs.GlobalProperty;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
+import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
@@ -17,13 +15,21 @@ public class SubscribeToOclFragmentController {
 						   @RequestParam(value = "urlSub", required = false) String urlSub,
 						   @RequestParam(value = "option", required = false) String option,
 						   @RequestParam(value = "hoursSub", required = false) String hoursSub,
-						   @RequestParam(value = "daysSub", required = false) String daysSub,
+						   @RequestParam(value = "daysSub", required = false) Integer daysSub,
 						   @RequestParam(value = "minutesSub", required = false) String minutesSub
 						) {
 		//populate the fields here
 			populateFields(model);
 		//save subscription to ocl- url, days and time
-			saveSubscription(urlSub, daysSub, hoursSub, minutesSub, option);
+		//create subscription object
+		Subscription subscription = new Subscription();
+		subscription.setUrl(urlSub);
+		if ("A".equals(option)) {
+			subscription.setDays(daysSub);
+			subscription.setHours(Integer.parseInt(hoursSub));
+			subscription.setMinutes(Integer.parseInt(minutesSub));
+		}
+		updateService.saveSubscription(subscription);
 	}
 
 	//method to populate the days, hours and minutes
@@ -57,44 +63,4 @@ public class SubscribeToOclFragmentController {
 		model.addAttribute("populateHrs", populateHrs);
 		model.addAttribute("populateMinutes", populateMinutes);
 	}
-
-	private void setGlobalPropertyUrl(String url) {
-		if (url != null) {
-			GlobalProperty gp_url = Context.getAdministrationService().getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
-			gp_url.setValue(url);
-			Context.getAdministrationService().saveGlobalProperty(gp_url);
-		}
-	}
-
-	private void setGlobalPropertyDays(String days) {
-		if (days != null) {
-			GlobalProperty gp_days = Context.getAdministrationService().getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULE_DAYS);
-			gp_days.setValue(days);
-			Context.getAdministrationService().saveGlobalProperty(gp_days);
-		}
-	}
-
-	private void setGlobalPropertyTime(String h, String m) {
-		if (h != null && m != null) {
-			String time = h + ":" + m;
-			GlobalProperty gp_time = Context.getAdministrationService().getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
-			gp_time.setValue(time);
-			Context.getAdministrationService().saveGlobalProperty(gp_time);
-		}
-	}
-
-	private void saveSubscription(String url, String days, String hours, String minutes, String option) {
-		//save the url
-		//setGlobalPropertyUrl(url);
-
-		if( "M".equals(option)) {
-			//do what is required for manual processing
-		}
-		else if ("A".equals(option)) {
-			//set up an automatic subscription
-				setGlobalPropertyDays(days);
-				setGlobalPropertyTime(hours, minutes);
-		}
-	}
-
 }
