@@ -4,8 +4,6 @@
 	config.beforeContent += ui.includeFragment("openconceptlab", "header/headerMenu", config)
 
 	config.pageTitle = "OpenConceptLab"
-	
-	ui.decorateWith("kenyaui", "standardPage", config)
 %>
 
 <!-- Override content layout from kenyaui based on the layout config value -->
