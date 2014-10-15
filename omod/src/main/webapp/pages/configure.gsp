@@ -6,11 +6,14 @@
 
 	function checkIfSubscribed() {
 		var status = ${ checkIfSubscribed } ;
-		if(status == false) {
+		if(status) {
 			//toggle labels and buttons text
-			jq('#subscribe-sub-id').val("Save Changes");
+			jq('#subscribe-sub-id').html("Save Changes");
 			jq('#title').html("Edit Open Concept Lab subscription");
 			jq('#unsubscribe').show();
+		}
+		else {
+			//do nothing
 		}
 	}
 	jq(document).ready(function () {
@@ -29,7 +32,7 @@
 
 </script>
 
-<form id="subscribe-to-ocl-form" method="post">
+<form id="subscribe-to-ocl-form" method="post" action="${ ui.pageLink("openconceptlab", "configure") }">
 	<table id="parent-table" cellpadding="5" cellspacing="10">
 		<tr>
 			<td>
@@ -70,8 +73,8 @@
 							</tr>
 							<tr>
 								<td align="right">
-									<input type="submit" id="subscribe-sub-id" value="Subscribe" name="subscribeSub"/>
-									<input type="reset" id="cancel-sub-id" value="Cancel" name="cancelSub" />
+									<button type="submit" id="subscribe-sub-id" value="Subscribe" name="subscribeSub"> Subscribe</button>
+									<button type="reset" id="cancel-sub-id" value="Cancel" name="cancelSub"> Cancel</button>
 								</td>
 							</tr>
 						</table>

@@ -11,9 +11,9 @@
 <style type="text/css">
 
 <% if (config.layout == "sidebar") { %>
-	html {
-		background: #FFF url('${ ui.resourceLink("kenyaui", "images/background.png") }') repeat-y;
-	}
+html {
+	background: #FFF url('${ ui.resourceLink("kenyaui", "images/background.png") }') repeat-y;
+}
 <% } %>
 
 </style>

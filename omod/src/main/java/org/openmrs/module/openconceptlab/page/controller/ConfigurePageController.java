@@ -1,8 +1,19 @@
+/**
+ * The contents of this file are subject to the OpenMRS Public License
+ * Version 1.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://license.openmrs.org
+ *
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+ * License for the specific language governing rights and limitations
+ * under the License.
+ *
+ * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ */
 package org.openmrs.module.openconceptlab.page.controller;
 
-import org.openmrs.GlobalProperty;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
+import org.apache.commons.lang.StringUtils;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.annotation.SpringBean;
@@ -27,30 +38,30 @@ public class ConfigurePageController {
 		//populate the fields here
 		populateFields(model);
 
-		Boolean checkIfSubscribed = true;
-		String gp_url = getGlobalPropertyUrl();
+		boolean checkIfSubscribed;
+		String gp_url = updateService.getSubscription().getUrl();
 
-		if( gp_url == null || gp_url.isEmpty()){
+		if(StringUtils.isEmpty(gp_url)){
 			checkIfSubscribed = false;
+		}
+		else {
+			checkIfSubscribed = true;
 		}
 
 		//save subscription to ocl- url, days and time
 		//create subscription object
-		Subscription subscription = new Subscription();
-		subscription.setUrl(urlSub);
-		if ("A".equals(option)) {
-			subscription.setDays(daysSub);
-			subscription.setHours(Integer.parseInt(hoursSub));
-			subscription.setMinutes(Integer.parseInt(minutesSub));
+		if (StringUtils.isNotEmpty(urlSub)) {
+			Subscription subscription = new Subscription();
+			subscription.setUrl(urlSub);
+			if ("A".equals(option)) {
+				subscription.setDays(daysSub);
+				subscription.setHours(Integer.parseInt(hoursSub));
+				subscription.setMinutes(Integer.parseInt(minutesSub));
+			}
+			updateService.saveSubscription(subscription);
 		}
-		updateService.saveSubscription(subscription);
 
 		model.addAttribute("checkIfSubscribed", checkIfSubscribed);
-	}
-
-	private String getGlobalPropertyUrl() {
-		GlobalProperty gp_url = Context.getAdministrationService().getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
-		return gp_url.getPropertyValue();
 	}
 
 	//method to populate the days, hours and minutes
