@@ -92,7 +92,7 @@ public class UpdateService {
 	@Transactional
 	public void stopUpdate(Update update) {
 		if (update.getUpdateId() == null) {
-			throw new IllegalArgumentException("Cannot stop the update, if it has not been scheduled.");
+			throw new IllegalArgumentException("Cannot stop the update, if it has not been started.");
 		}
 		if (update.getLocalDateStopped() != null) {
 			throw new IllegalStateException("Cannot stop the update twice.");

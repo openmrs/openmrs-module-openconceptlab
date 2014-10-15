@@ -5,19 +5,44 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateUtil;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 
 public class OclClientTest extends MockTest {
 	
-	OclClient oclClient = new OclClient();
-	
 	@Mock
 	GetMethod get;
+	
+	OclClient oclClient;
+	
+	File tempDir;
+	
+	@Before
+	public void createTempDir() throws IOException {
+		tempDir = File.createTempFile("ocl", "");
+		FileUtils.deleteQuietly(tempDir);
+		tempDir.mkdir();
+		tempDir.deleteOnExit();
+		
+		oclClient = new OclClient(tempDir.getAbsolutePath());
+	}
+	
+	@After
+	public void deleteTempDir() throws IOException {
+		FileUtils.deleteQuietly(tempDir);
+	}
 	
 	/**
 	 * @see OclClient#extractResponse(GetMethod)
@@ -29,12 +54,20 @@ public class OclClientTest extends MockTest {
 		Header header = new Header("Date", date);
 		
 		when(get.getResponseHeader("date")).thenReturn(header);
-		when(get.getResponseBodyAsStream()).thenReturn(getClass().getClassLoader().getResourceAsStream("response.zip"));
+		when(get.getResponseBodyAsStream()).thenReturn(TestResources.getResponseAsStream());
 		
 		OclResponse subscription = oclClient.extractResponse(get);
+		InputStream in = subscription.getContentStream();
+		String json = "";
+		try {
+			json = IOUtils.toString(in, "utf-8");
+			in.close();
+		} finally {
+			IOUtils.closeQuietly(in);
+		}
 		
 		assertThat(subscription.getUpdatedTo(), is(DateUtil.parseDate(date)));
-		assertThat(subscription.getJson(), startsWith("[{\"type\": \"Concept\", \"uuid\": \"5435b10b50d61b61c48ec449\""));
-		assertThat(subscription.getJson().length(), is(3401));
+		assertThat(json, startsWith("[{\"type\": \"Concept\", \"uuid\": \"5435b10b50d61b61c48ec449\""));
+		assertThat(json.length(), is(3401));
 	}
 }

@@ -1,9 +1,15 @@
 package org.openmrs.module.openconceptlab;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -13,12 +19,33 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateParseException;
 import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.IOUtils;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OclClient {
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	
+	public static final String FILE_NAME_FORMAT = "yyyyMMdd_HHmmss";
+	
+	private final String dataDirectory;
+	
+	private final int bufferSize = 64 * 1024;
+	
+	private long bytesDownloaded = 0;
+	
+	private long totalBytesToDownload = 0;
+	
+	private final ReentrantLock lock = new ReentrantLock();
+	
+	public OclClient() {
+		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
+	}
+	
+	public OclClient(String dataDirectory) {
+		this.dataDirectory = dataDirectory;
+	}
 	
 	public OclResponse fetchUpdates(String url, Date updatedSince) throws IOException {
 		GetMethod get = new GetMethod(url);
@@ -35,57 +62,123 @@ public class OclClient {
 		
 		return extractResponse(get);
 	}
-
+	
 	/**
 	 * @should extract date and json
 	 */
 	OclResponse extractResponse(GetMethod get) throws IOException {
-	    Header dateHeader = get.getResponseHeader("date");
+		Header dateHeader = get.getResponseHeader("date");
 		Date date;
-        try {
-	        date = DateUtil.parseDate(dateHeader.getValue());
-        }
-        catch (DateParseException e) {
-	        throw new IOException("Cannot parse date header", e);
-        }
-		
-		String json = "";
-		InputStream response = get.getResponseBodyAsStream();		
-		ZipInputStream zip = new ZipInputStream(response);
 		try {
-			ZipEntry entry = zip.getNextEntry(); 
-			while(entry != null) {
-		        if (entry.getName().equals("export.json")) {
-		        	json = IOUtils.toString(zip, "utf-8");
-		        }
-		        entry = zip.getNextEntry();
-	        }
-			zip.close();
-		} finally {
-			IOUtils.closeQuietly(zip);
+			date = DateUtil.parseDate(dateHeader.getValue());
+		}
+		catch (DateParseException e) {
+			throw new IOException("Cannot parse date header", e);
 		}
 		
-		return new OclResponse(json, date);
+		File file = newFile(date);
+		download(get.getResponseBodyAsStream(), get.getResponseContentLength(), file);
+		
+		InputStream response = new FileInputStream(file);
+		return unzipResponse(response, date);
+	}
+
+	@SuppressWarnings("resource")
+    public OclResponse unzipResponse(InputStream response, Date date) throws IOException {
+	    ZipInputStream zip = new ZipInputStream(response);
+	    boolean foundEntry = false;
+		try {
+			ZipEntry entry = zip.getNextEntry();
+			while (entry != null) {
+				if (entry.getName().equals("export.json")) {
+					foundEntry = true;
+					return new OclResponse(zip, entry.getSize(), date);
+				}
+				entry = zip.getNextEntry();
+			}
+			
+			zip.close();
+		} finally {
+			if (!foundEntry) {
+				IOUtils.closeQuietly(zip);
+			}
+		}
+	    throw new IOException("Unsupported format of response. Expected zip with export.json.");
     }
 	
-	public static class OclResponse {
+	File newFile(Date date) {
+		SimpleDateFormat fileNameFormat = new SimpleDateFormat(FILE_NAME_FORMAT);
+		String fileName = fileNameFormat.format(date) + ".zip";
+		File oclDirectory = new File(dataDirectory, "ocl");
+		if (!oclDirectory.exists()) {
+			oclDirectory.mkdirs();
+		}
+		File file = new File(oclDirectory, fileName);
+		return file;
+	}
+	
+	void download(InputStream in, long length, File destination) throws IOException {
+		//locked so that the client downloads one file at a time
+		lock.lock();
+		OutputStream out = null;
+		try {
+			totalBytesToDownload = length;
+			bytesDownloaded = 0;
+			
+			out = new BufferedOutputStream(new FileOutputStream(destination), bufferSize);
+			
+			byte[] buffer = new byte[bufferSize];
+			int bytesRead = 0;
+			while ((bytesRead = in.read(buffer, 0, buffer.length)) != -1) {
+				out.write(buffer, 0, bytesRead);
+				bytesDownloaded += bytesRead;
+			}
+			in.close();
+			out.close();
+		}
+		finally {
+			lock.unlock();
+			IOUtils.closeQuietly(in);
+			IOUtils.closeQuietly(out);
+		}
+	}
+	
+	public boolean isDownloading() {
+		return lock.isLocked();
+	}
+	
+	public long getBytesDownloaded() {
+		return bytesDownloaded;
+	}
+	
+    public long getTotalBytesToDownload() {
+	    return totalBytesToDownload;
+    }
+	
+    public static class OclResponse {
 		
-		private final String json;
+		private final InputStream in;
 		
 		private final Date updatedTo;
 		
-		public OclResponse(String json, Date updatedTo) {
-			this.json = json;
+		private final long contentLength;
+		
+		public OclResponse(InputStream in, long contentLength, Date updatedTo) {
+			this.in = in;
 			this.updatedTo = updatedTo;
+			this.contentLength = contentLength;
 		}
 		
-		public String getJson() {
-			return json;
+		public InputStream getContentStream() {
+			return in;
 		}
 		
 		public Date getUpdatedTo() {
 			return updatedTo;
 		}
 		
+		public long getContentLength() {
+			return contentLength;
+		}
 	}
 }

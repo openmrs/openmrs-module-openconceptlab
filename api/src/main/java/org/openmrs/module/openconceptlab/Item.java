@@ -28,6 +28,7 @@ import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @Entity
 @Table(name = "openconceptlab_item")
@@ -62,17 +63,11 @@ public class Item {
 		//for persistence only
 	}
 	
-	public Item(Update update, String versionUrl, String type, String uuid) {
+	public Item(Update update, OclConcept concept) {
 		this.update = update;
-		this.versionUrl = versionUrl;
-		this.type = type;
-		this.uuid = uuid;
-	}
-	
-	public Item(Update update, String versionUrl, String type) {
-		this.update = update;
-		this.versionUrl = versionUrl;
-		this.type = type;
+		this.versionUrl = concept.getVersionUrl();
+		this.type = concept.getType();
+		this.uuid = concept.getUuid();		
 	}
 	
 	public Long getItemId() {
@@ -89,10 +84,6 @@ public class Item {
 	
 	public String getUuid() {
 		return uuid;
-	}
-	
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
 	}
 	
 	public String getVersionUrl() {
@@ -137,6 +128,11 @@ public class Item {
 		}
 		Item other = (Item) obj;
 		return new EqualsBuilder().append(getItemId(), other.getItemId()).build();
+	}
+	
+	@Override
+	public String toString() {
+	    return new ToStringBuilder(this).append("itemId", itemId).append("uuid", uuid).toString();
 	}
 	
 }
