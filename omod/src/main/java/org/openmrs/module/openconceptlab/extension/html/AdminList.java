@@ -45,6 +45,7 @@ public class AdminList extends AdministrationSectionExt {
 	public Map<String, String> getLinks() {
 		LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 		map.put("/openconceptlab/configure.page", "openconceptlab.configure");
+		map.put("/openconceptlab/status.page", "openconceptlab.status");
 		return map;
 	}
 	
