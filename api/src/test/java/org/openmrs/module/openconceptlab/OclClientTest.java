@@ -54,7 +54,7 @@ public class OclClientTest extends MockTest {
 		Header header = new Header("Date", date);
 		
 		when(get.getResponseHeader("date")).thenReturn(header);
-		when(get.getResponseBodyAsStream()).thenReturn(TestResources.getResponseAsStream());
+		when(get.getResponseBodyAsStream()).thenReturn(TestResources.getSimpleResponseAsStream());
 		
 		OclResponse subscription = oclClient.extractResponse(get);
 		InputStream in = subscription.getContentStream();

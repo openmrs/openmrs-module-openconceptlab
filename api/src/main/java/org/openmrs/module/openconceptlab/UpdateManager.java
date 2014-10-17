@@ -9,6 +9,7 @@ import org.apache.commons.io.input.CountingInputStream;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.module.openconceptlab.ImportAgent.ImportQueue;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class UpdateManager {
 	OclClient oclClient;
 	
 	@Autowired
-	ConceptMapper mapper;
+	ImportAgent importAgent;
 	
 	private CountingInputStream in = null;
 	
@@ -104,12 +105,27 @@ public class UpdateManager {
 			throw new IOException("JSON must have a list of concepts or an empty list");
 		}
 		
+		ImportQueue importQueue = new ImportQueue();
+		
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
-			mapper.map(update, oclConcept);
 			
-			Item item = new Item(update, oclConcept);
-			updateService.saveItem(item);
+			importQueue.offer(oclConcept);
+			
+			while (!importQueue.isEmpty()) {
+				try {
+					oclConcept = importQueue.poll();
+					importAgent.importConcept(oclConcept, importQueue);
+				} catch (ImportException e) {
+					Item item = new Item(update, oclConcept, State.ERROR);
+					updateService.saveItem(item);
+				}
+				
+				if (!State.MISSING_DEPENDENCY.equals(importQueue.getLastState())) {
+					Item item = new Item(update, oclConcept, importQueue.getLastState());
+					updateService.saveItem(item);
+				}
+			}
 		}
 	}
 		

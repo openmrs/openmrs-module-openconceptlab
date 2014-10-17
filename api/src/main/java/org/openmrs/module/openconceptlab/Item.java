@@ -57,17 +57,18 @@ public class Item {
 	
 	@Enumerated(EnumType.ORDINAL)
 	@Column(name = "state")
-	private State state = State.QUEUED;
+	private State state;
 	
 	protected Item() {
 		//for persistence only
 	}
 	
-	public Item(Update update, OclConcept concept) {
+	public Item(Update update, OclConcept concept, State state) {
 		this.update = update;
 		this.versionUrl = concept.getVersionUrl();
 		this.type = concept.getType();
 		this.uuid = concept.getUuid();		
+		this.state = state;
 	}
 	
 	public Long getItemId() {
@@ -95,9 +96,6 @@ public class Item {
 	}
 	
 	public void setState(State state) {
-		if (this.state.isFinal()) {
-			throw new IllegalStateException("The item is in the final state that cannot be changed.");
-		}
 		this.state = state;
 	}
 	

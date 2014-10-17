@@ -6,7 +6,7 @@ import org.mockito.MockitoAnnotations;
 public class MockTest {
 	
 	@Before
-	public void initMocks() {
+	public void atFirstInitMocks() {
 		MockitoAnnotations.initMocks(this);
 	}
 	
