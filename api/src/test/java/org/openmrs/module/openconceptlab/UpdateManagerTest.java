@@ -2,8 +2,10 @@ package org.openmrs.module.openconceptlab;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
 
 import java.util.Date;
 
@@ -13,6 +15,9 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.openmrs.module.openconceptlab.ImportAgent.ImportQueue;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 
 public class UpdateManagerTest extends MockTest {
@@ -24,7 +29,7 @@ public class UpdateManagerTest extends MockTest {
 	UpdateService updateService;
 	
 	@Mock
-	ImportAgent mapper;
+	ImportAgent importAgent;
 	
 	@InjectMocks
 	UpdateManager updateManager;
@@ -91,6 +96,15 @@ public class UpdateManagerTest extends MockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
 		when(oclClient.fetchUpdates(subscription.getUrl(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
+		doAnswer(new Answer<Item>() {
+
+			@Override
+            public Item answer(InvocationOnMock invocation) throws Throwable {
+				ImportQueue importQueue = (ImportQueue) invocation.getArguments()[0];
+				OclConcept oclConcept = importQueue.poll();
+	            return new Item(oclConcept, State.ADDED);
+            }}).when(importAgent).importConcept(any(ImportQueue.class));
+		
 		
 		updateManager.runUpdate();
 		

@@ -41,8 +41,6 @@ public class ImportAgent {
 		
 		private final Queue<OclConcept> queued = new LinkedList<OclConcept>();
 		
-		private State lastState = null;
-		
 		public void addUnsatisfiedDependency(UnsatisfiedDependency unsatisfiedDependency) {
 			for (String missingUuid : unsatisfiedDependency.getMissingUuids()) {
 	            List<UnsatisfiedDependency> unsatisfiedDependencies = missingDependencies.get(missingUuid);
@@ -72,6 +70,10 @@ public class ImportAgent {
 			return queued.poll();
 		}
 		
+		public OclConcept peek() {
+			return queued.peek();
+		}
+		
 		public boolean isEmpty() {
 			return queued.isEmpty();
 		}
@@ -79,10 +81,6 @@ public class ImportAgent {
 		public boolean offer(OclConcept oclConcept) {
 			return queued.offer(oclConcept);
 		}
-		
-        public State getLastState() {
-	        return lastState;
-        }
 	}
 	
 	public static class UnsatisfiedDependency {
@@ -135,21 +133,24 @@ public class ImportAgent {
 	 * @should fail if datatype missing
 	 */
 	@Transactional
-	public void importConcept(OclConcept oclConcept, ImportQueue importQueue) throws ImportException {
+	public Item importConcept(ImportQueue importQueue) throws ImportException {
+		OclConcept oclConcept = importQueue.poll();
+		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getUuid());
 		if (concept == null) {
 			concept = new Concept();
 			concept.setUuid(oclConcept.getUuid());
 		}
 		
+		final Item item;
 		if (concept.getId() == null) {
-			importQueue.lastState = State.ADDED;
+			item = new Item(oclConcept, State.ADDED);
 		} else if (!concept.isRetired() && oclConcept.isRetired()) {
-			importQueue.lastState = State.RETIRED;
+			item = new Item(oclConcept, State.RETIRED);
 		} else if (concept.isRetired() && !oclConcept.isRetired()) {
-			importQueue.lastState = State.UNRETIRED;
+			item = new Item(oclConcept, State.UNRETIRED);
 		} else {
-			importQueue.lastState = State.UPDATED;
+			item = new Item(oclConcept, State.UPDATED);
 		}
 		
 		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());
@@ -179,12 +180,14 @@ public class ImportAgent {
 			//TODO: implement answers, sets, mappings
 			
 			conceptService.saveConcept(concept);
+			
+			importQueue.satisfyDependencies(oclConcept);
 		}
 		catch (Exception e) {
 			throw new ImportException("Cannot save concept with UUID " + oclConcept.getUuid(), e);
 		}
-		
-		importQueue.satisfyDependencies(oclConcept);
+
+		return item;
 	}
 	
 	void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {

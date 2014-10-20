@@ -113,16 +113,15 @@ public class UpdateManager {
 			importQueue.offer(oclConcept);
 			
 			while (!importQueue.isEmpty()) {
+				Item item;
 				try {
-					oclConcept = importQueue.poll();
-					importAgent.importConcept(oclConcept, importQueue);
+					oclConcept = importQueue.peek();
+					item = importAgent.importConcept(importQueue);
 				} catch (ImportException e) {
-					Item item = new Item(update, oclConcept, State.ERROR);
-					updateService.saveItem(item);
+					item = new Item(oclConcept, State.ERROR, update);
 				}
 				
-				if (!State.MISSING_DEPENDENCY.equals(importQueue.getLastState())) {
-					Item item = new Item(update, oclConcept, importQueue.getLastState());
+				if (!State.MISSING_DEPENDENCY.equals(item.getState())) {
 					updateService.saveItem(item);
 				}
 			}

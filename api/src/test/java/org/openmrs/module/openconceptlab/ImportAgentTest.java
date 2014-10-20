@@ -100,9 +100,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
         }
 		
 		importConcept(oclConcept);
-		assertImported(oclConcept);	
-		
-		conceptService.getConceptByUuid(oclConcept.getUuid());
+		assertImported(oclConcept);		
 	}
 	
 	/**
@@ -240,8 +238,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 		importQueue.offer(oclConcept);
 		
 		while (!importQueue.isEmpty()) {
-			oclConcept = importQueue.poll();
-			importAgent.importConcept(oclConcept, importQueue);
+			importAgent.importConcept(importQueue);
 		}
 	}
 	

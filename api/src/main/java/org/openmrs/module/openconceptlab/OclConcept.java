@@ -37,7 +37,6 @@ public class OclConcept {
 	@JsonProperty("source_url")
 	private String sourceUrl;
 	
-	@JsonProperty("versionUrl")
 	private String versionUrl;
 	
 	@JsonProperty("created_on")
