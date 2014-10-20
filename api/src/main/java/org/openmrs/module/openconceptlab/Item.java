@@ -63,7 +63,7 @@ public class Item {
 		//for persistence only
 	}
 	
-	public Item(OclConcept concept, State state, Update update) {
+	public Item( Update update, OclConcept concept, State state) {
 		this.update = update;
 		this.versionUrl = concept.getVersionUrl();
 		this.type = concept.getType();
@@ -71,17 +71,9 @@ public class Item {
 		this.state = state;
 	}
 	
-	public Item(OclConcept concept, State state) {
-		this(concept, state, null);
-	}
-	
 	public Long getItemId() {
 		return itemId;
 	}
-	
-    public void setUpdate(Update update) {
-	    this.update = update;
-    }
 	
 	public Update getUpdate() {
 		return update;

@@ -25,7 +25,6 @@ import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.openconceptlab.ImportAgent.ImportQueue;
 import org.openmrs.module.openconceptlab.OclConcept.Description;
 import org.openmrs.module.openconceptlab.OclConcept.Name;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
@@ -238,7 +237,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 		importQueue.offer(oclConcept);
 		
 		while (!importQueue.isEmpty()) {
-			importAgent.importConcept(importQueue);
+			importAgent.importConcept(null, importQueue);
 		}
 	}
 	

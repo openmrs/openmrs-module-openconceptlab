@@ -9,7 +9,6 @@ import org.apache.commons.io.input.CountingInputStream;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.module.openconceptlab.ImportAgent.ImportQueue;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,10 +115,9 @@ public class UpdateManager {
 				Item item;
 				try {
 					oclConcept = importQueue.peek();
-					item = importAgent.importConcept(importQueue);
-					item.setUpdate(update);
+					item = importAgent.importConcept(update, importQueue);
 				} catch (ImportException e) {
-					item = new Item(oclConcept, State.ERROR, update);
+					item = new Item(update, oclConcept, State.ERROR);
 				}
 				
 				if (!State.MISSING_DEPENDENCY.equals(item.getState())) {

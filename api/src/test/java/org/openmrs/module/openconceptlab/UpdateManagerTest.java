@@ -17,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.openmrs.module.openconceptlab.ImportAgent.ImportQueue;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 
 public class UpdateManagerTest extends MockTest {
@@ -100,10 +99,11 @@ public class UpdateManagerTest extends MockTest {
 
 			@Override
             public Item answer(InvocationOnMock invocation) throws Throwable {
-				ImportQueue importQueue = (ImportQueue) invocation.getArguments()[0];
+				Update update = (Update) invocation.getArguments()[0];
+				ImportQueue importQueue = (ImportQueue) invocation.getArguments()[1];
 				OclConcept oclConcept = importQueue.poll();
-	            return new Item(oclConcept, State.ADDED);
-            }}).when(importAgent).importConcept(any(ImportQueue.class));
+	            return new Item(update, oclConcept, State.ADDED);
+            }}).when(importAgent).importConcept(any(Update.class), any(ImportQueue.class));
 		
 		
 		updateManager.runUpdate();
