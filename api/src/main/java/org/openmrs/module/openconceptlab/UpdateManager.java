@@ -117,6 +117,7 @@ public class UpdateManager {
 				try {
 					oclConcept = importQueue.peek();
 					item = importAgent.importConcept(importQueue);
+					item.setUpdate(update);
 				} catch (ImportException e) {
 					item = new Item(oclConcept, State.ERROR, update);
 				}
