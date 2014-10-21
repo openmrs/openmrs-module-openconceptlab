@@ -23,7 +23,7 @@ public class UpdateManager {
 	OclClient oclClient;
 	
 	@Autowired
-	ConceptMapper mapper;
+	ImportAgent importAgent;
 	
 	private CountingInputStream in = null;
 	
@@ -104,12 +104,26 @@ public class UpdateManager {
 			throw new IOException("JSON must have a list of concepts or an empty list");
 		}
 		
+		ImportQueue importQueue = new ImportQueue();
+		
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
-			mapper.map(update, oclConcept);
 			
-			Item item = new Item(update, oclConcept);
-			updateService.saveItem(item);
+			importQueue.offer(oclConcept);
+			
+			while (!importQueue.isEmpty()) {
+				Item item;
+				try {
+					oclConcept = importQueue.peek();
+					item = importAgent.importConcept(update, importQueue);
+				} catch (ImportException e) {
+					item = new Item(update, oclConcept, State.ERROR);
+				}
+				
+				if (!State.MISSING_DEPENDENCY.equals(item.getState())) {
+					updateService.saveItem(item);
+				}
+			}
 		}
 	}
 		

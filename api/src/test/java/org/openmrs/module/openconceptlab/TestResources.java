@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 public class TestResources {
 	
-	public static InputStream getResponseAsStream() {
+	public static InputStream getSimpleResponseAsStream() {
 		return TestResources.class.getClassLoader().getResourceAsStream("response.zip");
 	}
 }

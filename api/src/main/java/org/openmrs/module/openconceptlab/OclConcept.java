@@ -5,8 +5,11 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,7 +37,6 @@ public class OclConcept {
 	@JsonProperty("source_url")
 	private String sourceUrl;
 	
-	@JsonProperty("versionUrl")
 	private String versionUrl;
 	
 	@JsonProperty("created_on")
@@ -190,18 +192,46 @@ public class OclConcept {
 		public void setNameType(String nameType) {
 			this.nameType = nameType;
 		}
+		
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append("name", name).build();
+		}
+		
+		@Override
+		public int hashCode() {
+			return new HashCodeBuilder().append(locale).append(localePreferred).append(name).append(nameType).build();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (obj == this) {
+				return true;
+			}
+			if (obj.getClass() != getClass()) {
+				return false;
+			}
+			Name rhs = (Name) obj;
+			return new EqualsBuilder().append(locale, rhs.locale).append(localePreferred, rhs.localePreferred)
+			        .append(name, rhs.name).append(nameType, rhs.nameType).build();
+		}
+		
+		public void copyFrom(ConceptName name) {
+			this.name = name.getName();
+			locale = name.getLocale();
+			localePreferred = name.getLocalePreferred() != null ? name.getLocalePreferred() : false;
+			nameType = name.getConceptNameType() != null ? name.getConceptNameType().toString() : null;
+		}
 	}
 	
 	public static class Description {
 		
 		private Locale locale;
 		
-		private boolean localePreferred;
-		
 		private String description;
-		
-		@JsonProperty("description_type")
-		private String descriptionType;
 		
 		public Locale getLocale() {
 			return locale;
@@ -209,14 +239,6 @@ public class OclConcept {
 		
 		public void setLocale(Locale locale) {
 			this.locale = locale;
-		}
-		
-		public boolean isLocalePreferred() {
-			return localePreferred;
-		}
-		
-		public void setLocalePreferred(boolean localePreferred) {
-			this.localePreferred = localePreferred;
 		}
 		
 		public String getDescription() {
@@ -227,12 +249,34 @@ public class OclConcept {
 			this.description = description;
 		}
 		
-		public String getDescriptionType() {
-			return descriptionType;
+		public void copyFrom(ConceptDescription description) {
+			this.description = description.getDescription();
+			locale = description.getLocale();
 		}
 		
-		public void setDescriptionType(String descriptionType) {
-			this.descriptionType = descriptionType;
+		@Override
+		public int hashCode() {
+			return new HashCodeBuilder().append(locale).append(description).build();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (obj == this) {
+				return true;
+			}
+			if (obj.getClass() != getClass()) {
+				return false;
+			}
+			Description rhs = (Description) obj;
+			return new EqualsBuilder().append(locale, rhs.locale).append(description, rhs.description).build();
+		}
+		
+		@Override
+		public String toString() {
+		    return new ToStringBuilder(this).append("description", description).append("locale", locale).build();
 		}
 	}
 	

@@ -16,9 +16,5 @@ package org.openmrs.module.openconceptlab;
 
 public enum State {
 	
-	QUEUED, ADDED, UPDATED, VOIDED, DELETED, ERROR;
-
-	public boolean isFinal() {
-		return !State.QUEUED.equals(this);
-	}
+	MISSING_DEPENDENCY, ADDED, UPDATED, RETIRED, UNRETIRED, ERROR;
 }
