@@ -47,6 +47,7 @@
 		<metadatadeployVersion>1.3</metadatadeployVersion>
 		<kenyauiVersion>2.0.2</kenyauiVersion>
 		<uicommonsVersion>1.3</uicommonsVersion>
+		<appuiVersion>1.2.2</appuiVersion>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -139,6 +140,12 @@
 				<groupId>org.openmrs.module</groupId>
 				<artifactId>uicommons-api</artifactId>
 				<version>${uicommonsVersion}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>appui-api</artifactId>
+				<version>${appuiVersion}</version>
 			</dependency>
 
 			<!-- End OpenMRS modules -->

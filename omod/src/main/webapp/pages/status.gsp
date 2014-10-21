@@ -1,3 +1,6 @@
+<%
+	ui.decorateWith("openconceptlab", "standardPage")
+%>
 <script type="text/javascript" >
 	jq = jQuery;
 	var isRunning = ${ checkIfUpdatesIsRunning };
@@ -11,10 +14,18 @@
 		}
 	}
 	function checkIfSubscribed() {
-		if(!isSubscribed){
-		   ui.navigate('openconceptlab', 'configure');
+		if (!isSubscribed) {
+			jq('#not-subscribed').show();
+			jq('#updates-in-progress').hide();
+			jq('#updates-next').hide();
+			jq('#previous-update').hide();
+		}
 	}
-}
+
+	jq(document).ready(function () {
+		checkIfRunning();
+		checkIfSubscribed()
+	});
 
 </script>
 <div id="updates-in-progress" style="display: none">
@@ -25,4 +36,9 @@
 </div>
 <div id="previous-update">
 	${ ui.includeFragment("openconceptlab", "status/previousUpdates")}
+</div>
+<div id="not-subscribed" style="display: none">
+	<p>
+		You are not subscribed to Open Concept Lab. <a href="configure.page">Please go to the configuration page to setup the subscription</a>
+	</p>
 </div>

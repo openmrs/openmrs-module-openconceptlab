@@ -9,7 +9,7 @@
 		if(status) {
 			//toggle labels and buttons text
 			jq('#subscribe-sub-id').html("Save Changes");
-			jq('#title').html("Edit Open Concept Lab subscription");
+			jq('#title').html("Edit Open Concept Lab Subscription");
 			jq('#unsubscribe').show();
 		}
 		else {
@@ -32,7 +32,7 @@
 
 </script>
 
-<form id="subscribe-to-ocl-form" method="post" action="${ ui.pageLink("openconceptlab", "configure") }">
+<form id="subscribe-to-ocl-form" method="post" action="configure.page">
 	<table id="parent-table" cellpadding="5" cellspacing="10">
 		<tr>
 			<td>
@@ -73,7 +73,7 @@
 							</tr>
 							<tr>
 								<td align="right">
-									<button type="submit" id="subscribe-sub-id" value="Subscribe" name="subscribeSub"> Subscribe</button>
+									<button type="submit" id="subscribe-sub-id" name="subscribeSub"> Subscribe</button>
 									<button type="reset" id="cancel-sub-id" value="Cancel" name="cancelSub"> Cancel</button>
 								</td>
 							</tr>

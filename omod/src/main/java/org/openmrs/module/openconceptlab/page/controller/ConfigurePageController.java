@@ -16,6 +16,7 @@ package org.openmrs.module.openconceptlab.page.controller;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,7 +34,8 @@ public class ConfigurePageController {
 						   @RequestParam(value = "option", required = false) String option,
 						   @RequestParam(value = "hoursSub", required = false) String hoursSub,
 						   @RequestParam(value = "daysSub", required = false) Integer daysSub,
-						   @RequestParam(value = "minutesSub", required = false) String minutesSub
+						   @RequestParam(value = "minutesSub", required = false) String minutesSub,
+						   UiUtils ui
 							){
 		//populate the fields here
 		populateFields(model);
@@ -46,6 +48,11 @@ public class ConfigurePageController {
 		}
 		else {
 			checkIfSubscribed = true;
+		}
+		//check if there are any subscription
+		Subscription subscriptionToEdit = updateService.getSubscription();
+		if(subscriptionToEdit != null) {
+			model.addAttribute("subscriptionToEdit", subscriptionToEdit);
 		}
 
 		//save subscription to ocl- url, days and time
@@ -62,7 +69,7 @@ public class ConfigurePageController {
 		}
 
 		model.addAttribute("checkIfSubscribed", checkIfSubscribed);
-	}
+}
 
 	//method to populate the days, hours and minutes
 	private void populateFields(PageModel model) {

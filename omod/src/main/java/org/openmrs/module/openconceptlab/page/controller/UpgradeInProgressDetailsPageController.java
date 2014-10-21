@@ -11,28 +11,29 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.openconceptlab.fragment;
+package org.openmrs.module.openconceptlab.page.controller;
 
-import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.annotation.SpringBean;
-import org.openmrs.ui.framework.fragment.FragmentModel;
+import org.openmrs.ui.framework.page.PageModel;
+
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
- * Fragment controller for un subscribing from ocl
+ * Page Controller to hold upgrade informatio
  */
-public class UnsubscribeFragmentController {
+public class UpgradeInProgressDetailsPageController {
 
-	public void controller(FragmentModel model,
-							@SpringBean UpdateService service) {
-
-		Subscription subscription = new Subscription();
-		subscription.setUrl(null);
-		subscription.setDays(null);
-		subscription.setHours(null);
-		subscription.setMinutes(null);
-
-		//save the subscription
-		service.saveSubscription(subscription);
+	public void controller(PageModel model,
+						   @SpringBean UpdateService service){
+		Update updatedItems = service.getLastUpdate();
+		SortedSet<Item> items = new TreeSet<Item>();
+		if(updatedItems != null){
+			items.addAll(updatedItems.getItems());
+		}
+		model.addAttribute("updatedItems", items);
 	}
 }

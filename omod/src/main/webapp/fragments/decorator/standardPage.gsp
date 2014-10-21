@@ -14,7 +14,7 @@
 
 <% if (config.layout == "sidebar") { %>
 html {
-	background: #FFF url('${ ui.resourceLink("kenyaui", "images/background.png") }') repeat-y;
+	background: #FFF url('${ ui.resourceLink("openconceptlab", "images/background.png") }') repeat-y;
 }
 <% } %>
 
