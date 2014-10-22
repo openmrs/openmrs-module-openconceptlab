@@ -13,27 +13,14 @@
  */
 package org.openmrs.module.openconceptlab.page.controller;
 
-import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateService;
-import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 /**
- * Page Controller to hold upgrade informatio
+ * Page controller for the details page
  */
-public class UpgradeInProgressDetailsPageController {
+public class DetailsPageController {
 
-	public void controller(PageModel model,
-						   @SpringBean UpdateService service){
-		Update updatedItems = service.getLastUpdate();
-		SortedSet<Item> items = new TreeSet<Item>();
-		if(updatedItems != null){
-			items.addAll(updatedItems.getItems());
-		}
-		model.addAttribute("updatedItems", items);
+	public void controller(PageModel model) {
+
 	}
 }

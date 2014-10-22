@@ -45,7 +45,7 @@
 				<legend id="progress-title">Update in progress</legend>
 				<table width="100%" cellspacing="5" cellpadding="5" border="0">
 					<tr>
-						<td colspan="2">
+						<td>
 							Upgrade is in progress for <span id="time"></span> seconds now
 						</td>
 					</tr>
@@ -53,12 +53,9 @@
 						<td>
 							Completed <span id="completed"></span> %
 						</td>
-						<td>
-							<a  href="upgradeInProgressDetails.page">See details</a>
-						</td>
 					</tr>
 					<tr>
-						<td colspan="2">
+						<td>
 							<div id="progressbar">
 								<div class="progress-label">
 									Loading...

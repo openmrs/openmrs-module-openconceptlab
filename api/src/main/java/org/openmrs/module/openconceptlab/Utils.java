@@ -54,4 +54,13 @@ public class Utils {
 		long diffInMillies = date2.getTime() - date1.getTime();
 		return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
 	}
+
+	/**
+	 * Extracting time from date
+	 * @return time upgrade started
+	 */
+	public static String timeFromDateTime(Date date) {
+		DateFormat dateFormatter = DateFormat.getTimeInstance(DateFormat.DEFAULT, Locale.ENGLISH);
+		return dateFormatter.format(date);
+	}
 }
