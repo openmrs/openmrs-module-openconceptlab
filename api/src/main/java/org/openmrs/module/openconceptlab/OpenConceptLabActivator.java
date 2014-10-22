@@ -14,16 +14,20 @@
 package org.openmrs.module.openconceptlab;
 
 
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.module.DaemonToken;
+import org.openmrs.module.DaemonTokenAware;
 import org.openmrs.module.ModuleActivator;
 
 /**
  * This class contains the logic that is run every time this module is either started or stopped.
  */
-public class OpenConceptLabActivator implements ModuleActivator {
+public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAware {
 	
 	protected Log log = LogFactory.getLog(getClass());
+	
+	private static DaemonToken daemonToken;
 		
 	/**
 	 * @see ModuleActivator#willRefreshContext()
@@ -66,5 +70,14 @@ public class OpenConceptLabActivator implements ModuleActivator {
 	public void stopped() {
 		log.info("Open Concept Lab Module stopped");
 	}
+
+	@Override
+    public void setDaemonToken(DaemonToken token) {
+	    daemonToken = token;
+    }
+	
+    public static DaemonToken getDaemonToken() {
+	    return daemonToken;
+    }
 		
 }

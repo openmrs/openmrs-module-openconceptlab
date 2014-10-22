@@ -11,10 +11,10 @@ import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-public class UpdateManager {
+@Component("openconceptlab.updater")
+public class Updater implements Runnable {
 	
 	@Autowired
 	UpdateService updateService;
@@ -23,18 +23,19 @@ public class UpdateManager {
 	OclClient oclClient;
 	
 	@Autowired
-	ImportAgent importAgent;
+	Importer importer;
 	
 	private CountingInputStream in = null;
 	
-	private long totalBytesToProcess;
-		
+	private volatile long totalBytesToProcess;
+			
 	/**
 	 * @should start first update with response date
 	 * @should start next update with updated since
 	 * @should create item for each concept
 	 */
-	public void runUpdate() throws IOException {
+	@Override
+	public void run() {		
 		Subscription subscription = updateService.getSubscription();
 		Update lastUpdate = updateService.getLastUpdate();
 		Date updatedSince = null;
@@ -42,7 +43,13 @@ public class UpdateManager {
 			updatedSince = lastUpdate.getOclDateStarted();
 		}
 		
-		OclResponse oclResponse = oclClient.fetchUpdates(subscription.getUrl(), updatedSince);
+		OclResponse oclResponse;
+		try {
+			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), updatedSince);
+		}
+		catch (IOException e) {
+			throw new ImportException(e);
+		}
 		
 		Update update = new Update();
 		update.setOclDateStarted(oclResponse.getUpdatedTo());
@@ -54,11 +61,13 @@ public class UpdateManager {
 			process(update, in);
 			in.close();
 		}
+		catch (IOException e) {
+			throw new ImportException(e);
+		}
 		finally {
 			IOUtils.closeQuietly(in);
+			updateService.stopUpdate(update);
 		}
-		
-		updateService.stopUpdate(update);
 	}
 	
 	public long getBytesDownloaded() {
@@ -69,8 +78,8 @@ public class UpdateManager {
 		return oclClient.getTotalBytesToDownload();
 	}
 	
-	public boolean isDownloading() {
-		return oclClient.isDownloading();
+	public boolean isDownloaded() {
+		return oclClient.isDownloaded();
 	}
 	
 	public long getBytesProcessed() {
@@ -115,8 +124,9 @@ public class UpdateManager {
 				Item item;
 				try {
 					oclConcept = importQueue.peek();
-					item = importAgent.importConcept(update, importQueue);
-				} catch (ImportException e) {
+					item = importer.importConcept(update, importQueue);
+				}
+				catch (ImportException e) {
 					item = new Item(update, oclConcept, State.ERROR);
 				}
 				
@@ -126,5 +136,5 @@ public class UpdateManager {
 			}
 		}
 	}
-		
+	
 }

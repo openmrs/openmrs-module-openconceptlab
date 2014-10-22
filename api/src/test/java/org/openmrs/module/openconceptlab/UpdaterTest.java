@@ -19,7 +19,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.module.openconceptlab.OclClient.OclResponse;
 
-public class UpdateManagerTest extends MockTest {
+public class UpdaterTest extends MockTest {
 	
 	@Mock
 	OclClient oclClient;
@@ -28,13 +28,13 @@ public class UpdateManagerTest extends MockTest {
 	UpdateService updateService;
 	
 	@Mock
-	ImportAgent importAgent;
+	Importer importer;
 	
 	@InjectMocks
-	UpdateManager updateManager;
+	Updater updater;
 	
 	/**
-	 * @see UpdateManager#runUpdate()
+	 * @see Updater#run()
 	 * @verifies start first update with response date
 	 */
 	@Test
@@ -48,13 +48,13 @@ public class UpdateManagerTest extends MockTest {
 		when(updateService.getLastUpdate()).thenReturn(null);
 		when(oclClient.fetchUpdates(subscription.getUrl(), null)).thenReturn(oclResponse);
 		
-		updateManager.runUpdate();
+		updater.run();
 		
 		verify(updateService).startUpdate(argThat(hasOclDateStarted(updatedTo)));
 	}
 	
 	/**
-	 * @see UpdateManager#runUpdate()
+	 * @see Updater#run()
 	 * @verifies start next update with updated since
 	 */
 	@Test
@@ -72,13 +72,13 @@ public class UpdateManagerTest extends MockTest {
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(oclClient.fetchUpdates(subscription.getUrl(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
 		
-		updateManager.runUpdate();
+		updater.run();
 		
 		verify(updateService).startUpdate(argThat(hasOclDateStarted(updatedTo)));
 	}
 	
 	/**
-	 * @see UpdateManager#runUpdate()
+	 * @see Updater#run()
 	 * @verifies create item for each concept
 	 */
 	@Test
@@ -103,10 +103,10 @@ public class UpdateManagerTest extends MockTest {
 				ImportQueue importQueue = (ImportQueue) invocation.getArguments()[1];
 				OclConcept oclConcept = importQueue.poll();
 	            return new Item(update, oclConcept, State.ADDED);
-            }}).when(importAgent).importConcept(any(Update.class), any(ImportQueue.class));
+            }}).when(importer).importConcept(any(Update.class), any(ImportQueue.class));
 		
 		
-		updateManager.runUpdate();
+		updater.run();
 		
 		verify(updateService).saveItem(argThat(hasUuid("5435b10b50d61b61c48ec449")));
 		verify(updateService).saveItem(argThat(hasUuid("543583f750d61b5bfd7df26f")));

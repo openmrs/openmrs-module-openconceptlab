@@ -15,6 +15,8 @@ package org.openmrs.module.openconceptlab;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -22,12 +24,13 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.api.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service("openconceptlab.updateService")
 public class UpdateService {
 	
 	@Autowired
@@ -36,7 +39,22 @@ public class UpdateService {
 	@Autowired
 	@Qualifier("adminService")
 	AdministrationService adminService;
+	
+	@Autowired
+	UpdateScheduler scheduler;
+	
+	@PostConstruct
+	public void setupScheduler() {
+		if (!Context.isSessionOpen()) {
+			Context.openSession();
+		}
 		
+		Subscription subscription = getSubscription();
+		if (subscription != null) {
+			scheduler.schedule(subscription);
+		}
+	}
+	
 	/**
 	 * @should return all updates ordered descending by ids
 	 */
@@ -72,18 +90,26 @@ public class UpdateService {
 		return (Update) update.uniqueResult();
 	}
 	
+	public void runUpdateNow() {
+		assertNoOtherUpdateRunnig();
+		scheduler.scheduleNow();
+	}
+	
 	/**
 	 * @should throw IllegalStateException if another update is in progress
 	 */
 	@Transactional
 	public void startUpdate(Update update) {
-		Update lastUpdate = getLastUpdate();
+		assertNoOtherUpdateRunnig();
+		getSession().save(update);
+	}
+
+	private void assertNoOtherUpdateRunnig() {
+	    Update lastUpdate = getLastUpdate();
 		if (lastUpdate != null && !lastUpdate.isStopped()) {
 			throw new IllegalStateException("Cannot start the update, if there is another update in progress.");
 		}
-		
-		getSession().save(update);
-	}
+    }
 	
 	/**
 	 * @should throw IllegalArgumentException if not scheduled
@@ -110,8 +136,12 @@ public class UpdateService {
 	
 	@Transactional(readOnly = true)
 	public Subscription getSubscription() {
+		String url = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
+		if (url == null) {
+			return null;
+		}
 		Subscription subscription = new Subscription();
-		subscription.setUrl(adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL));
+		subscription.setUrl(url);
 		
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (!StringUtils.isBlank(days)) {
@@ -167,5 +197,7 @@ public class UpdateService {
 			time.setPropertyValue("");
 		}
 		adminService.saveGlobalProperty(time);
+		
+		scheduler.schedule(subscription);
 	}
 }
