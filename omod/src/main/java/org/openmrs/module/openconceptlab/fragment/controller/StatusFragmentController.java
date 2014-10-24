@@ -14,7 +14,6 @@
 package org.openmrs.module.openconceptlab.fragment.controller;
 
 import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.UpdateManager;
 import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.UiUtils;
@@ -44,10 +43,8 @@ public class StatusFragmentController {
 	}
 
 	public void runUpdates(@SpringBean("updateService") UpdateService updateService,
-							 @SpringBean("updateManager") UpdateManager updateManager,
 							 UiUtils ui) throws IOException {
-		if (updateService.getLastUpdate() != null && updateService.getLastUpdate().isStopped()) {
-			updateManager.runUpdate();
-		}
+
+			updateService.runUpdateNow();
 	}
 }

@@ -19,9 +19,9 @@
 	jq = jQuery;
 	jq(document).ready(function () {
 		jq("#tbDetails").dataTable({
-			"scrollY": "200px",
+			"scrollY": 200,
 			"scrollCollapse": true,
-			"paging": false
+			"jQueryUI": true
 		});
 	});
 </script>

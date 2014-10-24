@@ -1,11 +1,10 @@
 <script type="text/javascript">
 	jq = jQuery;
-
 	jq(document).ready(function () {
 		jq("#previousDetails").dataTable({
-			"scrollY": "200px",
+			"scrollY": 200,
 			"scrollCollapse": true,
-			"paging": false
+			"jQueryUI": true
 		});
 	});
 </script>

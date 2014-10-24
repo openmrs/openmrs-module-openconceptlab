@@ -31,17 +31,17 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-public class ImportAgentTest extends BaseModuleContextSensitiveTest {
+public class ImporterTest extends BaseModuleContextSensitiveTest {
 	
 	@Autowired
-	ImportAgent importAgent;
+	Importer importer;
 	
 	@Autowired
 	@Qualifier("conceptService")
 	ConceptService conceptService;
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies save new concept
 	 */
 	@Test
@@ -52,7 +52,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies add new names to concept
 	 */
 	@Test
@@ -84,7 +84,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
     }
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies update name type in concept
 	 */
 	@Test
@@ -103,7 +103,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies void names from concept
 	 */
 	@Test
@@ -133,7 +133,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies add new descriptions to concept
 	 */
 	@Test
@@ -141,7 +141,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies void descriptions from concept
 	 */
 	@Test
@@ -149,7 +149,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies retire concept
 	 */
 	@Test
@@ -157,7 +157,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies unretire concept
 	 */
 	@Test
@@ -165,7 +165,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies update datatype
 	 */
 	@Test
@@ -173,7 +173,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies update concept class
 	 */
 	@Test
@@ -181,7 +181,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies fail if concept class missing
 	 */
 	@Test
@@ -189,7 +189,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see ImportAgent#importConcept(OclConcept,ImportQueue)
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies fail if datatype missing
 	 */
 	@Test
@@ -237,7 +237,7 @@ public class ImportAgentTest extends BaseModuleContextSensitiveTest {
 		importQueue.offer(oclConcept);
 		
 		while (!importQueue.isEmpty()) {
-			importAgent.importConcept(null, importQueue);
+			importer.importConcept(null, importQueue);
 		}
 	}
 	

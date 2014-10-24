@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -22,7 +21,7 @@ import org.apache.commons.io.IOUtils;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("openconceptlab.oclClient")
 public class OclClient {
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -33,12 +32,10 @@ public class OclClient {
 	
 	private final int bufferSize = 64 * 1024;
 	
-	private long bytesDownloaded = 0;
+	private volatile long bytesDownloaded = 0;
 	
-	private long totalBytesToDownload = 0;
-	
-	private final ReentrantLock lock = new ReentrantLock();
-	
+	private volatile long totalBytesToDownload = 0;
+			
 	public OclClient() {
 		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
 	}
@@ -58,7 +55,9 @@ public class OclClient {
 			get.getParams().setParameter("updatedSince", dateFormat.format(updatedSince));
 		}
 		
-		new HttpClient().executeMethod(get);
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.executeMethod(get);
 		
 		return extractResponse(get);
 	}
@@ -118,8 +117,6 @@ public class OclClient {
 	}
 	
 	void download(InputStream in, long length, File destination) throws IOException {
-		//locked so that the client downloads one file at a time
-		lock.lock();
 		OutputStream out = null;
 		try {
 			totalBytesToDownload = length;
@@ -135,16 +132,18 @@ public class OclClient {
 			}
 			in.close();
 			out.close();
+			
+			//if total bytes to download could not be determined, set it to the actual value
+			totalBytesToDownload = bytesDownloaded;
 		}
 		finally {
-			lock.unlock();
 			IOUtils.closeQuietly(in);
 			IOUtils.closeQuietly(out);
 		}
 	}
 	
-	public boolean isDownloading() {
-		return lock.isLocked();
+	public boolean isDownloaded() {
+		return totalBytesToDownload == bytesDownloaded;
 	}
 	
 	public long getBytesDownloaded() {
