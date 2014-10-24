@@ -23,8 +23,8 @@
 	}
 
 	jq(document).ready(function () {
-		//checkIfRunning();
-		//checkIfSubscribed()
+		checkIfRunning();
+		checkIfSubscribed()
 	});
 
 </script>

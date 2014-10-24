@@ -13,14 +13,20 @@
  */
 package org.openmrs.module.openconceptlab.page.controller;
 
+import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Page controller for the details page
  */
 public class DetailsPageController {
 
-	public void controller(PageModel model) {
+	public void controller(PageModel model,
+						   @RequestParam(value="updateId", required = false) Long updateId,
+						   @SpringBean("updateService")UpdateService service) {
 
+		model.addAttribute("updateId",updateId);
 	}
 }

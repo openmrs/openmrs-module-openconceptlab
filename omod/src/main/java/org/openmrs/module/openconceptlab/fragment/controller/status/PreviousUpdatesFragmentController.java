@@ -21,6 +21,7 @@ import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,30 +35,93 @@ public class PreviousUpdatesFragmentController {
 								   @SpringBean UpdateService service
 			){
 				List<Update> allUpdates = service.getUpdatesInOrder();
-				SortedSet<Item> items = new TreeSet<Item>();
-				Integer errors = 0;
+				List<UpdateSummary> summaryList = new ArrayList<UpdateSummary>();
+				SortedSet<Item> items;
 				Long duration = null;
 
 				for(Update update: allUpdates) {
-					items.addAll(update.getItems());
-				}
-				//loop through each item object to count errors
-				for( Item item : items) {
-					if(item != null) {
-						if (item.getState().equals(State.ERROR)) {
-							errors++;
+					if(update != null) {
+						int errors = 0;
+						items = new TreeSet<Item>(update.getItems());
+						//loop through each item object to count errors
+						for( Item item : items){
+							if (item != null) {
+								if (item.getState().equals(State.ERROR)) {
+									errors++;
+								}
+								duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES);
+							}
 						}
-						duration = Utils.dateDifference(item.getUpdate().getLocalDateStopped(), item.getUpdate().getLocalDateStarted(), TimeUnit.MINUTES);
+						String error;
+						if( errors > 0) {
+							error = errors+" errors";
+						}
+						else {
+							error = "Ok";
+						}
+						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, items.size(),error));
 					}
 				}
-				model.addAttribute("items", items);
-				if( errors > 0) {
-					model.addAttribute("errors", errors+" errors");
-				}
-				else {
-					model.addAttribute("errors", "OK");
-				}
-
-				model.addAttribute("duration", duration);
+				model.addAttribute("summaryList", summaryList);
 			}
+	class UpdateSummary{
+
+
+		private Long updateId;
+		private String startDate;
+		private Long duration;
+		private Integer items;
+		private String status;
+
+
+		public UpdateSummary(Long updateId, String startDate, Long duration, Integer items, String status) {
+			this.updateId = updateId;
+			this.startDate = startDate;
+			this.duration = duration;
+			this.items = items;
+			this.status = status;
+		}
+
+		public Long getUpdateId() {
+			return updateId;
+		}
+
+		public void setUpdateId(Long updateId) {
+			this.updateId = updateId;
+		}
+
+		public String getStartDate() {
+			return startDate;
+		}
+
+		public void setStartDate(String startDate) {
+			this.startDate = startDate;
+		}
+
+		public Long getDuration() {
+			return duration;
+		}
+
+		public void setDuration(Long duration) {
+			this.duration = duration;
+		}
+
+		public Integer getItems() {
+			return items;
+		}
+
+		public void setItems(Integer items) {
+			this.items = items;
+		}
+
+		public String getStatus() {
+			return status;
+		}
+
+		public void setStatus(String status) {
+			this.status = status;
+		}
+
+
+	}
 }

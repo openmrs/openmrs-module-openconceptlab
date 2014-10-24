@@ -16,7 +16,7 @@
 	<!-- / Module Properties -->
 	<require_modules>
 		<require_module version="${appframeworkVersion}">org.openmrs.module.appframework</require_module>
-		<require_module version="${kenyauiVersion}">org.openmrs.module.kenyaui</require_module>
+		<require_module version="${uiframeworkVersion}">org.openmrs.module.uiframework</require_module>
 		<require_module version="${metadatadeployVersion}">org.openmrs.module.metadatadeploy</require_module>
 	</require_modules>
 

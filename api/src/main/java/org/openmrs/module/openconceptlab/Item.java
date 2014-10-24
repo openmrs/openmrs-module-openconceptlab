@@ -13,7 +13,9 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import java.util.Comparator;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -25,10 +27,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import java.util.Comparator;
 
 @Entity
 @Table(name = "openconceptlab_item")
@@ -67,7 +66,7 @@ public class Item {
 		this.update = update;
 		this.versionUrl = concept.getVersionUrl();
 		this.type = concept.getType();
-		this.uuid = concept.getUuid();		
+		this.uuid = concept.getUuid();
 		this.state = state;
 	}
 	
@@ -98,7 +97,7 @@ public class Item {
 	public void setState(State state) {
 		this.state = state;
 	}
-	
+
 	public static class OrderByState implements Comparator<Item> {
 		
 		@Override

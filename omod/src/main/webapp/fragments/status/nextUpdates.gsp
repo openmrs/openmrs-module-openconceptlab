@@ -15,7 +15,7 @@
 					<table width="100%" cellspacing="5" cellpadding="5" border="0">
 						<tr>
 							<td>
-								There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="details.page">See details</a>
+								There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="lastUpdateDetails.page">See details</a>
 							</td>
 						</tr>
 						<tr>

@@ -16,7 +16,6 @@ package org.openmrs.module.openconceptlab.fragment.controller.status;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
 import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateManager;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.SpringBean;
@@ -33,8 +32,7 @@ import java.util.Set;
 public class NextUpdatesFragmentController {
 
 	public void controller(FragmentModel model,
-							@SpringBean UpdateService service,
-							@SpringBean UpdateManager manager
+							@SpringBean UpdateService service
 						){
 		Update update = new Update();
 		Date lastUpdateLocalDateStopped;
@@ -91,7 +89,7 @@ public class NextUpdatesFragmentController {
 		model.addAttribute("nextUpdateTime", appendZeros(hours.toString()) +":"+appendZeros(minutes.toString()));
 		model.addAttribute("errorItemSize", errorItems.size());
 
-	}
+}
 
 	private String appendZeros(String k) {
 		String results = k;

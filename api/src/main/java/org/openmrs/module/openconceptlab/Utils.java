@@ -13,16 +13,21 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import org.apache.commons.lang3.time.DateUtils;
+
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Contains most of the utility methods for Open Concept lab
  */
 public class Utils {
+
+	private static final DateFormat timeFormatter = new SimpleDateFormat("HH:mm");
+	private static final DateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy");
 
 	/**
 	 * Add days to an existing date
@@ -42,7 +47,6 @@ public class Utils {
 	 * format date into my locale
 	 */
 	public static String formatedDate(Date date) {
-		DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.DEFAULT, Locale.ENGLISH);
 		return dateFormatter.format(date);
 	}
 
@@ -56,11 +60,47 @@ public class Utils {
 	}
 
 	/**
-	 * Extracting time from date
-	 * @return time upgrade started
+	 * Formats a date, automatically inferring the best format
+	 * @param date the date
+	 * @return the string value
 	 */
-	public static String timeFromDateTime(Date date) {
-		DateFormat dateFormatter = DateFormat.getTimeInstance(DateFormat.DEFAULT, Locale.ENGLISH);
-		return dateFormatter.format(date);
+	public static String formatDateAuto(Date date) {
+		 if (DateUtils.isSameDay(date, new Date())) {
+			return "Today at "+formatTime(date);
+		}
+		 else if(DateUtils.isSameDay(date, dateAddDays(new Date(), -1))) {
+			return "Yesterday at "+formatTime(date);
+		}
+		 else {
+			return formatDateTime(date);
+		}
+	}
+
+	/**
+	 * Formats a date as a time value only
+	 * @param date the date
+	 * @return the string value
+	 * @should format date as a string without time information
+	 * @should format null date as empty string
+	 */
+	public static String formatTime(Date date) {
+		if (date == null) {
+			return "";
+		}
+
+		return timeFormatter.format(date);
+	}
+
+	/**
+	 * Formats a date time
+	 * @param date the date
+	 * @return the string value
+	 */
+	public static String formatDateTime(Date date) {
+		if (date == null) {
+			return "";
+		}
+
+		return dateFormatter.format(date) + " " + timeFormatter.format(date);
 	}
 }

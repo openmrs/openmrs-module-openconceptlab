@@ -3,7 +3,6 @@
 %>
 <script type="text/javascript">
 	jq = jQuery;
-
 	function checkIfSubscribed() {
 		var status = ${ checkIfSubscribed } ;
 		if(status) {

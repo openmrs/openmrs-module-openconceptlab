@@ -1,9 +1,20 @@
+<script type="text/javascript">
+	jq = jQuery;
+
+	jq(document).ready(function () {
+		jq("#previousDetails").dataTable({
+			"scrollY": "200px",
+			"scrollCollapse": true,
+			"paging": false
+		});
+	});
+</script>
 <table width="50%" cellspacing="5" cellpadding="5" border="0">
 	<tr>
 		<td>
 			<fieldset id="updates-previous">
 				<legend id="previous-title">Previous updates</legend>
-				<table width="100%" cellspacing="5" cellpadding="5" border="0">
+				<table width="100%" cellspacing="5" cellpadding="5" border="0" id="previousDetails">
 					<thead>
 						<tr>
 							<th>Date</th>
@@ -13,12 +24,12 @@
 						</tr>
 					</thead>
 					<tbody>
-					<% items.each { item -> %>
-						<tr>
-							<td>${ item.update.localDateStarted}</td>
-							<td>${ duration } minutes</td>
-							<td>${ item.size()}</td>
-							<td>${ errors }</td>
+					<% summaryList.each { summary -> %>
+						<tr id="${summary.updateId }">
+							<td><a href="details.page?updateId=${summary.updateId }"> ${ summary.startDate}</a></td>
+							<td>${ summary.duration } minutes</td>
+							<td>${ summary.items }</td>
+							<td>${ summary.status }</td>
 						</tr>
 					<% } %>
 					</tbody>
