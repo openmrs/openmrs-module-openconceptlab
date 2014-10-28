@@ -15,8 +15,6 @@ package org.openmrs.module.openconceptlab;
 
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -24,7 +22,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
-import org.openmrs.api.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -42,18 +39,6 @@ public class UpdateService {
 	
 	@Autowired
 	UpdateScheduler scheduler;
-	
-	@PostConstruct
-	public void setupScheduler() {
-		if (!Context.isSessionOpen()) {
-			Context.openSession();
-		}
-		
-		Subscription subscription = getSubscription();
-		if (subscription != null) {
-			scheduler.schedule(subscription);
-		}
-	}
 	
 	/**
 	 * @should return all updates ordered descending by ids
@@ -199,5 +184,12 @@ public class UpdateService {
 		adminService.saveGlobalProperty(time);
 		
 		scheduler.schedule(subscription);
+	}
+	
+	public void scheduleUpdate() {
+		Subscription subscription = getSubscription();
+		if (subscription != null) {
+			scheduler.schedule(subscription);
+		}
 	}
 }
