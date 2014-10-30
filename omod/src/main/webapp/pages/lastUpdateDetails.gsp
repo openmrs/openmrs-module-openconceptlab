@@ -1,6 +1,7 @@
 <%
 	ui.decorateWith("openconceptlab", "standardPage")
 %>
+<br /><br />
 <style type="text/css">
 .formatFields{
 	color: #97afd4;
@@ -19,13 +20,11 @@
 	jq = jQuery;
 	jq(document).ready(function () {
 		jq("#tbDetails").dataTable({
-			"scrollY": 200,
-			"scrollCollapse": true,
 			"jQueryUI": true
 		});
 	});
 </script>
-<table width="50%" cellspacing="5" cellpadding="5" border="0">
+<table width="50%" cellspacing="0" cellpadding="0" border="0">
 	<tr>
 		<td>
 			The update started on<span class="formatFields"> ${ startDate } </span>at<span class="formatFields"> ${ timeStarted }</span>. It completed in <span class="formatFields">${ duration }</span>
@@ -37,6 +36,7 @@
 		</td>
 	</tr>
 </table>
+<br />
 <table width="50%" cellspacing="0" cellpadding="0" border="0" id="tbDetails">
 	<thead>
 		<tr>

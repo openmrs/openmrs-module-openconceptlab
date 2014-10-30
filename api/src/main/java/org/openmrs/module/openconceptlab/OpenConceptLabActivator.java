@@ -16,6 +16,7 @@ package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.DaemonToken;
 import org.openmrs.module.DaemonTokenAware;
 import org.openmrs.module.ModuleActivator;
@@ -40,6 +41,13 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 	 * @see ModuleActivator#contextRefreshed()
 	 */
 	public void contextRefreshed() {
+		if (!Context.isSessionOpen()) {
+			Context.openSession();
+		}
+			
+		UpdateService updateService = Context.getRegisteredComponent("openconceptlab.updateService", UpdateService.class);
+		updateService.scheduleUpdate();
+		
 		log.info("Open Concept Lab Module refreshed");
 	}
 	

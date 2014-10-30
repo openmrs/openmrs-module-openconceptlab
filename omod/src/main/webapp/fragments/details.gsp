@@ -16,13 +16,12 @@
 	jq = jQuery;
 	jq(document).ready(function () {
 		jq("#mainTbDetails").dataTable({
-			"scrollY": 200,
-			"scrollCollapse": true,
 			"jQueryUI": true
 		});
 	});
 </script>
-<table width="50%" cellspacing="5" cellpadding="5" border="0">
+<br /><br />
+<table width="50%" cellspacing="0" cellpadding="0" border="0">
 	<tr>
 		<td>
 			The update started on<span class="formatFields"> ${ startDate } </span>at<span class="formatFields"> ${ timeStarted }</span>. It completed in <span class="formatFields">${ duration }</span>
@@ -34,6 +33,7 @@
 		</td>
 	</tr>
 </table>
+<br />
 <table width="50%" cellspacing="0" cellpadding="0" border="0" id="mainTbDetails">
 	<thead>
 	<tr>

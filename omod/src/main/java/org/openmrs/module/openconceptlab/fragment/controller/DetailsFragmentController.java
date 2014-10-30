@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DetailsFragmentController {
 			public void controller(FragmentModel model,
-								   @SpringBean UpdateService service,
+								   @SpringBean("openconceptlab.updateService") UpdateService service,
 								   @FragmentParam(value ="updateId", required = false) Long updateId
 									){
 				//fetch  update

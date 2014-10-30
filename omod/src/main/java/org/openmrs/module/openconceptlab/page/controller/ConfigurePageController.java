@@ -41,7 +41,10 @@ public class ConfigurePageController {
 		populateFields(model);
 
 		boolean checkIfSubscribed;
-		String gp_url = updateService.getSubscription().getUrl();
+		String gp_url = null;
+		if(updateService.getSubscription() != null){
+			gp_url = updateService.getSubscription().getUrl();
+		}
 
 		if(StringUtils.isEmpty(gp_url)){
 			checkIfSubscribed = false;

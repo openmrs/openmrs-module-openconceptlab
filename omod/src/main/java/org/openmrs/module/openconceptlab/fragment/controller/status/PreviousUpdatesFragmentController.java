@@ -37,7 +37,7 @@ public class PreviousUpdatesFragmentController {
 				List<Update> allUpdates = service.getUpdatesInOrder();
 				List<UpdateSummary> summaryList = new ArrayList<UpdateSummary>();
 				SortedSet<Item> items;
-				Long duration = null;
+				int duration = 0;
 
 				for(Update update: allUpdates) {
 					if(update != null) {
@@ -49,7 +49,7 @@ public class PreviousUpdatesFragmentController {
 								if (item.getState().equals(State.ERROR)) {
 									errors++;
 								}
-								duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES);
+								duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();
 							}
 						}
 						String error;
@@ -69,12 +69,12 @@ public class PreviousUpdatesFragmentController {
 
 		private Long updateId;
 		private String startDate;
-		private Long duration;
+		private Integer duration;
 		private Integer items;
 		private String status;
 
 
-		public UpdateSummary(Long updateId, String startDate, Long duration, Integer items, String status) {
+		public UpdateSummary(Long updateId, String startDate, Integer duration, Integer items, String status) {
 			this.updateId = updateId;
 			this.startDate = startDate;
 			this.duration = duration;
@@ -98,11 +98,11 @@ public class PreviousUpdatesFragmentController {
 			this.startDate = startDate;
 		}
 
-		public Long getDuration() {
+		public Integer getDuration() {
 			return duration;
 		}
 
-		public void setDuration(Long duration) {
+		public void setDuration(Integer duration) {
 			this.duration = duration;
 		}
 

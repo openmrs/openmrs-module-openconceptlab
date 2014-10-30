@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,11 +36,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class LastUpdateDetailsPageController {
 	public void controller(PageModel model,
-						   @SpringBean("updateService")UpdateService service) {
+						   @SpringBean("openconceptlab.updateService") UpdateService service) {
 		Update lastUpdate = service.getLastUpdate();
 		List<Details> lastUpdateDetails = new ArrayList<Details>();
 		ConceptService conceptService = Context.getConceptService();
-		Date upgradeStartDate;
+		Date upgradeStartDate = null;
 		Date upgradeStopDate;
 		Long timeTakenForUpgrade;
 		String duration = "";
@@ -47,11 +48,12 @@ public class LastUpdateDetailsPageController {
 		int seconds;
 		Concept concept;
 		List<Item> errorItems = new ArrayList<Item>();
+		SortedSet<Item> items = new TreeSet<Item>();
 		if(lastUpdate != null) {
 			upgradeStartDate = lastUpdate.getLocalDateStarted();
 			upgradeStopDate = lastUpdate.getLocalDateStopped();
 			//pick all items
-			SortedSet<Item> items = lastUpdate.getItems();
+			items = lastUpdate.getItems();
 			for(Item item : items) {
 				if (item.getState().equals(State.ERROR)) {
 					errorItems.add(item);
@@ -72,14 +74,13 @@ public class LastUpdateDetailsPageController {
 				seconds = (int) (timeTakenForUpgrade%60);
 				duration = minutes+" minutes"+"  "+seconds+" seconds";
 			}
-
-			model.addAttribute("allItems",lastUpdateDetails);
-			model.addAttribute("allErrorItems", errorItems.size());
-			model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
-			model.addAttribute("timeStarted", Utils.formatTime(upgradeStartDate));
-			model.addAttribute("duration", duration);
-			model.addAttribute("allItemsUpdatedSize", items.size());
 		}
+		model.addAttribute("allItems",lastUpdateDetails);
+		model.addAttribute("allErrorItems", errorItems.size());
+		model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
+		model.addAttribute("timeStarted", Utils.formatTime(upgradeStartDate));
+		model.addAttribute("duration", duration);
+		model.addAttribute("allItemsUpdatedSize", items.size());
 	}
 
 	class Details {

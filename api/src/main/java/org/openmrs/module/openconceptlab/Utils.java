@@ -47,6 +47,9 @@ public class Utils {
 	 * format date into my locale
 	 */
 	public static String formatedDate(Date date) {
+		if(date == null) {
+			date = new Date();
+		}
 		return dateFormatter.format(date);
 	}
 
