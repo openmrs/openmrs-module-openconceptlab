@@ -13,8 +13,8 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import java.util.List;
 
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -26,6 +26,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
 
 @Service("openconceptlab.updateService")
 public class UpdateService {
@@ -184,6 +187,14 @@ public class UpdateService {
 		adminService.saveGlobalProperty(time);
 		
 		scheduler.schedule(subscription);
+	}
+
+	@Transactional(readOnly = true)
+	public UpdateProgress getUpdateProgress() {
+		UpdateProgress updateProgress = new UpdateProgress();
+		updateProgress.setProgress(100);
+		updateProgress.setTime(1);
+		return updateProgress;
 	}
 	
 	public void scheduleUpdate() {

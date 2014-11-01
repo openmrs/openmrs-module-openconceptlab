@@ -11,28 +11,44 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.openconceptlab.fragment;
+package org.openmrs.module.openconceptlab.fragment.controller;
 
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.Updater;
+import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
-import org.openmrs.ui.framework.fragment.FragmentModel;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.IOException;
 
 /**
- * Fragment controller for un subscribing from ocl
+ * Fragment actions specifically for searching for OpenMRS objects
  */
-public class UnsubscribeFragmentController {
+public class StatusFragmentController {
 
-	public void controller(FragmentModel model,
-							@SpringBean UpdateService service) {
+	@Autowired
+	Updater updater;
 
-		Subscription subscription = new Subscription();
-		subscription.setUrl(null);
+
+	public UpdateProgress getUpdateProgress(@SpringBean("updateService") UpdateService updateService, UiUtils ui) {
+
+		return updateService.getUpdateProgress();
+	}
+
+	public void unsubscribe(@SpringBean("updateService") UpdateService service ) {
+		Subscription subscription = service.getSubscription();
+		subscription.setUrl("");
 		subscription.setDays(null);
 		subscription.setHours(null);
 		subscription.setMinutes(null);
 
 		//save the subscription
 		service.saveSubscription(subscription);
+	}
+
+	public void runUpdates(UiUtils ui) throws IOException {
+		updater.run();
 	}
 }
