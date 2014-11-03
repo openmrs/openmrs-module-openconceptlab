@@ -65,7 +65,7 @@ public class DetailsFragmentController {
 						//finding a concept from openmrs database using the uuid from the item table
 						concept = conceptService.getConceptByUuid(item.getUuid());
 						//populate my list with the objects needed
-						detailsList.add(new Details(fetchedUpdate.getUpdateId(), item.getType(), concept.getName().getName(), concept.getDescription().getDescription(), item.getState().name(), item.getUuid(),item.getVersionUrl()));
+						detailsList.add(new Details(fetchedUpdate.getUpdateId(), item.getType(), concept.getName().getName(), concept.getDescription().getDescription(), item.getState().name(), item.getUuid(), item.getVersionUrl(), concept.getConceptId()));
 					}
 					//calculate the time it take for the upgrade
 					timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
@@ -96,8 +96,8 @@ public class DetailsFragmentController {
 		private String status;
 		private String uuid;
 		private String versionUrl;
-
-		public Details(Long updateId, String type, String name, String description, String status, String uuid, String versionUrl) {
+		private Integer conceptId;
+		public Details(Long updateId, String type, String name, String description, String status, String uuid, String versionUrl, Integer conceptId) {
 			this.updateId = updateId;
 			this.type = type;
 			this.name = name;
@@ -105,6 +105,14 @@ public class DetailsFragmentController {
 			this.status = status;
 			this.uuid = uuid;
 			this.versionUrl = versionUrl;
+			this.conceptId = conceptId;
+		}
+		public Integer getConceptId() {
+			return conceptId;
+		}
+
+		public void setConceptId(Integer conceptId) {
+			this.conceptId = conceptId;
 		}
 		public String getDescription() {
 			return description;
