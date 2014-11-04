@@ -42,7 +42,17 @@
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>uiframework-api</artifactId>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>appui-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>appui-omod</artifactId>
+			<type>jar</type>
+		</dependency>
 
 		<!-- Begin OpenMRS core -->
 
@@ -80,6 +90,13 @@
 		</dependency>
 		
 		<!-- End OpenMRS core -->
+
+		<dependency>
+			<groupId>rubygems</groupId>
+			<artifactId>compass</artifactId>
+			<version>0.11.7</version>
+			<type>gem</type>
+		</dependency>
 
 	</dependencies>
 

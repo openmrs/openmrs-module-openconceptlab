@@ -1,7 +1,7 @@
 <script type="text/javascript">
 	jq = jQuery;
 	jq(function() {
-		jq.getJSON(ui.fragmentActionLink('openconceptlab', 'status', 'getUpdateProgress'), function(result) {
+		jq.getJSON('${ui.actionLink("openconceptlab", "status", "getUpdateProgress")}', function(result) {
 			jq('#completed').html(result.progress);
 			jq('#time').html(result.time);
 			jq(function() {

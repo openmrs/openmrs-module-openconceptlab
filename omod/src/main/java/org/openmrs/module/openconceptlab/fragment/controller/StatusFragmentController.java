@@ -32,12 +32,12 @@ public class StatusFragmentController {
 	Updater updater;
 
 
-	public UpdateProgress getUpdateProgress(@SpringBean("updateService") UpdateService updateService, UiUtils ui) {
+	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updateService") UpdateService updateService, UiUtils ui) {
 
 		return updateService.getUpdateProgress();
 	}
 
-	public void unsubscribe(@SpringBean("updateService") UpdateService service ) {
+	public void unsubscribe(@SpringBean("openconceptlab.updateService") UpdateService service ) {
 		Subscription subscription = service.getSubscription();
 		subscription.setUrl("");
 		subscription.setDays(null);
