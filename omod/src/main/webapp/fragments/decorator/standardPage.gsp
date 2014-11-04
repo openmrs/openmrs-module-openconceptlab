@@ -1,14 +1,12 @@
 <%
-	ui.includeJavascript("openconceptlab", "jquery-1.10.2.min.js", 50)
-	ui.includeJavascript("openconceptlab", "jquery-ui-1.10.3.min.js", 50)
 	ui.includeJavascript("openconceptlab", "jquery.dataTables.min.js", 49)
-
-	ui.includeCss("openconceptlab", "jquery-ui-1.10.3.custom.css", 50)
 	ui.includeCss("openconceptlab", "jquery.dataTables.min.css", 50)
 
 	config.beforeContent = ui.includeFragment("openconceptlab", "header/pageHeader", config)
 
 	config.pageTitle = "OpenConceptLab"
+
+	ui.decorateWith("appui", "standardEmrPage")
 %>
 
 <!DOCTYPE html>
