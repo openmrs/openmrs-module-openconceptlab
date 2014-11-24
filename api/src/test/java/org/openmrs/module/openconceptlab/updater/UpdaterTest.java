@@ -1,11 +1,11 @@
 package org.openmrs.module.openconceptlab.updater;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
 
 import java.util.Date;
 
@@ -15,6 +15,7 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.module.openconceptlab.Item;
@@ -25,11 +26,8 @@ import org.openmrs.module.openconceptlab.TestResources;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
-import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
-import org.openmrs.module.openconceptlab.updater.ImportQueue;
-import org.openmrs.module.openconceptlab.updater.Importer;
-import org.openmrs.module.openconceptlab.updater.Updater;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 
 public class UpdaterTest extends MockTest {
 	
@@ -62,7 +60,7 @@ public class UpdaterTest extends MockTest {
 		
 		updater.run();
 		
-		verify(updateService).startUpdate(argThat(hasOclDateStarted(updatedTo)));
+		verify(updateService).updateOclDateStarted(Mockito.any(Update.class), Mockito.eq(updatedTo));
 	}
 	
 	/**
@@ -78,7 +76,7 @@ public class UpdaterTest extends MockTest {
 		Update lastUpdate = new Update();
 		Date updatedSince = new Date();
 		lastUpdate.setOclDateStarted(updatedSince);
-		when(updateService.getLastUpdate()).thenReturn(lastUpdate);
+		when(updateService.getLastSuccessfulUpdate()).thenReturn(lastUpdate);
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
@@ -86,7 +84,7 @@ public class UpdaterTest extends MockTest {
 		
 		updater.run();
 		
-		verify(updateService).startUpdate(argThat(hasOclDateStarted(updatedTo)));
+		verify(updateService).updateOclDateStarted(Mockito.any(Update.class), Mockito.eq(updatedTo));
 	}
 	
 	/**
@@ -102,7 +100,7 @@ public class UpdaterTest extends MockTest {
 		Update lastUpdate = new Update();
 		Date updatedSince = new Date();
 		lastUpdate.setOclDateStarted(updatedSince);
-		when(updateService.getLastUpdate()).thenReturn(lastUpdate);
+		when(updateService.getLastSuccessfulUpdate()).thenReturn(lastUpdate);
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);

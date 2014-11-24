@@ -4,15 +4,12 @@
 <script type="text/javascript">
 	jq = jQuery;
 	function checkIfSubscribed() {
-		var status = ${ checkIfSubscribed } ;
-		if(status) {
+		var manual = ${ subscription.manual };
+		if(manual) {
 			//toggle labels and buttons text
 			jq('#subscribe-sub-id').html("Save Changes");
 			jq('#title').html("Edit Open Concept Lab Subscription");
 			jq('#unsubscribe').show();
-		}
-		else {
-			//do nothing
 		}
 	}
 	jq(document).ready(function () {
