@@ -21,5 +21,7 @@ public class OpenConceptLabMetaData extends AbstractMetadataBundle {
 		install(globalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS, "Interval in days when the process is repeated ", null));
 
 		install(globalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME, "The the time when the process should be carried on ", null));
+
+		install(globalProperty(OpenConceptLabConstants.GP_TOKEN, "The API Token ", null));
 	}
 }

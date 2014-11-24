@@ -64,25 +64,14 @@ public class NextUpdatesFragmentController {
 			lastUpdateLocalDateStopped = service.getLastUpdate().getLocalDateStopped();
 		}
 
-		if(service.getSubscription().getDays() == null) {
+		if(service.getSubscription() == null) {
 			days = 0;
+			hours = 0;
+			minutes = 0;
 		}
 		else {
 			days = service.getSubscription().getDays();
-		}
-
-		if ( service.getSubscription().getHours() == null) {
-			hours = 0;
-		}
-		else {
 			hours = service.getSubscription().getHours();
-		}
-
-		if (service.getSubscription().getMinutes() == null) {
-			minutes = 0;
-		}
-
-		else {
 			minutes = service.getSubscription().getMinutes();
 		}
 		model.addAttribute("nextUpdateDate", Utils.formatedDate(Utils.dateAddDays(lastUpdateLocalDateStopped, days)));

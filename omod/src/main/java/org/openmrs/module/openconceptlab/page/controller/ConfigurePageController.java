@@ -31,6 +31,7 @@ public class ConfigurePageController {
 	public void controller(PageModel model,
 						   @SpringBean UpdateService updateService,
 						   @RequestParam(value = "urlSub", required = false) String urlSub,
+						   @RequestParam(value = "token", required = false) String token,
 						   @RequestParam(value = "option", required = false) String option,
 						   @RequestParam(value = "hoursSub", required = false) String hoursSub,
 						   @RequestParam(value = "daysSub", required = false) Integer daysSub,
@@ -63,6 +64,7 @@ public class ConfigurePageController {
 		if (StringUtils.isNotEmpty(urlSub)) {
 			Subscription subscription = new Subscription();
 			subscription.setUrl(urlSub);
+			subscription.setToken(token);
 			if ("A".equals(option)) {
 				subscription.setDays(daysSub);
 				subscription.setHours(Integer.parseInt(hoursSub));

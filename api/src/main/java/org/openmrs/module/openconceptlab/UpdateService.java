@@ -14,7 +14,6 @@
 package org.openmrs.module.openconceptlab;
 
 
-import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -130,6 +129,12 @@ public class UpdateService {
 		}
 		Subscription subscription = new Subscription();
 		subscription.setUrl(url);
+
+		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
+		if (token == null) {
+			return null;
+		}
+		subscription.setUrl(token);
 		
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (!StringUtils.isBlank(days)) {
@@ -162,6 +167,13 @@ public class UpdateService {
 		}
 		url.setPropertyValue(subscription.getUrl());
 		adminService.saveGlobalProperty(url);
+
+		GlobalProperty token = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_TOKEN);
+		if(token == null) {
+			token = new GlobalProperty(OpenConceptLabConstants.GP_TOKEN);
+		}
+		token.setPropertyValue(subscription.getToken());
+		adminService.saveGlobalProperty(token);
 
 		GlobalProperty days = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if(days == null) {

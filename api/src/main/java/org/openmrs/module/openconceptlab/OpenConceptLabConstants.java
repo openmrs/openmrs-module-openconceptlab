@@ -20,4 +20,5 @@ public class OpenConceptLabConstants {
 	public static final String GP_SUBSCRIPTION_URL = MODULE_ID + ".subscriptionUrl";
 	public static final String GP_SCHEDULED_DAYS = MODULE_ID + ".scheduledDays";
 	public static final String GP_SCHEDULED_TIME = MODULE_ID + ".scheduledTime";
+	public static final String GP_TOKEN = MODULE_ID + ".token";
 }
