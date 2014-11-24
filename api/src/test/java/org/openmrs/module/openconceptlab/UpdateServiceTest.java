@@ -14,17 +14,17 @@
 package org.openmrs.module.openconceptlab;
 
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-
-import java.util.List;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	
@@ -127,6 +127,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		newSubscription.setDays(5);
 		newSubscription.setHours(3);
 		newSubscription.setMinutes(30);
+		newSubscription.setToken("c84e5a66d8b2e9a9bf1459cd81e6357f1c6a997e");
 
 		updateService.saveSubscription(newSubscription);
 		

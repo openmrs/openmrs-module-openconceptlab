@@ -43,6 +43,9 @@
 								<td>Subscription URL:<input type="text" id="url-sub-id" name="urlSub" size="50"></td>
 							</tr>
 							<tr>
+								<td>Token:<input type="text" id="token-id" name="token" size="50"></td>
+							</tr>
+							<tr>
 								<td valign="top">
 									<input type="radio" name="option" value="M" id="manual-M-S" checked ="checked" /> Install updates manually<br /><br />
 									<input type="radio" name="option" value="A" id="auto-A-S" /> Install updates automatically<br /><br />

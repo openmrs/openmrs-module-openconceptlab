@@ -6,6 +6,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class Subscription {
 	
 	private String url;
+
+	private String token;
 	
 	private Integer days;
 	
@@ -23,6 +25,14 @@ public class Subscription {
 	
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
 	}
 	
 	public Integer getDays() {
@@ -51,7 +61,7 @@ public class Subscription {
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(url).append(days).append(hours).append(minutes).build();
+		return new HashCodeBuilder().append(url).append(token).append(days).append(hours).append(minutes).build();
 	}
 	
 	@Override
@@ -63,7 +73,7 @@ public class Subscription {
 		if (getClass() != obj.getClass())
 			return false;
 		Subscription other = (Subscription) obj;
-		return new EqualsBuilder().append(other.url, url).append(other.days, days).append(other.hours, hours)
+		return new EqualsBuilder().append(other.url, url).append(other.token, token).append(other.days, days).append(other.hours, hours)
 		        .append(other.minutes, minutes).build();
 	}
 	
