@@ -198,7 +198,9 @@ public class UpdateService {
 		}
 		adminService.saveGlobalProperty(time);
 		
-		scheduler.schedule(subscription);
+		if (!subscription.isManual()) {
+			scheduler.schedule(subscription);
+		}
 	}
 
 	@Transactional(readOnly = true)

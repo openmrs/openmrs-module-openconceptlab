@@ -60,6 +60,10 @@ public class Subscription {
 		this.minutes = minutes;
 	}
 	
+	public boolean isManual() {
+		return days == null && hours == null && minutes == null;
+	}
+	
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder().append(url).append(token).append(days).append(hours).append(minutes).build();
