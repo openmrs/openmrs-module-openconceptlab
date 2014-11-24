@@ -134,7 +134,7 @@ public class UpdateService {
 		if (token == null) {
 			return null;
 		}
-		subscription.setUrl(token);
+		subscription.setToken(token);
 		
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (!StringUtils.isBlank(days)) {

@@ -2,11 +2,12 @@ package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Subscription {
 	
 	private String url;
-
+	
 	private String token;
 	
 	private Integer days;
@@ -26,11 +27,11 @@ public class Subscription {
 	public void setUrl(String url) {
 		this.url = url;
 	}
-
+	
 	public String getToken() {
 		return token;
 	}
-
+	
 	public void setToken(String token) {
 		this.token = token;
 	}
@@ -73,8 +74,14 @@ public class Subscription {
 		if (getClass() != obj.getClass())
 			return false;
 		Subscription other = (Subscription) obj;
-		return new EqualsBuilder().append(other.url, url).append(other.token, token).append(other.days, days).append(other.hours, hours)
-		        .append(other.minutes, minutes).build();
+		return new EqualsBuilder().append(other.url, url).append(other.token, token).append(other.days, days)
+		        .append(other.hours, hours).append(other.minutes, minutes).build();
+	}
+	
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("url", url).append("token", token).append("days", days)
+		        .append("hours", hours).append("minutes", minutes).build();
 	}
 	
 }
