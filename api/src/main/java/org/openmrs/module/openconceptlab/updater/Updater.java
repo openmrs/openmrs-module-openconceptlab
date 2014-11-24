@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.updater;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,10 +6,18 @@ import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.module.openconceptlab.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,23 +45,26 @@ public class Updater implements Runnable {
 	@Override
 	public void run() {		
 		Subscription subscription = updateService.getSubscription();
-		Update lastUpdate = updateService.getLastUpdate();
+		Update lastUpdate = updateService.getLastSuccessfulUpdate();
 		Date updatedSince = null;
 		if (lastUpdate != null) {
 			updatedSince = lastUpdate.getOclDateStarted();
 		}
+		
+		Update update = new Update();
+		updateService.startUpdate(update);
 		
 		OclResponse oclResponse;
 		try {
 			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), updatedSince);
 		}
 		catch (IOException e) {
+			setErrorMessage(update, e);
+			updateService.stopUpdate(update);
 			throw new ImportException(e);
 		}
 		
-		Update update = new Update();
-		update.setOclDateStarted(oclResponse.getUpdatedTo());
-		updateService.startUpdate(update);
+		updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
 		
 		in = new CountingInputStream(oclResponse.getContentStream());
 		totalBytesToProcess = oclResponse.getContentLength();
@@ -62,6 +73,7 @@ public class Updater implements Runnable {
 			in.close();
 		}
 		catch (IOException e) {
+			setErrorMessage(update, e);
 			throw new ImportException(e);
 		}
 		finally {
@@ -69,6 +81,12 @@ public class Updater implements Runnable {
 			updateService.stopUpdate(update);
 		}
 	}
+
+	private void setErrorMessage(Update update, IOException e) {
+	    String message = "Failed due to: " + ExceptionUtils.getRootCause(e).getMessage();
+	    message = message.substring(0, 1024);
+	    update.setErrorMessage(message);
+    }
 	
 	public long getBytesDownloaded() {
 		return oclClient.getBytesDownloaded();

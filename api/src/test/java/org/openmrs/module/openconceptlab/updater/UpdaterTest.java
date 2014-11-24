@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.updater;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.argThat;
@@ -17,7 +17,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.openmrs.module.openconceptlab.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.MockTest;
+import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.TestResources;
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.updater.ImportQueue;
+import org.openmrs.module.openconceptlab.updater.Importer;
+import org.openmrs.module.openconceptlab.updater.Updater;
 
 public class UpdaterTest extends MockTest {
 	

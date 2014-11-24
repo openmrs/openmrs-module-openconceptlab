@@ -53,6 +53,10 @@ public class Update {
 	@Column(name = "ocl_date_started")
 	private Date oclDateStarted;
 	
+	@Basic
+	@Column(name = "error_message")
+	private String errorMessage;
+	
 	@OneToMany(mappedBy = "update", fetch = FetchType.LAZY)
 	@OrderBy("state DESC")
 	@Sort(type = SortType.COMPARATOR, comparator = Item.OrderByState.class)
@@ -81,6 +85,14 @@ public class Update {
 	public void setOclDateStarted(Date oclDateStarted) {
 		this.oclDateStarted = oclDateStarted;
 	}
+	
+    public String getErrorMessage() {
+	    return errorMessage;
+    }
+    
+    public void setErrorMessage(String errorMessage) {
+	    this.errorMessage = errorMessage;
+    }
 	
 	public SortedSet<Item> getItems() {
 		return items;

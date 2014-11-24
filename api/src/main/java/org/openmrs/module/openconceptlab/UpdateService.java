@@ -14,19 +14,22 @@
 package org.openmrs.module.openconceptlab;
 
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 
 @Service("openconceptlab.updateService")
@@ -77,6 +80,16 @@ public class UpdateService {
 		return (Update) update.uniqueResult();
 	}
 	
+	@Transactional(readOnly = true)
+	public Update getLastSuccessfulUpdate() {
+		Criteria update = getSession().createCriteria(Update.class);
+		update.add(Restrictions.isNull("errorMessage"));
+		update.addOrder(Order.desc("updateId"));
+		update.setMaxResults(1);
+		
+		return (Update) update.uniqueResult();
+	}
+	
 	public void runUpdateNow() {
 		assertNoOtherUpdateRunnig();
 		scheduler.scheduleNow();
@@ -88,6 +101,12 @@ public class UpdateService {
 	@Transactional
 	public void startUpdate(Update update) {
 		assertNoOtherUpdateRunnig();
+		getSession().save(update);
+	}
+	
+	@Transactional
+	public void updateOclDateStarted(Update update, Date oclDateStarted) {
+		update.setOclDateStarted(oclDateStarted);
 		getSession().save(update);
 	}
 
@@ -131,9 +150,6 @@ public class UpdateService {
 		subscription.setUrl(url);
 
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
-		if (token == null) {
-			return null;
-		}
 		subscription.setToken(token);
 		
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);

@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.updater;
 
 public class ImportException extends RuntimeException {
 	

@@ -1,8 +1,9 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.scheduler;
 
 import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
 
+import org.openmrs.module.openconceptlab.Subscription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;

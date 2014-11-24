@@ -16,7 +16,7 @@ package org.openmrs.module.openconceptlab.fragment.controller;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
-import org.openmrs.module.openconceptlab.Updater;
+import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.springframework.beans.factory.annotation.Autowired;

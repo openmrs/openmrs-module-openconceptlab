@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.client;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -18,7 +18,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.openmrs.module.openconceptlab.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.MockTest;
+import org.openmrs.module.openconceptlab.TestResources;
+import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 
 public class OclClientTest extends MockTest {
 	

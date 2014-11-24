@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.updater;
 
 import java.util.Iterator;
 
@@ -11,7 +11,12 @@ import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
-import org.openmrs.module.openconceptlab.OclConcept.Description;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;

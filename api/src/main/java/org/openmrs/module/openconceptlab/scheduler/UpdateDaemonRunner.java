@@ -1,6 +1,8 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.scheduler;
 
 import org.openmrs.api.context.Daemon;
+import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
+import org.openmrs.module.openconceptlab.updater.Updater;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

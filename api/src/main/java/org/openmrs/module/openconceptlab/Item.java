@@ -16,6 +16,7 @@ package org.openmrs.module.openconceptlab;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -27,6 +28,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
 import java.util.Comparator;
 
 @Entity
@@ -57,6 +59,10 @@ public class Item {
 	@Enumerated(EnumType.ORDINAL)
 	@Column(name = "state")
 	private State state;
+	
+	@Basic
+	@Column(name = "error_message")
+	private String errorMessage;
 	
 	protected Item() {
 		//for persistence only
@@ -97,6 +103,14 @@ public class Item {
 	public void setState(State state) {
 		this.state = state;
 	}
+	
+    public String getErrorMessage() {
+	    return errorMessage;
+    }
+    
+    public void setErrorMessage(String errorMessage) {
+	    this.errorMessage = errorMessage;
+    }
 
 	public static class OrderByState implements Comparator<Item> {
 		
@@ -129,7 +143,7 @@ public class Item {
 	
 	@Override
 	public String toString() {
-	    return new ToStringBuilder(this).append("itemId", itemId).append("uuid", uuid).toString();
+	    return new ToStringBuilder(this).append("itemId", itemId).append("uuid", uuid).build();
 	}
 	
 }

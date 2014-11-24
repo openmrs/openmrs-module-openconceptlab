@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.client;
 
 import java.util.Date;
 import java.util.List;

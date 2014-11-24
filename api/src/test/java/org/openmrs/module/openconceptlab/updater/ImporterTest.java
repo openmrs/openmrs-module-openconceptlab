@@ -1,4 +1,4 @@
-package org.openmrs.module.openconceptlab;
+package org.openmrs.module.openconceptlab.updater;
 
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
@@ -25,8 +25,11 @@ import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.openconceptlab.OclConcept.Description;
-import org.openmrs.module.openconceptlab.OclConcept.Name;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclConcept.Description;
+import org.openmrs.module.openconceptlab.client.OclConcept.Name;
+import org.openmrs.module.openconceptlab.updater.ImportQueue;
+import org.openmrs.module.openconceptlab.updater.Importer;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
