@@ -18,6 +18,7 @@ import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.annotation.BindParams;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Configuration page
@@ -25,11 +26,23 @@ import org.openmrs.ui.framework.page.PageModel;
 public class ConfigurePageController {
 	
 	public void get(@SpringBean UpdateService updateService, PageModel model) {
-		model.put("subscription", updateService.getSubscription());
+		Subscription subscription = updateService.getSubscription();
+		if (subscription == null) {
+			subscription = new Subscription();
+			subscription.setUrl("");
+			subscription.setToken("");
+			subscription.setDays(0);
+			subscription.setHours(0);
+			subscription.setMinutes(0);
+		}
+		model.put("subscription", subscription);
 	}
 	
 	public void post(@SpringBean UpdateService updateService, @BindParams(value = "subscription") Subscription subscription,
-	        PageModel model) {
+	        @RequestParam(value = "unsubscribe", required = false) Boolean unsubscribe, PageModel model) {
+		if (unsubscribe != null && unsubscribe) {
+			subscription = new Subscription();
+		}
 		updateService.saveSubscription(subscription);
 		model.put("subscription", subscription);
 	}

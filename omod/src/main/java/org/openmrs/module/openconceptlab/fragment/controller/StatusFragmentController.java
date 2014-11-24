@@ -13,15 +13,14 @@
  */
 package org.openmrs.module.openconceptlab.fragment.controller;
 
-import org.openmrs.module.openconceptlab.Subscription;
+import java.io.IOException;
+
 import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.io.IOException;
 
 /**
  * Fragment actions specifically for searching for OpenMRS objects
@@ -35,17 +34,6 @@ public class StatusFragmentController {
 	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updateService") UpdateService updateService, UiUtils ui) {
 
 		return updateService.getUpdateProgress();
-	}
-
-	public void unsubscribe(@SpringBean("openconceptlab.updateService") UpdateService service ) {
-		Subscription subscription = service.getSubscription();
-		subscription.setUrl("");
-		subscription.setDays(null);
-		subscription.setHours(null);
-		subscription.setMinutes(null);
-
-		//save the subscription
-		service.saveSubscription(subscription);
 	}
 
 	public void runUpdates(UiUtils ui) throws IOException {

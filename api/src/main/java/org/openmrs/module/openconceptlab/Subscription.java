@@ -61,7 +61,7 @@ public class Subscription {
 	}
 	
 	public boolean isManual() {
-		return days == null && hours == null && minutes == null;
+		return (days == null && hours == null && minutes == null) || (days == 0 && hours == 0 && minutes == 0);
 	}
 	
 	@Override
