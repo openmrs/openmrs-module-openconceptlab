@@ -31,7 +31,7 @@ import javax.persistence.Table;
 
 import java.util.Comparator;
 
-@Entity
+@Entity(name = "OclItem")
 @Table(name = "openconceptlab_item")
 public class Item {
 	

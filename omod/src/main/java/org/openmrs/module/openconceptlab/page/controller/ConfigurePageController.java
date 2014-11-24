@@ -28,22 +28,31 @@ public class ConfigurePageController {
 	public void get(@SpringBean UpdateService updateService, PageModel model) {
 		Subscription subscription = updateService.getSubscription();
 		if (subscription == null) {
-			subscription = new Subscription();
-			subscription.setUrl("");
-			subscription.setToken("");
-			subscription.setDays(0);
-			subscription.setHours(0);
-			subscription.setMinutes(0);
+			subscription = newBlankSubscription();
 		}
 		model.put("subscription", subscription);
 	}
+
+	private Subscription newBlankSubscription() {
+	    Subscription subscription;
+	    subscription = new Subscription();
+	    subscription.setUrl("");
+	    subscription.setToken("");
+	    subscription.setDays(0);
+	    subscription.setHours(0);
+	    subscription.setMinutes(0);
+	    return subscription;
+    }
 	
 	public void post(@SpringBean UpdateService updateService, @BindParams(value = "subscription") Subscription subscription,
 	        @RequestParam(value = "unsubscribe", required = false) Boolean unsubscribe, PageModel model) {
 		if (unsubscribe != null && unsubscribe) {
-			subscription = new Subscription();
+			updateService.unsubscribe();
+			subscription = newBlankSubscription();
+			
+		} else {
+			updateService.saveSubscription(subscription);
 		}
-		updateService.saveSubscription(subscription);
 		model.put("subscription", subscription);
 	}
 }

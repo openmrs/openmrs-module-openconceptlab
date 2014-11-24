@@ -218,6 +218,13 @@ public class UpdateService {
 			scheduler.schedule(subscription);
 		}
 	}
+	
+	@Transactional
+	public void unsubscribe() {
+		saveSubscription(new Subscription());
+		getSession().createQuery("delete from OclItem").executeUpdate();
+		getSession().createQuery("delete from OclUpdate").executeUpdate();
+	}
 
 	@Transactional(readOnly = true)
 	public UpdateProgress getUpdateProgress() {

@@ -32,7 +32,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
 
-@Entity
+@Entity(name = "OclUpdate")
 @Table(name = "openconceptlab_update")
 public class Update {
 	
