@@ -4,8 +4,8 @@
 <script type="text/javascript">
 	jq = jQuery;
 	function checkIfSubscribed() {
-		var manual = ${ subscription.manual };
-		if(manual) {
+		var subscribed = ${ subscription.subscribed };
+		if(subscribed) {
 			//toggle labels and buttons text
 			jq('#subscribe-sub-id').html("Save Changes");
 			jq('#title').html("Edit Open Concept Lab Subscription");
@@ -14,7 +14,7 @@
 	}
 	jq(document).ready(function () {
 		checkIfSubscribed();
-		jq('#automatically-subscribe :input').prop('disabled', true);
+		
 		jq("#auto-A-S").click(function () {
 			jq('input:radio[name=manualS]').attr('checked', false);
 			jq('#automatically-subscribe :input').prop('disabled', false);
@@ -24,6 +24,13 @@
 			jq('input:radio[name=autoS]').attr('checked', false);
 			jq('#automatically-subscribe :input').prop('disabled', true);
 		});
+		
+		var manual = ${subscription.manual};
+		if (manual) {
+			jq("#manual-M-S").click();
+		} else {
+			jq("#auto-A-S").click();
+		}
 	});
 
 </script>

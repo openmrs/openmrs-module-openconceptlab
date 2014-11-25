@@ -1,5 +1,6 @@
 package org.openmrs.module.openconceptlab;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -62,6 +63,10 @@ public class Subscription {
 	
 	public boolean isManual() {
 		return (days == null && hours == null && minutes == null) || (days == 0 && hours == 0 && minutes == 0);
+	}
+	
+	public boolean isSubscribed() {
+		return !StringUtils.isBlank(url);
 	}
 	
 	@Override
