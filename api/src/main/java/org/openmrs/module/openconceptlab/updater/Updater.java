@@ -56,7 +56,7 @@ public class Updater implements Runnable {
 		
 		OclResponse oclResponse;
 		try {
-			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), updatedSince);
+			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
 		}
 		catch (IOException e) {
 			setErrorMessage(update, e);

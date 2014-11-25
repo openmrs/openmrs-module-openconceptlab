@@ -18,6 +18,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateParseException;
 import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.stereotype.Component;
 
@@ -44,8 +45,11 @@ public class OclClient {
 		this.dataDirectory = dataDirectory;
 	}
 	
-	public OclResponse fetchUpdates(String url, Date updatedSince) throws IOException {
+	public OclResponse fetchUpdates(String url, String token, Date updatedSince) throws IOException {
 		GetMethod get = new GetMethod(url);
+		if (!StringUtils.isBlank(token)) {
+			get.addRequestHeader("token", token);
+		}
 		get.addRequestHeader(new Header("compress", "true"));
 		get.getParams().setParameter("verbose", true);
 		get.getParams().setParameter("includeRetired", true);

@@ -68,7 +68,7 @@
 							<tr>
 								<td align="right">
 									<button type="submit" id="subscribe-sub-id" name="subscribeSub">Subscribe</button>
-									<button id="cancel-sub-id" value="Cancel" name="cancelSub" onClick="location.href='status.page'">Cancel</button>
+									<button id="cancel-sub-id" value="Cancel" name="cancelSub" onclick="location.href='status.page'">Cancel</button>
 								</td>
 							</tr>
 						</table>

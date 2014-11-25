@@ -56,7 +56,7 @@ public class UpdaterTest extends MockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(updateService.getLastUpdate()).thenReturn(null);
-		when(oclClient.fetchUpdates(subscription.getUrl(), null)).thenReturn(oclResponse);
+		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), null)).thenReturn(oclResponse);
 		
 		updater.run();
 		
@@ -80,7 +80,7 @@ public class UpdaterTest extends MockTest {
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
-		when(oclClient.fetchUpdates(subscription.getUrl(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
+		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
 		
 		updater.run();
 		
@@ -104,7 +104,7 @@ public class UpdaterTest extends MockTest {
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
-		when(oclClient.fetchUpdates(subscription.getUrl(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
+		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
 		doAnswer(new Answer<Item>() {
 
 			@Override
