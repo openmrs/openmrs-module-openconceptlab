@@ -11,11 +11,11 @@ public class Subscription {
 	
 	private String token;
 	
-	private Integer days;
+	private Integer days = 0;
 	
-	private Integer hours;
+	private Integer hours = 0;
 	
-	private Integer minutes;
+	private Integer minutes = 0;
 	
 	public Subscription() {
 		

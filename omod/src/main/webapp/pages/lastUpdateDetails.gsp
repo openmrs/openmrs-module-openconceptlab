@@ -1,5 +1,5 @@
 <%
-	ui.decorateWith("openconceptlab", "standardPage")
+	ui.decorateWith("appui", "standardEmrPage")
 %>
 <br /><br />
 <style type="text/css">

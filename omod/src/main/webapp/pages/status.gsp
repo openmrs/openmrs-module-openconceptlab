@@ -1,5 +1,5 @@
 <%
-	ui.decorateWith("openconceptlab", "standardPage")
+	ui.decorateWith("appui", "standardEmrPage")
 %>
 <script type="text/javascript" >
 	jq = jQuery;

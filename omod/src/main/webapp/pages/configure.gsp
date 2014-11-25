@@ -1,5 +1,5 @@
 <%
-	ui.decorateWith("openconceptlab", "standardPage")
+	ui.decorateWith("appui", "standardEmrPage")
 %>
 <script type="text/javascript">
 	jq = jQuery;
@@ -68,7 +68,7 @@
 							<tr>
 								<td align="right">
 									<button type="submit" id="subscribe-sub-id" name="subscribeSub">Subscribe</button>
-									<button type="reset" id="cancel-sub-id" value="Cancel" name="cancelSub">Cancel</button>
+									<button id="cancel-sub-id" value="Cancel" name="cancelSub" onClick="location.href='status.page'">Cancel</button>
 								</td>
 							</tr>
 						</table>
