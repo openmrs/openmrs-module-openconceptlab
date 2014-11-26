@@ -65,7 +65,7 @@ public class NextUpdatesFragmentController {
 			minutes = service.getSubscription().getMinutes();
 		}
 
-		if (subscription.isManual()) {
+		if (subscription != null && subscription.isManual()) {
 			manual = true;
 		}
 		

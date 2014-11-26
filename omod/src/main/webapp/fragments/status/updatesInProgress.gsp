@@ -48,11 +48,11 @@
 				Completed <span id="completed"></span> %
 		</p>
 		<p>
-				<div id="progressbar">
-					<div class="progress-label">
-						Loading...
-					</div
-				</div>
+			<div id="progressbar">
+				<div class="progress-label">
+					Loading...
+				</div
+			</div>
 		</p>
 </fieldset>
 
