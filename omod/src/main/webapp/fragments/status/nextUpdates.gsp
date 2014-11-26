@@ -26,8 +26,8 @@
 							<% } %>
 						</p>
 						<p>
-								<button type="submit" id="update-now">Update now</button>
-								<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
+							<button type="submit" id="update-now">Update now</button>
+							<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
 						</p>
 				</fieldset>
 			</td>

@@ -52,7 +52,7 @@ public class NextUpdatesFragmentController {
 		if (lastUpdate == null) {
 			lastUpdateDate = new Date();
 		} else {
-			lastUpdateDate = service.getLastUpdate().getLocalDateStopped();
+			lastUpdateDate = service.getLastUpdate().getLocalDateStarted();
 		}
 		
 		Integer days = 0;
@@ -65,7 +65,7 @@ public class NextUpdatesFragmentController {
 			minutes = service.getSubscription().getMinutes();
 		}
 
-		if (subscription.isSubscribed() && (subscription.getDays() == null || subscription.getDays() == 0)) {
+		if (subscription.isManual()) {
 			manual = true;
 		}
 		

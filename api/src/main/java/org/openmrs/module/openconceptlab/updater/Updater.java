@@ -59,7 +59,7 @@ public class Updater implements Runnable {
 			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
 		}
 		catch (IOException e) {
-			setErrorMessage(update, e);
+			update.setErrorMessage(getErrorMessage(e));
 			updateService.stopUpdate(update);
 			throw new ImportException(e);
 		}
@@ -73,7 +73,7 @@ public class Updater implements Runnable {
 			in.close();
 		}
 		catch (IOException e) {
-			setErrorMessage(update, e);
+			update.setErrorMessage(getErrorMessage(e));
 			throw new ImportException(e);
 		}
 		finally {
@@ -82,10 +82,13 @@ public class Updater implements Runnable {
 		}
 	}
 
-	private void setErrorMessage(Update update, IOException e) {
-	    String message = "Failed due to: " + ExceptionUtils.getRootCause(e).getMessage();
-	    message = message.substring(0, 1024);
-	    update.setErrorMessage(message);
+	private String getErrorMessage(Exception e) {
+	    String message = "Failed with '" + e.getMessage() + "' caused by '" + ExceptionUtils.getRootCause(e).getMessage() + "'";
+	    if (message.length() > 1024) {
+	    	return message.substring(0, 1024);
+	    } else {
+	    	return message;
+	    }
     }
 	
 	public long getBytesDownloaded() {
@@ -139,17 +142,18 @@ public class Updater implements Runnable {
 			importQueue.offer(oclConcept);
 			
 			while (!importQueue.isEmpty()) {
-				Item item;
+				Item item = null;
 				try {
 					oclConcept = importQueue.peek();
 					item = importer.importConcept(update, importQueue);
 				}
 				catch (ImportException e) {
 					item = new Item(update, oclConcept, State.ERROR);
-				}
-				
-				if (!State.MISSING_DEPENDENCY.equals(item.getState())) {
-					updateService.saveItem(item);
+					item.setErrorMessage(getErrorMessage(e));
+				} finally {
+					if (!State.MISSING_DEPENDENCY.equals(item.getState())) {
+						updateService.saveItem(item);
+					}
 				}
 			}
 		}

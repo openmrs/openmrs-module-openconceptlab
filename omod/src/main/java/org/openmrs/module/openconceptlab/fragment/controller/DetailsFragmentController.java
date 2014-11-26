@@ -62,10 +62,12 @@ public class DetailsFragmentController {
 						if (item.getState().equals(State.ERROR)) {
 							errorItems.add(item);
 						}
-						//finding a concept from openmrs database using the uuid from the item table
-						concept = conceptService.getConceptByUuid(item.getUuid());
-						//populate my list with the objects needed
-						detailsList.add(new Details(fetchedUpdate.getUpdateId(), item.getType(), concept.getName().getName(), concept.getDescription().getDescription(), item.getState().name(), item.getUuid(), item.getVersionUrl(), concept.getConceptId()));
+						else {
+							//finding a concept from openmrs database using the uuid from the item table
+							concept = conceptService.getConceptByUuid(item.getUuid());
+							//populate my list with the objects needed
+							detailsList.add(new Details(fetchedUpdate.getUpdateId(), item.getType(), concept.getName().getName(), concept.getDescription().getDescription(), item.getState().name(), item.getUuid(), item.getVersionUrl(), concept.getConceptId()));
+						}
 					}
 					//calculate the time it take for the upgrade
 					timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
