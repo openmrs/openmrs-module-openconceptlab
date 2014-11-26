@@ -58,7 +58,7 @@ public class Updater implements Runnable {
 		try {
 			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			update.setErrorMessage(getErrorMessage(e));
 			updateService.stopUpdate(update);
 			throw new ImportException(e);
@@ -72,7 +72,7 @@ public class Updater implements Runnable {
 			process(update, in);
 			in.close();
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			update.setErrorMessage(getErrorMessage(e));
 			throw new ImportException(e);
 		}
@@ -83,7 +83,11 @@ public class Updater implements Runnable {
 	}
 
 	private String getErrorMessage(Exception e) {
-	    String message = "Failed with '" + e.getMessage() + "' caused by '" + ExceptionUtils.getRootCause(e).getMessage() + "'";
+	    String message = "Failed with '" + e.getMessage() + "'";
+	    Throwable rootCause = ExceptionUtils.getRootCause(e);
+	    if (rootCause != null) {
+	    	message += " caused by '" + rootCause.getMessage() + "'";
+	    }
 	    if (message.length() > 1024) {
 	    	return message.substring(0, 1024);
 	    } else {
