@@ -50,7 +50,7 @@ public class OclClient {
 		if (!StringUtils.isBlank(token)) {
 			get.addRequestHeader("token", token);
 		}
-		get.addRequestHeader(new Header("compress", "true"));
+		get.getParams().setParameter("format", "zip");
 		get.getParams().setParameter("verbose", true);
 		get.getParams().setParameter("includeRetired", true);
 		
