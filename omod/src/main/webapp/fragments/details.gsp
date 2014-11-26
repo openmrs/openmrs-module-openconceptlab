@@ -29,38 +29,27 @@
 		<td>
 			<table width="100%" cellspacing="0" cellpadding="0" border="0" id="mainTbDetails">
 				<thead>
-				<tr>
-					<th>Type</th>
-					<th>Name</th>
-					<th>Description</th>
-					<th>Status</th>
-					<th>Action</th>
-				</tr>
+					<tr>
+						<th>Type</th>
+						<th>Name</th>
+						<th>Description</th>
+						<th>Status</th>
+						<th>Action</th>
+					</tr>
 				</thead>
 				<tbody>
-				<% allItemsUpdated.each { item -> %>
-				<tr>
-					<td>${ item.type }</td>
-					<td>${ item.name }</td>
-					<td>${ item.description }</td>
-					<td>${ item.status}</td>
-					<td>
-						<table>
-							<tr>
-								<td>
-									<button onclick="window.location='/' + OPENMRS_CONTEXT_PATH + '/dictionary/concept.htm?conceptId=${ item.conceptId }'">View Locally</button>
-								</td>
-								<td>
-									<button onclick="window.location='http://www.maternalconceptlab.com/search.php?q=${ item.conceptId }'">View previous in OCL</button>
-								</td>
-								<td>
-									<button onclick="window.location='http://www.maternalconceptlab.com/search.php?q=${ item.conceptId }'">View in OCL</button>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-				<% } %>
+					<% allItemsUpdated.each { item -> %>
+					<tr>
+						<td>${ item.type }</td>
+						<td>${ item.name }</td>
+						<td>${ item.description }</td>
+						<td>${ item.status}</td>
+						<td>
+							<button onclick="window.location='/' + OPENMRS_CONTEXT_PATH + '/dictionary/concept.htm?conceptId=${ item.conceptId }'">View Locally</button>
+							<button onclick="window.location='http://www.maternalconceptlab.com/search.php?q=${ item.conceptId }'">View in OCL</button>
+						</td>
+					</tr>
+					<% } %>
 				</tbody>
 			</table>
 		</td>
