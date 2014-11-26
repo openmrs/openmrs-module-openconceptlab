@@ -11,7 +11,7 @@
 		<tr>
 			<td>
 				<fieldset id="updates-next">
-					<legend id="next-title">Next updates</legend>
+					<legend id="next-title">Next update</legend>
 					<table width="100%" cellspacing="5" cellpadding="5" border="0">
 						<tr>
 							<td>

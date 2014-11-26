@@ -17,26 +17,19 @@ import java.io.IOException;
 
 import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
-import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Fragment actions specifically for searching for OpenMRS objects
  */
 public class StatusFragmentController {
 
-	@Autowired
-	Updater updater;
-
-
 	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updateService") UpdateService updateService, UiUtils ui) {
-
 		return updateService.getUpdateProgress();
 	}
 
-	public void runUpdates(UiUtils ui) throws IOException {
-		updater.run();
+	public void runUpdates(@SpringBean("openconceptlab.updateService") UpdateService updateService) throws IOException {
+		updateService.runUpdateNow();
 	}
 }

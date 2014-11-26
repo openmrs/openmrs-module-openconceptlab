@@ -49,7 +49,7 @@ public class NextUpdatesFragmentController {
 		if (lastUpdate == null) {
 			lastUpdateDate = new Date();
 		} else {
-			lastUpdateDate = service.getLastUpdate().getLocalDateStopped();
+			lastUpdateDate = service.getLastUpdate().getLocalDateStarted();
 		}
 		
 		Integer days = 0;

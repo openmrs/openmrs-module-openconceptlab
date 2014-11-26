@@ -13,10 +13,7 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.openmrs.module.openconceptlab.client.OclConcept;
+import java.util.Comparator;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -29,7 +26,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import java.util.Comparator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 
 @Entity(name = "OclItem")
 @Table(name = "openconceptlab_item")
@@ -68,10 +70,14 @@ public class Item {
 		//for persistence only
 	}
 	
-	public Item( Update update, OclConcept concept, State state) {
+	public Item(Update update, OclConcept concept, State state) {
 		this.update = update;
 		this.versionUrl = concept.getVersionUrl();
-		this.type = concept.getType();
+		if (StringUtils.isBlank(concept.getType())) {
+			this.type = "Concept";
+		} else {
+			this.type = concept.getType();
+		}
 		this.uuid = concept.getUuid();
 		this.state = state;
 	}
@@ -104,19 +110,20 @@ public class Item {
 		this.state = state;
 	}
 	
-    public String getErrorMessage() {
-	    return errorMessage;
-    }
-    
-    public void setErrorMessage(String errorMessage) {
-	    this.errorMessage = errorMessage;
-    }
-
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+	
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
+	}
+	
 	public static class OrderByState implements Comparator<Item> {
 		
 		@Override
 		public int compare(Item o1, Item o2) {
-			return o2.getState().compareTo(o1.getState());
+			return new CompareToBuilder().append(o2.getState(), o1.getState()).append(o2.getItemId(), o1.getItemId())
+			        .build();
 		}
 		
 	}
@@ -143,7 +150,7 @@ public class Item {
 	
 	@Override
 	public String toString() {
-	    return new ToStringBuilder(this).append("itemId", itemId).append("uuid", uuid).build();
+		return new ToStringBuilder(this).append("itemId", itemId).append("uuid", uuid).build();
 	}
 	
 }

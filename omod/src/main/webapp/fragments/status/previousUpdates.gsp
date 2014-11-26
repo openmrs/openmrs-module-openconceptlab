@@ -16,7 +16,6 @@
 						<tr>
 							<th>Date</th>
 							<th>Duration</th>
-							<th>Objects updated</th>
 							<th>Status</th>
 						</tr>
 					</thead>
@@ -25,7 +24,6 @@
 							<tr>
 								<td><a href="details.page?updateId=${summary.updateId }"> ${ summary.startDate}</a></td>
 								<td>${ summary.duration } minutes</td>
-								<td>${ summary.items }</td>
 								<td>${ summary.status }</td>
 							</tr>
 						<% } %>

@@ -41,6 +41,9 @@ public class PreviousUpdatesFragmentController {
 
 				for(Update update: allUpdates) {
 					if(update != null) {
+						if (!update.isStopped()) {
+							continue;
+						}
 						int errors = 0;
 						items = new TreeSet<Item>(update.getItems());
 						//loop through each item object to count errors
@@ -52,14 +55,14 @@ public class PreviousUpdatesFragmentController {
 								duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();
 							}
 						}
-						String error;
+						String status;
 						if( errors > 0) {
-							error = errors+" errors";
+							status = errors + " errors";
 						}
 						else {
-							error = "Ok";
+							status = items.size() + " items updated";
 						}
-						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, items.size(),error));
+						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, items.size(),status));
 					}
 				}
 				model.addAttribute("summaryList", summaryList);
@@ -70,7 +73,6 @@ public class PreviousUpdatesFragmentController {
 		private Long updateId;
 		private String startDate;
 		private Integer duration;
-		private Integer items;
 		private String status;
 
 
@@ -78,7 +80,6 @@ public class PreviousUpdatesFragmentController {
 			this.updateId = updateId;
 			this.startDate = startDate;
 			this.duration = duration;
-			this.items = items;
 			this.status = status;
 		}
 
@@ -104,14 +105,6 @@ public class PreviousUpdatesFragmentController {
 
 		public void setDuration(Integer duration) {
 			this.duration = duration;
-		}
-
-		public Integer getItems() {
-			return items;
-		}
-
-		public void setItems(Integer items) {
-			this.items = items;
 		}
 
 		public String getStatus() {
