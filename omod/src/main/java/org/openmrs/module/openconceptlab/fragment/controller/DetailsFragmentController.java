@@ -62,8 +62,9 @@ public class DetailsFragmentController {
 						if (item.getState().equals(State.ERROR)) {
 							errorItems.add(item);
 						}
-						concept = conceptService.getConceptByUuid(item.getUuid());
-						detailsList.add(new Details(item, concept));
+					concept = conceptService.getConceptByUuid(item.getUuid());
+					detailsList.add(new Details(item, concept));
+
 					}
 					//calculate the time it take for the upgrade
 					timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);

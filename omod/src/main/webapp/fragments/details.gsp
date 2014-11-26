@@ -16,19 +16,14 @@
 	});
 </script>
 <br /><br />
-<table width="50%" cellspacing="0" cellpadding="0" border="0">
-	<tr>
-		<td>
+
+		<p>
 			The update started on<span class="formatFields"> ${ startDate } </span>at<span class="formatFields"> ${ timeStarted }</span>. It completed in <span class="formatFields">${ duration }</span>
-		</td>
-	</tr>
-	<tr>
-		<td>
+		</p>
+
+		<p>
 			There were <span class="formatFields">${ allItemsUpdatedSize }</span> objects updated and <span class="formatFieldsErrors">${ allErrorItems } in error queue</span>
-		</td>
-	</tr>
-</table>
-<br />
+		</p>
 <table width="50%" cellspacing="0" cellpadding="0" border="0">
 	<tr>
 		<td>

@@ -11,25 +11,24 @@
 		<tr>
 			<td>
 				<fieldset id="updates-next">
-					<legend id="next-title">Next update</legend>
-					<table width="100%" cellspacing="5" cellpadding="5" border="0">
-						<tr>
-							<td>
-								There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="lastUpdateDetails.page">See details</a>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								The next update is planned on<span class="formatFields"> ${ nextUpdateDate }</span> at <span class="formatFields">${ nextUpdateTime }</span>. <a href="configure.page">Adjust schedule</a>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<button type="submit" id="update-now">Update now</button>
-								<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
-							</td>
-						</tr>
-					</table>
+					<legend id="next-title">Next updates</legend>
+						<p>
+								<% if ( errorItemSize > 0) { %>
+									There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="lastUpdateDetails.page">See details</a>
+								<% } %>
+						</p>
+						<p>
+
+							<% if ( manual ) { %>
+									No update is scheduled <a href="configure.page">Adjust schedule</a>
+							<% } else { %>
+									The next update is planned on<span class="formatFields"> ${ nextUpdateDate }</span> at <span class="formatFields">${ nextUpdateTime }</span>. <a href="configure.page">Adjust schedule</a>
+							<% } %>
+						</p>
+						<p>
+							<button type="submit" id="update-now">Update now</button>
+							<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
+						</p>
 				</fieldset>
 			</td>
 		</tr>

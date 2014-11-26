@@ -58,11 +58,8 @@ public class LastUpdateDetailsPageController {
 				if (item.getState().equals(State.ERROR)) {
 					errorItems.add(item);
 				}
-				//finding a concept from openmrs database using the uuid from the item table
 				concept = conceptService.getConceptByUuid(item.getUuid());
-				//populate my list with the objects needed
-				lastUpdateDetails.add(new Details(lastUpdate.getUpdateId(), item.getType(), concept.getName().getName(), concept.getDescription().getDescription(), item.getState().name(), item.getUuid(),item.getVersionUrl(), concept.getConceptId()));
-
+				lastUpdateDetails.add(new Details(item, concept));
 			}
 			//calculate the time it take for the upgrade
 			timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
@@ -94,15 +91,17 @@ public class LastUpdateDetailsPageController {
 		private String versionUrl;
 		private Integer conceptId;
 
-		public Details(Long updateId, String type, String name, String description, String status, String uuid, String versionUrl, Integer conceptId) {
-			this.updateId = updateId;
-			this.type = type;
-			this.name = name;
-			this.description = description;
-			this.status = status;
-			this.uuid = uuid;
-			this.versionUrl = versionUrl;
-			this.conceptId = conceptId;
+		public Details(Item item, Concept concept) {
+			this.updateId = item.getUpdate().getUpdateId();
+			this.type = item.getType();
+			if (concept != null) {
+				this.name = concept.getName().getName();
+				this.description = concept.getDescription().getDescription();
+				this.conceptId = concept.getConceptId();
+			}
+			this.status = item.getState().name() + ": " + item.getErrorMessage();
+			this.uuid = item.getUuid();
+			this.versionUrl = item.getVersionUrl();
 		}
 		public Integer getConceptId() {
 			return conceptId;
