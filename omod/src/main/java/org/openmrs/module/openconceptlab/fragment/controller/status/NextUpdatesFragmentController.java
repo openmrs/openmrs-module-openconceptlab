@@ -13,18 +13,19 @@
  */
 package org.openmrs.module.openconceptlab.fragment.controller.status;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Controller to schedule next updates
@@ -46,6 +47,8 @@ public class NextUpdatesFragmentController {
 		}
 		
 		Date lastUpdateDate;
+		Subscription subscription = service.getSubscription();
+		boolean manual = false;
 		if (lastUpdate == null) {
 			lastUpdateDate = new Date();
 		} else {
@@ -61,10 +64,15 @@ public class NextUpdatesFragmentController {
 			hours = service.getSubscription().getHours();
 			minutes = service.getSubscription().getMinutes();
 		}
+
+		if (subscription.isSubscribed() && (subscription.getDays() == null || subscription.getDays() == 0)) {
+			manual = true;
+		}
 		
 		model.addAttribute("nextUpdateDate", Utils.formatedDate(Utils.dateAddDays(lastUpdateDate, days)));
 		model.addAttribute("nextUpdateTime", appendZeros(hours.toString()) + ":" + appendZeros(minutes.toString()));
 		model.addAttribute("errorItemSize", errorItems.size());
+		model.addAttribute("manual", manual);
 		
 	}
 	

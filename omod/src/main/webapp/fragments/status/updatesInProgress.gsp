@@ -38,34 +38,21 @@
 		text-shadow: 1px 1px 0 #fff;
 }
 </style>
-<table width="50%" cellspacing="5" cellpadding="5" border="0">
-	<tr>
-		<td>
-			<fieldset id="updates-progressing">
-				<legend id="progress-title">Update in progress</legend>
-				<table width="100%" cellspacing="5" cellpadding="5" border="0">
-					<tr>
-						<td>
-							Upgrade is in progress for <span id="time"></span> seconds now
-						</td>
-					</tr>
-					<tr>
-						<td>
-							Completed <span id="completed"></span> %
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<div id="progressbar">
-								<div class="progress-label">
-									Loading...
-								</div
-							</div>
-						</td>
 
-					</tr>
-				</table>
-			</fieldset>
-		</td>
-	</tr>
-</table>
+<fieldset id="updates-progressing">
+	<legend id="progress-title">Update in progress</legend>
+		<p>
+			Upgrade is in progress for <span id="time"></span> seconds now
+		</p>
+		<p>
+				Completed <span id="completed"></span> %
+		</p>
+		<p>
+				<div id="progressbar">
+					<div class="progress-label">
+						Loading...
+					</div
+				</div>
+		</p>
+</fieldset>
+

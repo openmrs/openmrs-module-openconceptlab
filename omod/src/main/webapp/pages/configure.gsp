@@ -36,7 +36,7 @@
 </script>
 
 <form id="subscribe-to-ocl-form" method="post" action="configure.page">
-	<table id="parent-table" cellpadding="5" cellspacing="10">
+	<table id="parentTable" cellpadding="5" cellspacing="10">
 		<tr>
 			<td>
 				<div id="subscription-to-be-shown">
