@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.openconceptlab.fragment.controller.status;
 
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
 import org.openmrs.module.openconceptlab.Update;
@@ -58,6 +59,8 @@ public class PreviousUpdatesFragmentController {
 						String status;
 						if( errors > 0) {
 							status = errors + " errors";
+						} else if (!StringUtils.isBlank(update.getErrorMessage())){
+							status = update.getErrorMessage();
 						}
 						else {
 							status = items.size() + " items updated";

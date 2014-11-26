@@ -36,7 +36,6 @@
 </script>
 
 <form id="subscribe-to-ocl-form" method="post" action="configure.page">
-
 	<div id="subscription-to-be-shown">
 		<fieldset>
 			<legend id="title">Subscribe to Open Concept Lab</legend>
@@ -71,22 +70,16 @@
 
 		<fieldset>
 			<legend>Unsubscribe</legend>
-			<table cellpadding="5" cellspacing="10">
-				<tr>
-					<td>
+					<p>
 						<input type="hidden" name="unsubscribe" value="true" />
 						<input type="submit" id="unsubscribe-btn" value="Unsubscribe"/>
 						<br />
-					</td>
-				</tr>
-				<tr>
-					<td>
+					</p>
+					<p>
 						<i>
 							If you unsubscribe, no concepts will be deleted nor changed.<br /> All information about the subscription will be deleted from from your system
 						</i>
-					</td>
-				</tr>
-			</table>
+					</p>
 		</fieldset>
 	</form>
 </div>
