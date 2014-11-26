@@ -55,9 +55,9 @@
 									<input type="radio" name="option" value="A" id="auto-A-S" /> Install updates automatically<br /><br />
 									<div id="automatically-subscribe">
 										&nbsp;Install updates every
-										<input type="number" id="subscription.days" name="subscription.days" value="${subscription.days}" min="0" max="365" /> days at
-										<input type="number" id="subscription.hours" name="subscription.hours" value="${subscription.hours}" min="0" max="23" size="2" />:
-										<input type="number" id="subscription.minutes" name="subscription.minutes" value="${subscription.minutes}" min="0" max="59" size="2" />
+										<input type="number" id="subscription.days" name="subscription.days" value="${subscription.days}" min="0" max="365" style="min-width: 5%; display: inline" /> days at
+										<input type="number" id="subscription.hours" name="subscription.hours" value="${subscription.hours}" min="0" max="23" style="min-width: 5%; display: inline" />:
+										<input type="number" id="subscription.minutes" name="subscription.minutes" value="${subscription.minutes}" min="0" max="59" style="min-width: 5%; display: inline" />
 									</div>
 									<br />
 									<div id="message-sub">
@@ -68,7 +68,7 @@
 							<tr>
 								<td align="right">
 									<button type="submit" id="subscribe-sub-id" name="subscribeSub">Subscribe</button>
-									<button id="cancel-sub-id" value="Cancel" name="cancelSub" onclick="location.href='status.page'">Cancel</button>
+									<input type="button" value="Cancel" onclick="window.location.href='status.page'" />
 								</td>
 							</tr>
 						</table>
