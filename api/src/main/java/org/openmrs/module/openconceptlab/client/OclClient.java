@@ -14,6 +14,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateParseException;
 import org.apache.commons.httpclient.util.DateUtil;
@@ -36,7 +37,7 @@ public class OclClient {
 	private volatile long bytesDownloaded = 0;
 	
 	private volatile long totalBytesToDownload = 0;
-			
+	
 	public OclClient() {
 		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
 	}
@@ -50,9 +51,9 @@ public class OclClient {
 		if (!StringUtils.isBlank(token)) {
 			get.addRequestHeader("token", token);
 		}
-		get.getParams().setParameter("format", "zip");
-		get.getParams().setParameter("verbose", true);
-		get.getParams().setParameter("includeRetired", true);
+		NameValuePair[] query = new NameValuePair[] { new NameValuePair("format", "zip"),
+		        new NameValuePair("verbose", "true"), new NameValuePair("includeRetired", "true") };
+		get.setQueryString(query);
 		
 		if (updatedSince != null) {
 			SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
@@ -85,11 +86,11 @@ public class OclClient {
 		InputStream response = new FileInputStream(file);
 		return unzipResponse(response, date);
 	}
-
+	
 	@SuppressWarnings("resource")
-    public OclResponse unzipResponse(InputStream response, Date date) throws IOException {
-	    ZipInputStream zip = new ZipInputStream(response);
-	    boolean foundEntry = false;
+	public OclResponse unzipResponse(InputStream response, Date date) throws IOException {
+		ZipInputStream zip = new ZipInputStream(response);
+		boolean foundEntry = false;
 		try {
 			ZipEntry entry = zip.getNextEntry();
 			while (entry != null) {
@@ -101,13 +102,14 @@ public class OclClient {
 			}
 			
 			zip.close();
-		} finally {
+		}
+		finally {
 			if (!foundEntry) {
 				IOUtils.closeQuietly(zip);
 			}
 		}
-	    throw new IOException("Unsupported format of response. Expected zip with export.json.");
-    }
+		throw new IOException("Unsupported format of response. Expected zip with export.json.");
+	}
 	
 	File newFile(Date date) {
 		SimpleDateFormat fileNameFormat = new SimpleDateFormat(FILE_NAME_FORMAT);
@@ -154,11 +156,11 @@ public class OclClient {
 		return bytesDownloaded;
 	}
 	
-    public long getTotalBytesToDownload() {
-	    return totalBytesToDownload;
-    }
+	public long getTotalBytesToDownload() {
+		return totalBytesToDownload;
+	}
 	
-    public static class OclResponse {
+	public static class OclResponse {
 		
 		private final InputStream in;
 		

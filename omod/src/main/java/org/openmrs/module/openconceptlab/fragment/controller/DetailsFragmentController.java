@@ -81,7 +81,7 @@ public class DetailsFragmentController {
 					model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
 					model.addAttribute("timeStarted", Utils.formatTime(upgradeStartDate));
 					model.addAttribute("duration", duration);
-					model.addAttribute("allItemsUpdatedSize", itemsUpdated.size());
+					model.addAttribute("allItemsUpdatedSize", itemsUpdated.size() - errorItems.size());
 					model.addAttribute("allItemsUpdated", detailsList);
 				}
 
@@ -104,7 +104,11 @@ public class DetailsFragmentController {
 				this.description = concept.getDescription().getDescription();
 				this.conceptId = concept.getConceptId();
 			}
-			this.status = item.getState().name() + ": " + item.getErrorMessage();
+			if (State.ERROR.equals(item.getState())) {
+				this.status = item.getErrorMessage();
+			} else {
+				this.status = item.getState().name();
+			}
 			this.uuid = item.getUuid();
 			this.versionUrl = item.getVersionUrl();
 		}

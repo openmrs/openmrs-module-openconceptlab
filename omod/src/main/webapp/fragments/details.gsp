@@ -22,11 +22,8 @@
 		</p>
 
 		<p>
-			There were <span class="formatFields">${ allItemsUpdatedSize }</span> objects updated and <span class="formatFieldsErrors">${ allErrorItems } in error queue</span>
+			There were <span class="formatFields">${ allItemsUpdatedSize }</span> objects updated and <span class="formatFieldsErrors">${ allErrorItems } in error.</span>
 		</p>
-<table width="50%" cellspacing="0" cellpadding="0" border="0">
-	<tr>
-		<td>
 			<table width="100%" cellspacing="0" cellpadding="0" border="0" id="mainTbDetails">
 				<thead>
 					<tr>
@@ -52,6 +49,3 @@
 					<% } %>
 				</tbody>
 			</table>
-		</td>
-	</tr>
-</table>
