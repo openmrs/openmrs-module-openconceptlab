@@ -1,5 +1,6 @@
 package org.openmrs.module.openconceptlab.client;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -26,9 +27,9 @@ public class OclConcept {
 	
 	private String datatype;
 	
-	private List<Name> names;
+	private List<Name> names = new ArrayList<OclConcept.Name>();
 	
-	private List<Description> descriptons;
+	private List<Description> descriptons = new ArrayList<OclConcept.Description>();
 	
 	private boolean retired;
 	

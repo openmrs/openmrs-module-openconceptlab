@@ -6,6 +6,7 @@ import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -86,7 +87,9 @@ public class Updater implements Runnable {
 	    String message = "Failed with '" + e.getMessage() + "'";
 	    Throwable rootCause = ExceptionUtils.getRootCause(e);
 	    if (rootCause != null) {
-	    	message += " caused by '" + rootCause.getMessage() + "'";
+	    	String[] stackFrames = ExceptionUtils.getStackFrames(rootCause);
+	    	int endIndex = stackFrames.length > 5 ? 5 : stackFrames.length;
+	    	message += " caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
 	    }
 	    if (message.length() > 1024) {
 	    	return message.substring(0, 1024);

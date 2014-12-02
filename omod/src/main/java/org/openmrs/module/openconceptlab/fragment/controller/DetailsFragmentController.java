@@ -105,7 +105,7 @@ public class DetailsFragmentController {
 				this.conceptId = concept.getConceptId();
 			}
 			if (State.ERROR.equals(item.getState())) {
-				this.status = item.getErrorMessage();
+				this.status = "<pre style=\"font-size: 70%\">" + item.getErrorMessage() + "</pre>";
 			} else {
 				this.status = item.getState().name();
 			}
