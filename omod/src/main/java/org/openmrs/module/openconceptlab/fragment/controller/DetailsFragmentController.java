@@ -100,8 +100,12 @@ public class DetailsFragmentController {
 			this.updateId = item.getUpdate().getUpdateId();
 			this.type = item.getType();
 			if (concept != null) {
-				this.name = concept.getName().getName();
-				this.description = concept.getDescription().getDescription();
+				if (concept.getName() != null) {
+					this.name = concept.getName().getName();
+				}
+				if (concept.getDescription() != null) {
+					this.description = concept.getDescription().getDescription();
+				}
 				this.conceptId = concept.getConceptId();
 			}
 			if (State.ERROR.equals(item.getState())) {
