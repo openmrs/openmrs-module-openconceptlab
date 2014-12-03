@@ -37,6 +37,8 @@ public class NextUpdatesFragmentController {
 		Set<Item> updatedItems;
 		List<Item> errorItems = new ArrayList<Item>();
 		if (lastUpdate != null) {
+			model.addAttribute("lastUpdateId", lastUpdate.getUpdateId());
+			
 			updatedItems = lastUpdate.getItems();
 			errorItems = new ArrayList<Item>();
 			for (Item item : updatedItems) {
@@ -68,6 +70,7 @@ public class NextUpdatesFragmentController {
 		if (subscription != null && subscription.isManual()) {
 			manual = true;
 		}
+		
 		
 		model.addAttribute("nextUpdateDate", Utils.formatedDate(Utils.dateAddDays(lastUpdateDate, days)));
 		model.addAttribute("nextUpdateTime", appendZeros(hours.toString()) + ":" + appendZeros(minutes.toString()));

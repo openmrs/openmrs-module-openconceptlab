@@ -11,7 +11,7 @@
 		<legend id="next-title">Next updates</legend>
 			<p>
 					<% if ( errorItemSize > 0) { %>
-						There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="lastUpdateDetails.page">See details</a>
+						There were <span class="formatFieldsErrors">${ errorItemSize } errors</span> in the last update. <a href="details.page?updateId=${lastUpdateId}">See details</a>
 					<% } %>
 			</p>
 			<p>
