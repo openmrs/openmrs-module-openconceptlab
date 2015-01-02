@@ -26,6 +26,7 @@ import org.hibernate.criterion.Restrictions;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+import org.openmrs.module.openconceptlab.updater.Updater;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,10 @@ public class UpdateService {
 	
 	@Autowired
 	UpdateScheduler scheduler;
+	
+	@Autowired
+	@Qualifier("openconceptlab.updater")
+	Updater updater;
 	
 	/**
 	 * @should return all updates ordered descending by ids
@@ -229,8 +234,19 @@ public class UpdateService {
 	@Transactional(readOnly = true)
 	public UpdateProgress getUpdateProgress() {
 		UpdateProgress updateProgress = new UpdateProgress();
-		updateProgress.setProgress(100);
-		updateProgress.setTime(1);
+		
+		if (!updater.isDownloaded()) {
+			double progress = updater.getBytesDownloaded() / (double) updater.getTotalBytesToDownload() * 50.0;
+			updateProgress.setProgress((int) progress);
+		} else {
+			double progress = (double) updater.getBytesProcessed() / (double) updater.getTotalBytesToProcess() * 50.0;
+			progress += 50;
+			updateProgress.setProgress((int) progress);
+		}
+		
+		Update lastUpdate = getLastUpdate();
+		long time = new Date().getTime() - lastUpdate.getLocalDateStarted().getTime() / 1000;
+		updateProgress.setTime((int) time);
 		return updateProgress;
 	}
 	
