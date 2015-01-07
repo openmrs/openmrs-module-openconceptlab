@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="Spring" name="Spring">
-      <configuration>
-        <fileset id="fileset" name="Spring Application Context" removed="false">
-          <file>file://$MODULE_DIR$/src/main/resources/moduleApplicationContext.xml</file>
-          <file>file://$MODULE_DIR$/src/test/resources/TestingApplicationContext.xml</file>
-        </fileset>
-      </configuration>
-    </facet>
-  </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
@@ -29,10 +19,10 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.commons:commons-lang3:3.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.antlr:antlr4-runtime:4.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.mozilla:rhino:1.7R4" level="project" />
-    <orderEntry type="module" module-name="uiframework-api" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.openmrs.module:uiframework-api:3.2.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.openmrs.module:metadatadeploy-api:1.3" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.sf.opencsv:opencsv:2.3" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.openmrs.api:openmrs-api:1.9.8" level="project" />
+    <orderEntry type="module" module-name="openmrs-api (1)" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-collections:commons-collections:3.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-beanutils:commons-beanutils:1.7.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-io:commons-io:1.4" level="project" />
@@ -88,7 +78,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.openmrs.liquibase.ext:type-converter:1.0.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: xml-resolver:xml-resolver:1.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: javax.validation:validation-api:1.0.0.GA" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.openmrs.web:openmrs-web:1.9.8" level="project" />
+    <orderEntry type="module" module-name="openmrs-web (1)" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:servlet-api:2.5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:jsp-api:2.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:jstl:1.1.2" level="project" />
@@ -120,8 +110,8 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.struts:struts-core:1.3.8" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.struts:struts-taglib:1.3.8" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.struts:struts-tiles:1.3.8" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.openmrs.api:openmrs-api:test-jar:tests:1.9.8" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.openmrs.web:openmrs-web:test-jar:tests:1.9.8" level="project" />
+    <orderEntry type="module" module-name="openmrs-api (1)" scope="TEST" production-on-test="" />
+    <orderEntry type="module" module-name="openmrs-web (1)" scope="TEST" production-on-test="" />
     <orderEntry type="library" scope="TEST" name="Maven: org.springframework:spring-test:3.0.5.RELEASE" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.h2database:h2:1.2.135" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.11" level="project" />

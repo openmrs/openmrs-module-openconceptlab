@@ -54,9 +54,11 @@ public class UpdateService {
 	 * @should return all updates ordered descending by ids
 	 */
 	@Transactional(readOnly = true)
-	public List<Update> getUpdatesInOrder() {
+	public List<Update> getUpdatesInOrder(int first, int max) {
 		Criteria update = getSession().createCriteria(Update.class);
 		update.addOrder(Order.desc("updateId"));
+		update.setFirstResult(first);
+		update.setMaxResults(max);
 		
 		@SuppressWarnings("unchecked")
 		List<Update> list = update.list();

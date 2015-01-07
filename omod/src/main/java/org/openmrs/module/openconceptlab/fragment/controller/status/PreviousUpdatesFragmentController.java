@@ -35,7 +35,7 @@ public class PreviousUpdatesFragmentController {
 			public void controller(FragmentModel model,
 								   @SpringBean UpdateService service
 			){
-				List<Update> allUpdates = service.getUpdatesInOrder();
+				List<Update> allUpdates = service.getUpdatesInOrder(0, 20);
 				List<UpdateSummary> summaryList = new ArrayList<UpdateSummary>();
 				SortedSet<Item> items;
 				int duration = 0;
