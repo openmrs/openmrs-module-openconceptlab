@@ -72,7 +72,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		Update secondUpdate = new Update();
 		updateService.startUpdate(secondUpdate);
 		
-		List<Update> updatesInOrder = updateService.getUpdatesInOrder();
+		List<Update> updatesInOrder = updateService.getUpdatesInOrder(0, 20);
 		
 		assertThat(updatesInOrder, contains(secondUpdate, firstUpdate));
 	}
