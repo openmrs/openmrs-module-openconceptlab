@@ -29,7 +29,6 @@
 					<tr>
 						<th>Type</th>
 						<th>Name</th>
-						<th>Description</th>
 						<th>Status</th>
 						<th>Action</th>
 					</tr>
@@ -39,11 +38,10 @@
 					<tr>
 						<td>${ item.type }</td>
 						<td>${ item.name }</td>
-						<td>${ item.description }</td>
 						<td>${ item.status}</td>
 						<td>
 							<button onclick="window.location='/' + OPENMRS_CONTEXT_PATH + '/dictionary/concept.htm?conceptId=${ item.conceptId }'">View Locally</button>
-							<button onclick="window.location='http://www.maternalconceptlab.com/search.php?q=${ item.conceptId }'">View in OCL</button>
+							<button onclick="window.location='${ item.versionUrl }'">View in OCL</button>
 						</td>
 					</tr>
 					<% } %>
