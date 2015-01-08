@@ -237,18 +237,28 @@ public class UpdateService {
 	public UpdateProgress getUpdateProgress() {
 		UpdateProgress updateProgress = new UpdateProgress();
 		
+		Update lastUpdate = getLastUpdate();
+		long time = (new Date().getTime() - lastUpdate.getLocalDateStarted().getTime()) / 1000;
+		updateProgress.setTime((int) time);
+		
 		if (!updater.isDownloaded()) {
-			double progress = updater.getBytesDownloaded() / (double) updater.getTotalBytesToDownload() * 50.0;
+			double totalBytesToDownload = updater.getTotalBytesToDownload();
+			double progress = 0;
+			if (updater.getBytesDownloaded() == 0) {
+				//simulate download progress until first bytes are downloaded
+				progress = (double) time / (time + 5) * 10.0;
+			} else if (updater.getTotalBytesToDownload() == -1) {
+				//simulate download progress since total bytes to download are unknown
+				progress = 10.0 + ((double) time / (time + 100) * 20.0);
+			} else {
+				progress = 10.0 + ((double) updater.getBytesDownloaded() / totalBytesToDownload * 20.0);
+			}
 			updateProgress.setProgress((int) progress);
 		} else {
-			double progress = (double) updater.getBytesProcessed() / (double) updater.getTotalBytesToProcess() * 50.0;
-			progress += 50;
+			double progress = 30.0 + ((double) updater.getBytesProcessed() / updater.getTotalBytesToProcess() * 70.0);
 			updateProgress.setProgress((int) progress);
 		}
 		
-		Update lastUpdate = getLastUpdate();
-		long time = new Date().getTime() - lastUpdate.getLocalDateStarted().getTime() / 1000;
-		updateProgress.setTime((int) time);
 		return updateProgress;
 	}
 	

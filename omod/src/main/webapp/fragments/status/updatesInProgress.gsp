@@ -4,15 +4,21 @@
 		var progressbar = jq( "#progressbar" );
 		progressbar.progressbar();
 		
-		jq.getJSON('${ui.actionLink("openconceptlab", "status", "getUpdateProgress")}', function(result) {
-			jq('#completed').html(result.progress);
-			jq('#time').html(result.time);
-			var progressbar = jq( "#progressbar" );
-			progressbar.progressbar( "value", result.progress);	
-			if (result.progress == 100) {
-				setTimeout(function() { window.location.reload(); }, 1000);
-			}
-		}, 1000 );
+		var updateProgressbar = function() {
+			jq.getJSON('${ui.actionLink("openconceptlab", "status", "getUpdateProgress")}', function(result) {
+				jq('#completed').html(result.progress);
+				jq('#time').html(result.time);
+				var progressbar = jq( "#progressbar" );
+				progressbar.progressbar( "value", result.progress);	
+				if (result.progress == 100) {
+					setTimeout(function() { window.location.reload(); }, 1000);
+				}
+			});
+			
+			setTimeout(updateProgressbar, 1000);
+		};
+		
+		updateProgressbar();
 	});
 </script>
 <style type="text/css">
