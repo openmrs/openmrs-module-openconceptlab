@@ -57,14 +57,17 @@ public class DetailsFragmentController {
 					upgradeStartDate = fetchedUpdate.getLocalDateStarted();
 					upgradeStopDate = fetchedUpdate.getLocalDateStopped();
 					SortedSet<Item> itemsUpdated = fetchedUpdate.getItems();
+					List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 100);
 					//loop through and find those with errors
-					for (Item item : itemsUpdated) {
-						if (item.getState().equals(State.ERROR)) {
-							errorItems.add(item);
-						}
+					for (Item item : itemsUpdatedLimited) {
 					concept = conceptService.getConceptByUuid(item.getUuid());
 					detailsList.add(new Details(item, concept));
+					}
 
+					for(Item errorItem : itemsUpdated) {
+						if (errorItem.getState().equals(State.ERROR)) {
+							errorItems.add(errorItem);
+						}
 					}
 					//calculate the time it take for the upgrade
 					timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
