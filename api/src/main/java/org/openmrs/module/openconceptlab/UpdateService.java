@@ -29,9 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -270,23 +267,11 @@ public class UpdateService {
 	 * @return a list of items
 	 */
 	public List<Item> getUpdateItems(Update update, int first, int max) {
-		List<Item> list = new ArrayList<Item>(update.getItems());
-		Collections.sort(list, new Comparator<Item>() {
-			@Override
-			public int compare(Item item1, Item item2) {
-				int state =  item1.getState().compareTo(item2.getState());
-				if(state == 5) {
-					return 1;
-				}
-				return 0;
-			}
-		});
-
-		if(list.size() < max) {
-			max = list.size();
-		}
-		List<Item> trimmedList = list.subList(first, max);
-
-		return trimmedList;
+		Criteria items = getSession().createCriteria(Item.class);
+		items.add(Restrictions.eq("update", update));
+		items.addOrder(Order.desc("state"));
+		items.setFirstResult(first);
+		items.setMaxResults(max);
+		return items.list();
 	}
 }
