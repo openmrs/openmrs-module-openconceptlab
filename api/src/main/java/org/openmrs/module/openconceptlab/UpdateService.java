@@ -14,9 +14,6 @@
 package org.openmrs.module.openconceptlab;
 
 
-import java.util.Date;
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -31,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
 
 
 @Service("openconceptlab.updateService")
@@ -267,5 +267,21 @@ public class UpdateService {
 		if (subscription != null) {
 			scheduler.schedule(subscription);
 		}
+	}
+
+	/**
+	 *
+	 * @param update the update to be passed
+	 * @param first starting index
+	 * @param max  maximum limit
+	 * @return a list of items
+	 */
+	public List<Item> getUpdateItems(Update update, int first, int max) {
+		Criteria items = getSession().createCriteria(Item.class);
+		items.add(Restrictions.eq("update", update));
+		items.addOrder(Order.desc("state"));
+		items.setFirstResult(first);
+		items.setMaxResults(max);
+		return items.list();
 	}
 }
