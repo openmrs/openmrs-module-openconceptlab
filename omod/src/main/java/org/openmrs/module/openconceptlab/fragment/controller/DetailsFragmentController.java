@@ -27,7 +27,9 @@ import org.openmrs.ui.framework.fragment.FragmentModel;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
@@ -48,15 +50,14 @@ public class DetailsFragmentController {
 				Date upgradeStopDate;
 				Long timeTakenForUpgrade;
 				String duration = "";
-				Integer minutes;
+				int minutes;
 				int seconds;
-				List<Item> errorItems = new ArrayList<Item>();
 				//go through a set of items and find the number of items
 				if(fetchedUpdate != null) {
 					//get the start date
 					upgradeStartDate = fetchedUpdate.getLocalDateStarted();
 					upgradeStopDate = fetchedUpdate.getLocalDateStopped();
-					SortedSet<Item> itemsUpdated = fetchedUpdate.getItems();
+					Integer itemsUpdated =service.getUpdateItemsCount(fetchedUpdate, new HashSet<State>());
 					List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 100);
 					//loop through and find those with errors
 					for (Item item : itemsUpdatedLimited) {
@@ -64,11 +65,11 @@ public class DetailsFragmentController {
 					detailsList.add(new Details(item, concept));
 					}
 
-					for(Item errorItem : itemsUpdated) {
-						if (errorItem.getState().equals(State.ERROR)) {
-							errorItems.add(errorItem);
-						}
-					}
+					Set<State> states = new HashSet<State>();
+					states.add(State.ERROR);
+
+					Integer errorsItems = service.getUpdateItemsCount(fetchedUpdate, states);
+
 					//calculate the time it take for the upgrade
 					timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
 					if (timeTakenForUpgrade < 60) {
@@ -80,11 +81,11 @@ public class DetailsFragmentController {
 						duration = minutes+" minutes"+"  "+seconds+" seconds";
 					}
 
-					model.addAttribute("allErrorItems", errorItems.size());
+					model.addAttribute("allErrorItems", errorsItems);
 					model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
 					model.addAttribute("timeStarted", Utils.formatTime(upgradeStartDate));
 					model.addAttribute("duration", duration);
-					model.addAttribute("allItemsUpdatedSize", itemsUpdated.size() - errorItems.size());
+					model.addAttribute("allItemsUpdatedSize", itemsUpdated - errorsItems);
 					model.addAttribute("allItemsUpdated", detailsList);
 				}
 

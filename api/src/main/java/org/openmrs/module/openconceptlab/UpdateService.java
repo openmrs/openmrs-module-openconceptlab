@@ -19,6 +19,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 @Service("openconceptlab.updateService")
@@ -283,5 +285,20 @@ public class UpdateService {
 		items.setFirstResult(first);
 		items.setMaxResults(max);
 		return items.list();
+	}
+
+	/**
+	 * @param update the update to be passed
+	 * @param  states set of states passed
+	 * @return a count of items
+	 */
+	public Integer getUpdateItemsCount(Update update, Set<State> states) {
+		Criteria items = getSession().createCriteria(Item.class);
+		items.add(Restrictions.eq("update", update));
+		items.addOrder(Order.desc("state"));
+		if (!(states.isEmpty())) {
+			items.add(Restrictions.in("state", states));
+		}
+		return  (Integer) items.setProjection(Projections.rowCount()).uniqueResult();
 	}
 }
