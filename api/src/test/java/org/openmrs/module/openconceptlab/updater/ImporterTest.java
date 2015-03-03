@@ -4,15 +4,21 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
@@ -116,7 +122,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclConcept.getNames().add(fourthName);
 		importConcept(oclConcept);
 		
-		List<Name> voided = new ArrayList<OclConcept.Name>();;
+		List<Name> voided = new ArrayList<OclConcept.Name>();
 		for (Iterator<Name> it = oclConcept.getNames().iterator(); it.hasNext();) {
 	        Name name = it.next();
 	        if (!name.isLocalePreferred()) {
@@ -141,7 +147,21 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void importConcept_shouldAddNewDescriptionsToConcept() throws Exception {
+
+		OclConcept oclConcept = newOclConcept();
+	    importConcept(oclConcept);
+
+		Description desc1 = new Description();
+		desc1.setDescription("test oclConceptDescription");
+		desc1.setLocale(Context.getLocale());
+		oclConcept.getDescriptons().add(desc1);
+
+		importConcept(oclConcept);
+
+		assertImported(oclConcept);
+
 	}
+
 	
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
@@ -149,14 +169,75 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void importConcept_shouldVoidDescriptionsFromConcept() throws Exception {
+
+		OclConcept oclConcept = newOclConcept();
+		importConcept(oclConcept);
+
+		Description desc1 = new Description();
+		desc1.setDescription("test oclConceptDescription");
+		desc1.setLocale(Context.getLocale());
+		oclConcept.getDescriptons().add(desc1);
+
+		importConcept(oclConcept);
+		Concept concept = assertImported(oclConcept);
+
+		//cloning object to save state of descriptions after importing again
+		Concept cloned = (Concept)org.apache.commons.lang.SerializationUtils.clone(concept);
+
+		Collection<ConceptDescription> descriptionsBeforeVoiding = cloned.getDescriptions();
+
+		List<Description> voided = new ArrayList<OclConcept.Description>();
+		for (Iterator<Description> it = oclConcept.getDescriptons().iterator(); it.hasNext();) {
+			Description description = it.next();
+			if(description.getDescription().equals(desc1.getDescription())) {
+				it.remove();
+				voided.add(description);
+			}
+		}
+		assertThat(voided, is(not(empty())));
+
+		//at this point without cloning object original desc collecion is lost
+		importConcept(oclConcept);
+	    concept = assertImported(oclConcept);
+
+		final Collection<ConceptDescription> remainingDescriptions = concept.getDescriptions();
+		/*
+		it's equivalent for descriptionsBeforeVoiding.removeAll(remoiningDescriptions) which can't work becouse of refs disagreement
+		it filters descriptionsBeforeVoiding.getDescription() is compared with remainingDescriptions.getDescription()
+		*/
+		Collection<ConceptDescription> recievedVoidedDescriptions = CustomPredicate.filter(descriptionsBeforeVoiding,
+				new IPredicate<ConceptDescription>() {
+					public boolean apply(ConceptDescription objectOfA) {
+						CustomPredicate.predicateParams = objectOfA.getDescription();
+						return CustomPredicate.select(remainingDescriptions, new IPredicate<ConceptDescription>() {
+							public boolean apply(ConceptDescription objectOfB) {
+								return objectOfB.getDescription().equals(CustomPredicate.predicateParams.toString());
+							}
+						}) == null;
+					}
+				});
+
+		assertThat(recievedVoidedDescriptions, containsDescriptionsInAnyOrder(voided));
+
 	}
-	
+
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies retire concept
 	 */
 	@Test
 	public void importConcept_shouldRetireConcept() throws Exception {
+
+		OclConcept oclConcept = newOclConcept();
+		assertFalse(oclConcept.isRetired());
+		importConcept(oclConcept);
+
+		oclConcept.setRetired(true);
+
+		importConcept(oclConcept);
+
+		Concept concept = assertImported(oclConcept);
+		assertTrue(concept.isRetired());
 	}
 	
 	/**
@@ -165,6 +246,19 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void importConcept_shouldUnretireConcept() throws Exception {
+
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		assertTrue(oclConcept.isRetired());
+		importConcept(oclConcept);
+
+		oclConcept.setRetired(false);
+
+		importConcept(oclConcept);
+
+		Concept concept = assertImported(oclConcept);
+		assertFalse(concept.isRetired());
+
 	}
 	
 	/**
@@ -310,5 +404,33 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 				return actualDescription.equals(description);
 			}
 		};
+	}
+
+	private interface IPredicate<T> { boolean apply(T type); }
+
+	private static class CustomPredicate {
+		public static Object predicateParams;
+
+		public static <T> Collection<T> filter(Collection<T> target, IPredicate<T> predicate) {
+			Collection<T> result = new ArrayList<T>();
+			for (T element : target) {
+				if (predicate.apply(element)) {
+					result.add(element);
+				}
+			}
+			return result;
+		}
+
+		public static <T> T select(Collection<T> target, IPredicate<T> predicate) {
+			T result = null;
+			for (T element : target) {
+				if (!predicate.apply(element))
+					continue;
+				result = element;
+				break;
+			}
+			return result;
+		}
+
 	}
 }
