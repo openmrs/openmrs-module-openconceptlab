@@ -299,6 +299,6 @@ public class UpdateService {
 		if (!(states.isEmpty())) {
 			items.add(Restrictions.in("state", states));
 		}
-		return  (Integer) items.setProjection(Projections.rowCount()).uniqueResult();
+		return  ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
 	}
 }
