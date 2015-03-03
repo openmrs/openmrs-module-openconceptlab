@@ -14,7 +14,6 @@
 package org.openmrs.module.openconceptlab.fragment.controller.status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
@@ -23,9 +22,9 @@ import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,7 +36,6 @@ public class PreviousUpdatesFragmentController {
 			){
 				List<Update> allUpdates = service.getUpdatesInOrder(0, 20);
 				List<UpdateSummary> summaryList = new ArrayList<UpdateSummary>();
-				SortedSet<Item> items;
 				int duration = 0;
 
 				for(Update update: allUpdates) {
@@ -45,27 +43,23 @@ public class PreviousUpdatesFragmentController {
 						if (!update.isStopped()) {
 							continue;
 						}
-						int errors = 0;
-						items = new TreeSet<Item>(update.getItems());
-						//loop through each item object to count errors
-						for( Item item : items){
-							if (item != null) {
-								if (item.getState().equals(State.ERROR)) {
-									errors++;
-								}
-								duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();
-							}
-						}
-						String status;
+						Set<State> states = new HashSet<State>();
+						states.add(State.ERROR);
+
+						Integer errors = service.getUpdateItemsCount(update, states);
+						Integer totalItems =  service.getUpdateItemsCount(update, new HashSet<State>());
+						//loop through each item object to count error
+						duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();String status;
+
 						if( errors > 0) {
 							status = errors + " errors";
 						} else if (!StringUtils.isBlank(update.getErrorMessage())){
 							status = update.getErrorMessage();
 						}
 						else {
-							status = items.size() + " items updated";
+							status = totalItems + " items updated";
 						}
-						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, items.size(),status));
+						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, totalItems,status));
 					}
 				}
 				model.addAttribute("summaryList", summaryList);
