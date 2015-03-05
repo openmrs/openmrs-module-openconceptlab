@@ -16,5 +16,5 @@ package org.openmrs.module.openconceptlab;
 
 public enum State {
 	
-	MISSING_DEPENDENCY, ADDED, UPDATED, RETIRED, UNRETIRED, ERROR;
+	ADDED, UPDATED, RETIRED, UNRETIRED, ERROR;
 }

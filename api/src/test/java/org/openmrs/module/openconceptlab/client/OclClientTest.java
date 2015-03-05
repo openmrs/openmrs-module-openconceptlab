@@ -70,7 +70,7 @@ public class OclClientTest extends MockTest {
 		}
 		
 		assertThat(subscription.getUpdatedTo(), is(DateUtil.parseDate(date)));
-		assertThat(json, startsWith("[{\"type\": \"Concept\", \"uuid\": \"5435b10b50d61b61c48ec449\""));
-		assertThat(json.length(), is(3401));
+		assertThat(json, startsWith("{\"type\": \"Source\", \"uuid\": \"54e74b378a86f251d2e737d8\""));
+		assertThat(json.length(), is(2999700));
 	}
 }

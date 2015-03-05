@@ -152,6 +152,10 @@ public class OclConcept {
 	
 	public static class Name {
 		
+		private String uuid;
+		
+		private String external_id;
+		
 		private Locale locale;
 		
 		@JsonProperty("locale_preferred")
@@ -161,6 +165,24 @@ public class OclConcept {
 		
 		@JsonProperty("name_type")
 		private String nameType;
+		
+		private String type;
+		
+		public String getUuid() {
+			return uuid;
+		}
+		
+		public void setUuid(String uuid) {
+			this.uuid = uuid;
+		}
+		
+		public String getExternal_id() {
+			return external_id;
+		}
+		
+		public void setExternal_id(String external_id) {
+			this.external_id = external_id;
+		}
 		
 		public Locale getLocale() {
 			return locale;
@@ -192,6 +214,14 @@ public class OclConcept {
 		
 		public void setNameType(String nameType) {
 			this.nameType = nameType;
+		}
+		
+		public String getType() {
+			return type;
+		}
+		
+		public void setType(String type) {
+			this.type = type;
 		}
 		
 		@Override
@@ -230,9 +260,19 @@ public class OclConcept {
 	
 	public static class Description {
 		
+		private String uuid;
+		
 		private Locale locale;
 		
 		private String description;
+		
+		public String getUuid() {
+			return uuid;
+		}
+		
+		public void setUuid(String uuid) {
+			this.uuid = uuid;
+		}
 		
 		public Locale getLocale() {
 			return locale;
@@ -277,7 +317,7 @@ public class OclConcept {
 		
 		@Override
 		public String toString() {
-		    return new ToStringBuilder(this).append("description", description).append("locale", locale).build();
+			return new ToStringBuilder(this).append("description", description).append("locale", locale).build();
 		}
 	}
 	
