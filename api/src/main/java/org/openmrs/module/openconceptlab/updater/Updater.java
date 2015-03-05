@@ -127,43 +127,41 @@ public class Updater implements Runnable {
 		JsonParser parser = objectMapper.getJsonFactory().createJsonParser(in);
 		
 		JsonToken token = parser.nextToken();
-		if (token != JsonToken.START_OBJECT && token != JsonToken.START_ARRAY) {
-			throw new IOException("JSON must start from an object or an array");
+		if (token != JsonToken.START_OBJECT) {
+			throw new IOException("JSON must start from an object");
 		}
-		if (token == JsonToken.START_OBJECT) {
-			token = parser.nextToken();
+		
+		//Advance to the concepts field
+		while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
+			if (parser.getText().equals("concepts")) {
+				token = parser.nextToken();
+				if (token != JsonToken.START_ARRAY) {
+					throw new IOException("JSON must have a list of concepts");
+				}
+				break;
+			}
 		}
 		
 		if (token == JsonToken.END_OBJECT) {
 			return;
 		}
-		if (token != JsonToken.START_ARRAY) {
-			throw new IOException("JSON must have a list of concepts or an empty list");
-		}
-		
-		ImportQueue importQueue = new ImportQueue();
 		
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			
-			importQueue.offer(oclConcept);
-			
-			while (!importQueue.isEmpty()) {
-				Item item = null;
-				try {
-					oclConcept = importQueue.peek();
-					item = importer.importConcept(update, importQueue);
-				}
-				catch (ImportException e) {
-					item = new Item(update, oclConcept, State.ERROR);
-					item.setErrorMessage(getErrorMessage(e));
-				} finally {
-					if (!State.MISSING_DEPENDENCY.equals(item.getState())) {
-						updateService.saveItem(item);
-					}
-				}
+			Item item = null;
+			try {
+				item = importer.importConcept(update, oclConcept);
+			}
+			catch (ImportException e) {
+				item = new Item(update, oclConcept, State.ERROR);
+				item.setErrorMessage(getErrorMessage(e));
+			} finally {
+				updateService.saveItem(item);
 			}
 		}
+		
+		//TODO: process mappings here
 	}
 	
 }

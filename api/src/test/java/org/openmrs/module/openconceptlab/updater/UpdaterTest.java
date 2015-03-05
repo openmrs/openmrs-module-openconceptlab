@@ -110,17 +110,16 @@ public class UpdaterTest extends MockTest {
 			@Override
             public Item answer(InvocationOnMock invocation) throws Throwable {
 				Update update = (Update) invocation.getArguments()[0];
-				ImportQueue importQueue = (ImportQueue) invocation.getArguments()[1];
-				OclConcept oclConcept = importQueue.poll();
+				OclConcept oclConcept = (OclConcept) invocation.getArguments()[1];
 	            return new Item(update, oclConcept, State.ADDED);
-            }}).when(importer).importConcept(any(Update.class), any(ImportQueue.class));
+            }}).when(importer).importConcept(any(Update.class), any(OclConcept.class));
 		
 		
 		updater.run();
 		
-		verify(updateService).saveItem(argThat(hasUuid("5435b10b50d61b61c48ec449")));
-		verify(updateService).saveItem(argThat(hasUuid("543583f750d61b5bfd7df26f")));
-		verify(updateService).saveItem(argThat(hasUuid("54348e1150d61b2a914bdd01")));
+		verify(updateService).saveItem(argThat(hasUuid("54ea8e3a8a86f20421474652")));
+		verify(updateService).saveItem(argThat(hasUuid("54ea8e3b8a86f20421474653")));
+		verify(updateService).saveItem(argThat(hasUuid("54ea8e3d8a86f20421474654")));
 	}
 	
 	public Matcher<Update> hasOclDateStarted(Date oclDateStarted) {

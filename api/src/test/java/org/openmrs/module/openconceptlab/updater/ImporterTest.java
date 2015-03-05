@@ -10,15 +10,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Predicate;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
@@ -34,8 +30,6 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Name;
-import org.openmrs.module.openconceptlab.updater.ImportQueue;
-import org.openmrs.module.openconceptlab.updater.Importer;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,7 +50,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldSaveNewConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		assertImported(oclConcept);
 	}
 	
@@ -67,7 +61,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldAddNewNamesToConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		
 		Name thirdName = new Name();
 		thirdName.setName("Third name");
@@ -79,7 +73,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Name fourthName = newFourthName();
 		oclConcept.getNames().add(fourthName);
 		
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		assertImported(oclConcept);
 	}
 
@@ -99,7 +93,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldUpdateNameTypeInConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		
 		for (Name name : oclConcept.getNames()) {
 	        if (name.getNameType() == null) {
@@ -107,7 +101,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	        }
         }
 		
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		assertImported(oclConcept);		
 	}
 	
@@ -120,7 +114,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		Name fourthName = newFourthName();
 		oclConcept.getNames().add(fourthName);
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		
 		List<Name> voided = new ArrayList<OclConcept.Name>();
 		for (Iterator<Name> it = oclConcept.getNames().iterator(); it.hasNext();) {
@@ -132,7 +126,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
         }
 		assertThat(voided, is(not(empty())));
 		
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		Concept concept = assertImported(oclConcept);
 		
 		Collection<ConceptName> nonVoidedNames = concept.getNames(false);
@@ -149,14 +143,14 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldAddNewDescriptionsToConcept() throws Exception {
 
 		OclConcept oclConcept = newOclConcept();
-	    importConcept(oclConcept);
+	    importer.importConcept(null, oclConcept);
 
 		Description desc1 = new Description();
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptons().add(desc1);
 
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		assertImported(oclConcept);
 
@@ -171,14 +165,14 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldVoidDescriptionsFromConcept() throws Exception {
 
 		OclConcept oclConcept = newOclConcept();
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		Description desc1 = new Description();
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptons().add(desc1);
 
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 		Concept concept = assertImported(oclConcept);
 
 		//cloning object to save state of descriptions after importing again
@@ -197,7 +191,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		assertThat(voided, is(not(empty())));
 
 		//at this point without cloning object original desc collecion is lost
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 	    concept = assertImported(oclConcept);
 
 		final Collection<ConceptDescription> remainingDescriptions = concept.getDescriptions();
@@ -230,11 +224,11 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 		OclConcept oclConcept = newOclConcept();
 		assertFalse(oclConcept.isRetired());
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		oclConcept.setRetired(true);
 
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		Concept concept = assertImported(oclConcept);
 		assertTrue(concept.isRetired());
@@ -250,11 +244,11 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		oclConcept.setRetired(true);
 		assertTrue(oclConcept.isRetired());
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		oclConcept.setRetired(false);
 
-		importConcept(oclConcept);
+		importer.importConcept(null, oclConcept);
 
 		Concept concept = assertImported(oclConcept);
 		assertFalse(concept.isRetired());
@@ -327,15 +321,6 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclConcept.setNames(names);
 		
 		return oclConcept;
-	}
-	
-	public void importConcept(OclConcept oclConcept) {
-		ImportQueue importQueue = new ImportQueue();
-		importQueue.offer(oclConcept);
-		
-		while (!importQueue.isEmpty()) {
-			importer.importConcept(null, importQueue);
-		}
 	}
 	
 	private Concept assertImported(OclConcept oclConcept) {

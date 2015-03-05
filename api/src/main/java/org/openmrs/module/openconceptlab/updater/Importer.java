@@ -50,9 +50,7 @@ public class Importer {
 	 * @should fail if datatype missing
 	 */
 	@Transactional
-	public Item importConcept(Update update, ImportQueue importQueue) throws ImportException {
-		OclConcept oclConcept = importQueue.poll();
-		
+	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getUuid());
 		if (concept == null) {
 			concept = new Concept();
@@ -94,11 +92,7 @@ public class Importer {
 			
 			addDescriptionsFromOcl(concept, oclConcept);
 			
-			//TODO: implement answers, sets, mappings
-			
 			conceptService.saveConcept(concept);
-			
-			importQueue.satisfyDependencies(oclConcept);
 		}
 		catch (Exception e) {
 			throw new ImportException("Cannot save concept with UUID " + oclConcept.getUuid(), e);
