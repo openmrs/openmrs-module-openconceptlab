@@ -301,4 +301,20 @@ public class UpdateService {
 		}
 		return  ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
 	}
+
+	/**
+	 * @param uuid the uuid to search a concept with
+	 * @return true if subscribed  else false
+	 *
+	 */
+	public Boolean isSubscribedConcept(String uuid) {
+		boolean isSubscribed = false;
+		Criteria items = getSession().createCriteria(Item.class);
+		items.add(Restrictions.eq("uuid", uuid));
+		if((Long)(items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
+			isSubscribed = true;
+		}
+
+		return isSubscribed;
+	}
 }
