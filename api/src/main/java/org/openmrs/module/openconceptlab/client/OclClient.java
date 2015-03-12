@@ -52,11 +52,12 @@ public class OclClient {
 		
 		GetMethod get = new GetMethod(url);
 		if (!StringUtils.isBlank(token)) {
-			get.addRequestHeader("token", token);
+			get.addRequestHeader("Authorization", "Token " + token);
+			get.addRequestHeader("compress", "true");
 		}
-		NameValuePair[] query = new NameValuePair[] { new NameValuePair("format", "zip"),
-		        new NameValuePair("verbose", "true"), new NameValuePair("includeRetired", "true"),
-		        new NameValuePair("limit", "1000")};
+		NameValuePair[] query = new NameValuePair[] { new NameValuePair("includeMappings", "true"),
+		        new NameValuePair("includeConcepts", "true"), new NameValuePair("includeRetired", "true"),
+		        new NameValuePair("limit", "100000"), new NameValuePair("format", "zip")};
 		get.setQueryString(query);
 		
 		if (updatedSince != null) {
