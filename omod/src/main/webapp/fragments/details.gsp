@@ -28,7 +28,7 @@
 				<thead>
 					<tr>
 						<th>Type</th>
-						<th>Name</th>
+						<th>UUID</th>
 						<th>Status</th>
 						<th>Action</th>
 					</tr>
@@ -37,10 +37,9 @@
 					<% allItemsUpdated.each { item -> %>
 					<tr>
 						<td>${ item.type }</td>
-						<td>${ item.name }</td>
+						<td>${ item.uuid }</td>
 						<td>${ item.status}</td>
 						<td>
-							<button onclick="window.location='/' + OPENMRS_CONTEXT_PATH + '/dictionary/concept.htm?conceptId=${ item.conceptId }'">View Locally</button>
 							<button onclick="window.location='${ item.versionUrl }'">View in OCL</button>
 						</td>
 					</tr>

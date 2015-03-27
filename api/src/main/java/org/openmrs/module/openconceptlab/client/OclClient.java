@@ -47,17 +47,17 @@ public class OclClient {
 	}
 	
 	public OclResponse fetchUpdates(String url, String token, Date updatedSince) throws IOException {
-		totalBytesToDownload = -1;
+		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
 		
 		GetMethod get = new GetMethod(url);
 		if (!StringUtils.isBlank(token)) {
 			get.addRequestHeader("Authorization", "Token " + token);
-			get.addRequestHeader("compress", "true");
+			get.addRequestHeader("Compress", "true");
 		}
 		NameValuePair[] query = new NameValuePair[] { new NameValuePair("includeMappings", "true"),
 		        new NameValuePair("includeConcepts", "true"), new NameValuePair("includeRetired", "true"),
-		        new NameValuePair("limit", "100000"), new NameValuePair("format", "zip")};
+		        new NameValuePair("limit", "100000")};
 		get.setQueryString(query);
 		
 		if (updatedSince != null) {

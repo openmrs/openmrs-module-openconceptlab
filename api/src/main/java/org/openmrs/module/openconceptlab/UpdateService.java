@@ -256,8 +256,13 @@ public class UpdateService {
 				progress = 10.0 + ((double) updater.getBytesDownloaded() / totalBytesToDownload * 20.0);
 			}
 			updateProgress.setProgress((int) progress);
-		} else if (!lastUpdate.isStopped()) {
-			double progress = 30.0 + ((double) updater.getBytesProcessed() / updater.getTotalBytesToProcess() * 70.0);
+		} else if (!updater.isProcessed()) {
+			double progress = 30;
+			if (updater.getTotalBytesToProcess() == -1) {
+				progress = 30 + ((double) time / (time + 100) * 70.0);
+			} else {
+				progress = 30.0 + ((double) updater.getBytesProcessed() / updater.getTotalBytesToProcess() * 70.0);
+			}
 			updateProgress.setProgress((int) progress);
 		} else {
 			updateProgress.setProgress(100);

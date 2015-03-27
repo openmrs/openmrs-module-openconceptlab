@@ -8,9 +8,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -19,11 +22,14 @@ import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("openconceptlab.updater")
 public class Updater implements Runnable {
+	
+	private Log log = LogFactory.getLog(getClass());
 	
 	@Autowired
 	UpdateService updateService;
@@ -34,52 +40,102 @@ public class Updater implements Runnable {
 	@Autowired
 	Importer importer;
 	
+	private Update update;
+	
 	private CountingInputStream in = null;
 	
 	private volatile long totalBytesToProcess;
 			
 	/**
+	 * Runs an update for a configured subscription.
+	 * <p>
+	 * It is not run directly, rather by a dedicated scheduler {@link UpdateScheduler}.
+	 * 
 	 * @should start first update with response date
 	 * @should start next update with updated since
 	 * @should create item for each concept
 	 */
 	@Override
-	public void run() {		
-		Subscription subscription = updateService.getSubscription();
-		Update lastUpdate = updateService.getLastSuccessfulUpdate();
-		Date updatedSince = null;
-		if (lastUpdate != null) {
-			updatedSince = lastUpdate.getOclDateStarted();
-		}
+	public void run() {			
+		runAndHandleErrors(new Task() {
+			
+			@Override
+			public void run() throws Exception {
+				updateService.startUpdate(update);
+				
+				Subscription subscription = updateService.getSubscription();
+				Update lastUpdate = updateService.getLastSuccessfulUpdate();
+				Date updatedSince = null;
+				if (lastUpdate != null) {
+					updatedSince = lastUpdate.getOclDateStarted();
+				}
+				
+				OclResponse oclResponse;
+				oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
+				
+				updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
+				
+				in = new CountingInputStream(oclResponse.getContentStream());
+				totalBytesToProcess = oclResponse.getContentLength();
+				
+				processInput();
+				
+				in.close();
+			}
+		});
+	}
+	
+	/**
+	 * It can be used to run update from the given input e.g. from a resource bundled with a module.
+	 * <p>
+	 * It does not require any subscription to be setup.
+	 * 
+	 * @param inputStream to JSON in OCL format
+	 */
+	public void run(final InputStream inputStream) {
+		runAndHandleErrors(new Task() {
+			
+			@Override
+			public void run() throws IOException {
+				updateService.startUpdate(update);
+				updateService.updateOclDateStarted(update, new Date());
+				in = new CountingInputStream(inputStream);
+				
+				processInput();
+				
+				in.close();
+			}
+		});
+	}
 		
+	private interface Task {
+		public void run() throws Exception;
+	}
+	
+	private void runAndHandleErrors(Task task) {
 		Update update = new Update();
-		updateService.startUpdate(update);
+		totalBytesToProcess = -1; //unknown
 		
-		OclResponse oclResponse;
 		try {
-			oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
-		}
-		catch (Exception e) {
-			update.setErrorMessage(getErrorMessage(e));
-			updateService.stopUpdate(update);
-			throw new ImportException(e);
-		}
-		
-		updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
-		
-		in = new CountingInputStream(oclResponse.getContentStream());
-		totalBytesToProcess = oclResponse.getContentLength();
-		try {
-			process(update, in);
-			in.close();
-		}
-		catch (Exception e) {
+			task.run();
+		} catch (Exception e) {
 			update.setErrorMessage(getErrorMessage(e));
 			throw new ImportException(e);
 		}
 		finally {
 			IOUtils.closeQuietly(in);
-			updateService.stopUpdate(update);
+			
+			try {
+				if (update != null && update.getUpdateId() != null) {
+					updateService.stopUpdate(update);
+				}
+			} catch (Exception e) {
+				log.error("Failed to stop update", e);
+			}
+			
+			in = null;
+			totalBytesToProcess = 0;
+			update = null;
 		}
 	}
 
@@ -122,7 +178,11 @@ public class Updater implements Runnable {
 		return totalBytesToProcess;
 	}
 	
-	void process(Update update, InputStream in) throws IOException {
+	public boolean isProcessed() {
+		return totalBytesToProcess == getBytesProcessed();
+	}
+	
+	private void processInput() throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		JsonParser parser = objectMapper.getJsonFactory().createJsonParser(in);
 		
@@ -146,6 +206,8 @@ public class Updater implements Runnable {
 			return;
 		}
 		
+		int batchCount = 1;
+		
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			
@@ -158,6 +220,13 @@ public class Updater implements Runnable {
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
 				updateService.saveItem(item);
+			}
+			
+			batchCount++;
+			if (batchCount % 100 == 0) {
+				batchCount = 1;
+				Context.flushSession();
+				Context.clearSession();
 			}
 		}
 		
