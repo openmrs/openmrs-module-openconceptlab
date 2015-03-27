@@ -51,10 +51,10 @@ public class Importer {
 	 */
 	@Transactional
 	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
-		Concept concept = conceptService.getConceptByUuid(oclConcept.getUuid());
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
 			concept = new Concept();
-			concept.setUuid(oclConcept.getUuid());
+			concept.setUuid(oclConcept.getExternalId());
 		}
 		
 		final Item item;
@@ -118,6 +118,7 @@ public class Importer {
 			
 			if (!nameFound) {
 				ConceptName conceptName = new ConceptName(oclName.getName(), oclName.getLocale());
+				conceptName.setUuid(oclName.getExternalId());
 				conceptName.setConceptNameType(oclNameType);
 				concept.addName(conceptName);
 			}
@@ -151,6 +152,7 @@ public class Importer {
 			if (!nameFound) {
 				ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
 				        oclDescription.getLocale());
+				description.setUuid(oclDescription.getExternalId());
 				concept.addDescription(description);
 			}
 		}
@@ -172,12 +174,14 @@ public class Importer {
 	}
 	
 	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
-		return new EqualsBuilder().append(name.getLocale(), oclName.getLocale()).append(name.getName(), oclName.getName())
-		        .isEquals();
+		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals()
+		        || new EqualsBuilder().append(name.getLocale(), oclName.getLocale())
+		                .append(name.getName(), oclName.getName()).isEquals();
 	}
 	
 	public boolean isMatch(OclConcept.Description oclDescription, ConceptDescription description) {
-		return new EqualsBuilder().append(description.getLocale(), oclDescription.getLocale())
-		        .append(description.getDescription(), oclDescription.getDescription()).isEquals();
+		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals()
+		        || new EqualsBuilder().append(description.getLocale(), oclDescription.getLocale())
+		                .append(description.getDescription(), oclDescription.getDescription()).isEquals();
 	}
 }

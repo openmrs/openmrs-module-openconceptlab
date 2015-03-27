@@ -64,6 +64,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		importer.importConcept(null, oclConcept);
 		
 		Name thirdName = new Name();
+		thirdName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
 		thirdName.setName("Third name");
 		thirdName.setLocale(new Locale("pl", "PL"));
 		thirdName.setLocalePreferred(true);
@@ -79,6 +80,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 	private Name newFourthName() {
 	    Name fourthName = new Name();
+	    fourthName.setExternalId("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
 		fourthName.setName("Fourth name");
 		fourthName.setLocale(Context.getLocale());
 		fourthName.setLocalePreferred(false);
@@ -168,6 +170,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		importer.importConcept(null, oclConcept);
 
 		Description desc1 = new Description();
+		desc1.setExternalId("7cc35481-ce72-4615-b857-a944b25e9c43");
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptons().add(desc1);
@@ -290,7 +293,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public OclConcept newOclConcept() {
 		OclConcept oclConcept = new OclConcept();
 		
-		oclConcept.setUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
+		oclConcept.setExternalId("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		
 		oclConcept.setConceptClass("Test");
 		oclConcept.setDatatype("N/A");
@@ -299,6 +302,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		List<Description> descriptons = new ArrayList<OclConcept.Description>();
 		Description description = new Description();
+		description.setExternalId("a54594cf-7612-46c3-90f3-10599f4e3223");
 		description.setDescription("Test description");
 		description.setLocale(Context.getLocale());
 		descriptons.add(description);
@@ -306,6 +310,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		List<Name> names = new ArrayList<OclConcept.Name>();
 		Name name = new Name();
+		name.setExternalId("051ba9d7-755a-4301-87b3-8e6466f3d3fd");
 		name.setName("Test name");
 		name.setLocale(Context.getLocale());
 		name.setLocalePreferred(true);
@@ -313,6 +318,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		names.add(name);
 		
 		Name secondName = new Name();
+		secondName.setExternalId("e24eef27-60fa-41d2-ae23-93cc1e6bb153");
 		secondName.setName("Second name");
 		secondName.setLocale(Context.getLocale());
 		secondName.setLocalePreferred(false);
@@ -324,7 +330,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	private Concept assertImported(OclConcept oclConcept) {
-		Concept concept = conceptService.getConceptByUuid(oclConcept.getUuid());
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		assertThat(concept, is(notNullValue()));
 		
 		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());

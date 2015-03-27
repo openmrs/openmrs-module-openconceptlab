@@ -22,6 +22,9 @@ public class OclConcept {
 	
 	private String id;
 	
+	@JsonProperty("external_id")
+	private String externalId;
+	
 	@JsonProperty("concept_class")
 	private String conceptClass;
 	
@@ -68,6 +71,14 @@ public class OclConcept {
 	
 	public void setId(String id) {
 		this.id = id;
+	}
+	
+	public String getExternalId() {
+		return externalId;
+	}
+	
+	public void setExternalId(String externalId) {
+		this.externalId = externalId;
 	}
 	
 	public String getConceptClass() {
@@ -154,7 +165,8 @@ public class OclConcept {
 		
 		private String uuid;
 		
-		private String external_id;
+		@JsonProperty("external_id")
+		private String externalId;
 		
 		private Locale locale;
 		
@@ -176,12 +188,12 @@ public class OclConcept {
 			this.uuid = uuid;
 		}
 		
-		public String getExternal_id() {
-			return external_id;
+		public String getExternalId() {
+			return externalId;
 		}
 		
-		public void setExternal_id(String external_id) {
-			this.external_id = external_id;
+		public void setExternalId(String externalId) {
+			this.externalId = externalId;
 		}
 		
 		public Locale getLocale() {
@@ -262,6 +274,9 @@ public class OclConcept {
 		
 		private String uuid;
 		
+		@JsonProperty("external_id")
+		private String externalId;
+		
 		private Locale locale;
 		
 		private String description;
@@ -273,6 +288,14 @@ public class OclConcept {
 		public void setUuid(String uuid) {
 			this.uuid = uuid;
 		}
+		
+        public String getExternalId() {
+	        return externalId;
+        }
+        
+        public void setExternalId(String externalId) {
+	        this.externalId = externalId;
+        }
 		
 		public Locale getLocale() {
 			return locale;

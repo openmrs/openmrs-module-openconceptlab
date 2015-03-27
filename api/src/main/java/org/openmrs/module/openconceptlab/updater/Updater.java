@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.State;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -225,8 +224,9 @@ public class Updater implements Runnable {
 			batchCount++;
 			if (batchCount % 100 == 0) {
 				batchCount = 1;
-				Context.flushSession();
-				Context.clearSession();
+				//Commented out before I find a way to test
+				//Context.flushSession();
+				//Context.clearSession();
 			}
 		}
 		

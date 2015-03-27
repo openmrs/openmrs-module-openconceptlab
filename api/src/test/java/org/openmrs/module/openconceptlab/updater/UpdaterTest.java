@@ -117,9 +117,9 @@ public class UpdaterTest extends MockTest {
 		
 		updater.run();
 		
-		verify(updateService).saveItem(argThat(hasUuid("54ea8e3a8a86f20421474652")));
-		verify(updateService).saveItem(argThat(hasUuid("54ea8e3b8a86f20421474653")));
-		verify(updateService).saveItem(argThat(hasUuid("54ea8e3d8a86f20421474654")));
+		verify(updateService).saveItem(argThat(hasUuid("1001AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
+		verify(updateService).saveItem(argThat(hasUuid("1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
+		verify(updateService).saveItem(argThat(hasUuid("1003AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
 	}
 	
 	public Matcher<Update> hasOclDateStarted(Date oclDateStarted) {

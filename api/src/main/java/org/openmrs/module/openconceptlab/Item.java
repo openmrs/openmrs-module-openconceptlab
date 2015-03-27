@@ -78,7 +78,7 @@ public class Item {
 		} else {
 			this.type = concept.getType();
 		}
-		this.uuid = concept.getUuid();
+		this.uuid = concept.getExternalId();
 		this.state = state;
 	}
 	
