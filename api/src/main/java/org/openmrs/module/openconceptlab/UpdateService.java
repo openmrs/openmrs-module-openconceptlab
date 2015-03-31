@@ -13,6 +13,9 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
@@ -29,11 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 
 @Service("openconceptlab.updateService")
 public class UpdateService {
@@ -118,13 +116,13 @@ public class UpdateService {
 		update.setOclDateStarted(oclDateStarted);
 		getSession().save(update);
 	}
-
+	
 	private void assertNoOtherUpdateRunnig() {
-	    Update lastUpdate = getLastUpdate();
+		Update lastUpdate = getLastUpdate();
 		if (lastUpdate != null && !lastUpdate.isStopped()) {
 			throw new IllegalStateException("Cannot start the update, if there is another update in progress.");
 		}
-    }
+	}
 	
 	/**
 	 * @should throw IllegalArgumentException if not scheduled
@@ -144,6 +142,16 @@ public class UpdateService {
 		getSession().saveOrUpdate(update);
 	}
 	
+	@Transactional(readOnly = true)
+	public Item getLastSuccessfulItemByUrl(String url) {
+		Criteria criteria = getSession().createCriteria(Item.class);
+		criteria.add(Restrictions.eq("url", url));
+		criteria.add(Restrictions.not(Restrictions.eq("state", ItemState.ERROR)));
+		criteria.addOrder(Order.desc("itemId"));
+		criteria.setMaxResults(1);
+		return (Item) criteria.uniqueResult();
+	}
+	
 	@Transactional
 	public void saveItem(Item item) {
 		getSession().saveOrUpdate(item);
@@ -157,7 +165,7 @@ public class UpdateService {
 		}
 		Subscription subscription = new Subscription();
 		subscription.setUrl(url);
-
+		
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		subscription.setToken(token);
 		
@@ -183,25 +191,25 @@ public class UpdateService {
 	private Session getSession() {
 		return sessionFactory.getCurrentSession();
 	}
-
+	
 	@Transactional
 	public void saveSubscription(Subscription subscription) {
 		GlobalProperty url = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
-		if(url == null) {
+		if (url == null) {
 			url = new GlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
 		}
 		url.setPropertyValue(subscription.getUrl());
 		adminService.saveGlobalProperty(url);
-
+		
 		GlobalProperty token = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_TOKEN);
-		if(token == null) {
+		if (token == null) {
 			token = new GlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		}
 		token.setPropertyValue(subscription.getToken());
 		adminService.saveGlobalProperty(token);
-
+		
 		GlobalProperty days = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
-		if(days == null) {
+		if (days == null) {
 			days = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		}
 		
@@ -213,7 +221,7 @@ public class UpdateService {
 		adminService.saveGlobalProperty(days);
 		
 		GlobalProperty time = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
-		if(time == null) {
+		if (time == null) {
 			time = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
 		}
 		if (subscription.getHours() != null && subscription.getMinutes() != null) {
@@ -234,7 +242,7 @@ public class UpdateService {
 		getSession().createQuery("delete from OclItem").executeUpdate();
 		getSession().createQuery("delete from OclUpdate").executeUpdate();
 	}
-
+	
 	@Transactional(readOnly = true)
 	public UpdateProgress getUpdateProgress() {
 		UpdateProgress updateProgress = new UpdateProgress();
@@ -277,12 +285,11 @@ public class UpdateService {
 			scheduler.schedule(subscription);
 		}
 	}
-
+	
 	/**
-	 *
 	 * @param update the update to be passed
 	 * @param first starting index
-	 * @param max  maximum limit
+	 * @param max maximum limit
 	 * @return a list of items
 	 */
 	public List<Item> getUpdateItems(Update update, int first, int max) {
@@ -293,35 +300,35 @@ public class UpdateService {
 		items.setMaxResults(max);
 		return items.list();
 	}
-
+	
 	/**
 	 * @param update the update to be passed
-	 * @param  states set of states passed
+	 * @param states set of states passed
 	 * @return a count of items
 	 */
-	public Integer getUpdateItemsCount(Update update, Set<State> states) {
+	public Integer getUpdateItemsCount(Update update, Set<ItemState> states) {
 		Criteria items = getSession().createCriteria(Item.class);
 		items.add(Restrictions.eq("update", update));
 		items.addOrder(Order.desc("state"));
 		if (!(states.isEmpty())) {
 			items.add(Restrictions.in("state", states));
 		}
-		return  ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
+		return ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
 	}
-
+	
 	/**
 	 * @param uuid the uuid to search a concept with
-	 * @return true if subscribed  else false
-	 *
+	 * @return true if subscribed else false
 	 */
 	public Boolean isSubscribedConcept(String uuid) {
 		boolean isSubscribed = false;
 		Criteria items = getSession().createCriteria(Item.class);
+		items.add(Restrictions.eq("type", "Concept"));
 		items.add(Restrictions.eq("uuid", uuid));
-		if((Long)(items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
+		if ((Long) (items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
 			isSubscribed = true;
 		}
-
+		
 		return isSubscribed;
 	}
 }

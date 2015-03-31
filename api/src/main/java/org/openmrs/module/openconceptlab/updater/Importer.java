@@ -5,18 +5,26 @@ import java.util.Iterator;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
+import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
+import org.openmrs.ConceptMap;
+import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptReferenceTerm;
+import org.openmrs.ConceptSet;
+import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
+import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -50,22 +58,24 @@ public class Importer {
 	 * @should fail if datatype missing
 	 */
 	@Transactional
-	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
+	public Item importItem(Update update, OclConcept oclConcept) throws ImportException {
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
 			concept = new Concept();
 			concept.setUuid(oclConcept.getExternalId());
 		}
 		
+		concept.setVersion(oclConcept.getVersionUrl());
+		
 		final Item item;
 		if (concept.getId() == null) {
-			item = new Item(update, oclConcept, State.ADDED);
+			item = new Item(update, oclConcept, ItemState.ADDED);
 		} else if (!concept.isRetired() && oclConcept.isRetired()) {
-			item = new Item(update, oclConcept, State.RETIRED);
+			item = new Item(update, oclConcept, ItemState.RETIRED);
 		} else if (concept.isRetired() && !oclConcept.isRetired()) {
-			item = new Item(update, oclConcept, State.UNRETIRED);
+			item = new Item(update, oclConcept, ItemState.UNRETIRED);
 		} else {
-			item = new Item(update, oclConcept, State.UPDATED);
+			item = new Item(update, oclConcept, ItemState.UPDATED);
 		}
 		
 		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());
@@ -95,7 +105,178 @@ public class Importer {
 			conceptService.saveConcept(concept);
 		}
 		catch (Exception e) {
-			throw new ImportException("Cannot save concept with UUID " + oclConcept.getUuid(), e);
+			throw new ImportException("Cannot save concept with UUID " + concept.getUuid(), e);
+		}
+		
+		return item;
+	}
+	
+	@Transactional
+	public Item importItem(Update update, OclMapping oclMapping) {
+		Item item = null;
+		
+		Item fromItem = null;
+		if (oclMapping.getFromConceptUrl() != null) {
+			fromItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
+		}
+		Concept fromConcept = null;
+		if (fromItem != null) {
+			fromConcept = conceptService.getConceptByUuid(fromItem.getUuid());
+		}
+		
+		Item toItem = null;
+		if (oclMapping.getToConceptUrl() != null) {
+			toItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
+		}
+		Concept toConcept = null;
+		if (toItem != null) {
+			toConcept = conceptService.getConceptByUuid(toItem.getUuid());
+		}
+		
+		if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
+			if (fromConcept == null) {
+				return new Item(update, oclMapping, ItemState.ERROR, "Concept (from) with URL "
+				        + oclMapping.getFromConceptUrl() + " has not been imported");
+			}
+
+			if (toConcept == null) {
+				return new Item(update, oclMapping, ItemState.ERROR, "Concept (to) with URL " + oclMapping.getToConceptUrl()
+				        + " has not been imported");
+			}
+			
+			if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
+				item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
+			} else {
+				item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
+			}
+			
+			conceptService.saveConcept(fromConcept);
+		} else {
+			ConceptReferenceTerm term = conceptService.getConceptReferenceTermByUuid(oclMapping.getExternalId());
+			
+			if (term == null) {
+				term = new ConceptReferenceTerm();
+				term.setUuid(oclMapping.getExternalId());
+			}
+			
+			String toSourceName = oclMapping.getToSourceName();
+			ConceptSource toSource = conceptService.getConceptSourceByName(toSourceName);
+			if (toSource == null) {
+				toSource = new ConceptSource();
+				toSource.setName(toSourceName);
+				conceptService.saveConceptSource(toSource);
+			}
+			
+			term.setConceptSource(toSource);
+			term.setCode(oclMapping.getToSourceCode());
+			
+			conceptService.saveConceptReferenceTerm(term);
+			
+			String mapTypeName = oclMapping.getMapType().replace("-", "_");
+			ConceptMapType mapType = conceptService.getConceptMapTypeByName(mapTypeName);
+			if (mapType == null) {
+				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName
+			        + " does not exist");
+			}
+			
+			if (fromConcept != null) {
+				boolean found = false;
+					
+				Iterator<ConceptMap> it = fromConcept.getConceptMappings().iterator();
+				while (it.hasNext()) {
+					ConceptMap conceptMap = it.next();
+				
+					if (conceptMap.getConceptReferenceTerm().equals(term)) {
+						found = true;
+						
+						if (Boolean.TRUE.equals(oclMapping.getRetired())) {
+							item = new Item(update, oclMapping, ItemState.RETIRED);
+							it.remove();
+						} else {
+							item = new Item(update, oclMapping, ItemState.UPDATED);
+							conceptMap.setConceptMapType(mapType);
+						} 
+						
+						break;
+					}
+				}
+				
+				if (!found) {
+					ConceptMap conceptMap = new ConceptMap();
+					conceptMap.setConceptReferenceTerm(term);
+					conceptMap.setConceptMapType(mapType);
+					fromConcept.addConceptMapping(conceptMap);
+				}
+				
+				conceptService.saveConcept(fromConcept);
+			}
+		}
+		return item;
+	}
+	
+	private Item updateOrAddSetMemebersFromOcl(Update update, OclMapping oclMapping, Concept set, Concept member) {
+		Item item = null;
+		
+		boolean found = false;
+		Iterator<ConceptSet> it = set.getConceptSets().iterator();
+		while (it.hasNext()) {
+			ConceptSet conceptSet = it.next();
+			
+			if (conceptSet.getUuid().equals(oclMapping.getExternalId())) {
+				found = true;
+				
+				if (Boolean.TRUE.equals(oclMapping.getRetired())) {
+					item = new Item(update, oclMapping, ItemState.RETIRED);
+					it.remove();
+				} else {
+					item = new Item(update, oclMapping, ItemState.UPDATED);
+					conceptSet.setConcept(member);
+				}
+				
+				break;
+			}
+		}
+		
+		if (!found) {
+			ConceptSet conceptSet = new ConceptSet();
+			conceptSet.setConceptSet(set);
+			conceptSet.setConcept(member);
+			conceptSet.setUuid(oclMapping.getExternalId());
+			set.getConceptSets().add(conceptSet);
+			item = new Item(update, oclMapping, ItemState.ADDED);
+		}
+		
+		return item;
+	}
+	
+	private Item updateOrAddAnswersFromOcl(Update update, OclMapping oclMapping, Concept question, Concept answer) {
+		Item item = null;
+		
+		boolean found = false;
+		Iterator<ConceptAnswer> it = question.getAnswers().iterator();
+		while (it.hasNext()) {
+			ConceptAnswer conceptAnswer = it.next();
+			
+			if (conceptAnswer.getUuid().equals(oclMapping.getExternalId())) {
+				found = true;
+				
+				if (Boolean.TRUE.equals(oclMapping.getRetired())) {
+					item = new Item(update, oclMapping, ItemState.RETIRED);
+					it.remove();
+				} else {
+					item = new Item(update, oclMapping, ItemState.UPDATED);
+					conceptAnswer.setAnswerConcept(answer);
+				}
+				
+				break;
+			}
+		}
+		
+		if (!found) {
+			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
+			question.setUuid(oclMapping.getExternalId());
+			question.addAnswer(conceptAnswer);
+			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
 		
 		return item;

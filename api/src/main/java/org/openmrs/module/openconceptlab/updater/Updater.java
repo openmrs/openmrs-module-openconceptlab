@@ -10,15 +10,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
@@ -52,7 +54,7 @@ public class Updater implements Runnable {
 	 * 
 	 * @should start first update with response date
 	 * @should start next update with updated since
-	 * @should create item for each concept
+	 * @should create item for each concept and mapping
 	 */
 	@Override
 	public void run() {			
@@ -190,47 +192,62 @@ public class Updater implements Runnable {
 			throw new IOException("JSON must start from an object");
 		}
 		
-		//Advance to the concepts field
-		while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
-			if (parser.getText().equals("concepts")) {
-				token = parser.nextToken();
-				if (token != JsonToken.START_ARRAY) {
-					throw new IOException("JSON must have a list of concepts");
-				}
-				break;
-			}
-		}
+		token = advanceToListOf("concepts", parser);
 		
 		if (token == JsonToken.END_OBJECT) {
 			return;
 		}
-		
-		int batchCount = 1;
 		
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			
 			Item item = null;
 			try {
-				item = importer.importConcept(update, oclConcept);
+				item = importer.importItem(update, oclConcept);
 			}
 			catch (ImportException e) {
-				item = new Item(update, oclConcept, State.ERROR);
+				item = new Item(update, oclConcept, ItemState.ERROR);
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
 				updateService.saveItem(item);
 			}
+		}
+		
+		token = advanceToListOf("mappings", parser);
+		
+		if (token == JsonToken.END_OBJECT) {
+			return;
+		}
+		
+		while (parser.nextToken() != JsonToken.END_ARRAY) {
+			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
 			
-			batchCount++;
-			if (batchCount % 100 == 0) {
-				batchCount = 1;
-				//Commented out before I find a way to test
-				//Context.flushSession();
-				//Context.clearSession();
+			Item item = null;
+			try {
+				item = importer.importItem(update, oclMapping);
+			}
+			catch (ImportException e) {
+				item = new Item(update, oclMapping, ItemState.ERROR);
+				item.setErrorMessage(getErrorMessage(e));
+			} finally {
+				updateService.saveItem(item);
+			}
+		}
+	}
+
+	private JsonToken advanceToListOf(String field, JsonParser parser) throws IOException, JsonParseException {
+	    JsonToken token;
+		while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
+			if (parser.getText().equals(field)) {
+				token = parser.nextToken();
+				if (token != JsonToken.START_ARRAY) {
+					throw new IOException("JSON must have a list of " + field);
+				}
+				break;
 			}
 		}
 		
-		//TODO: process mappings here
-	}
+		return token;
+    }
 	
 }

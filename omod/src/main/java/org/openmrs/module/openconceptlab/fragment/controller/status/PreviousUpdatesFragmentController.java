@@ -14,7 +14,7 @@
 package org.openmrs.module.openconceptlab.fragment.controller.status;
 
 import org.apache.commons.lang3.StringUtils;
-import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
@@ -43,11 +43,11 @@ public class PreviousUpdatesFragmentController {
 						if (!update.isStopped()) {
 							continue;
 						}
-						Set<State> states = new HashSet<State>();
-						states.add(State.ERROR);
+						Set<ItemState> states = new HashSet<ItemState>();
+						states.add(ItemState.ERROR);
 
 						Integer errors = service.getUpdateItemsCount(update, states);
-						Integer totalItems =  service.getUpdateItemsCount(update, new HashSet<State>());
+						Integer totalItems =  service.getUpdateItemsCount(update, new HashSet<ItemState>());
 						//loop through each item object to count error
 						duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();String status;
 

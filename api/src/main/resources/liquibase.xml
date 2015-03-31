@@ -82,5 +82,23 @@
     	</preConditions>
         <dropNotNullConstraint tableName="openconceptlab_item" columnName="version_url" columnDataType="varchar(1024)" />
     </changeSet>
+    
+    <changeSet author="rkorytkowski" id="20150327-1">
+    	<preConditions onFail="MARK_RAN">
+    		<not><columnExists tableName="openconceptlab_item" columnName="url"/></not>
+    	</preConditions>
+        <addColumn tableName="openconceptlab_item">
+        	<column name="url" type="varchar(1024)" />
+        </addColumn>
+    </changeSet>
 
+	<changeSet author="rkorytkowski" id="20150327-2">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists indexName="item_url_state"/></not>
+    	</preConditions>
+        <createIndex tableName="openconceptlab_item" indexName="item_url_state">
+        	<column name="url" />
+        	<column name="state" />
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

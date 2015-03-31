@@ -36,11 +36,9 @@ public class OclConcept {
 	
 	private boolean retired;
 	
-	private String source;
+	private String url;
 	
-	@JsonProperty("source_url")
-	private String sourceUrl;
-	
+	@JsonProperty("version_url")
 	private String versionUrl;
 	
 	@JsonProperty("created_on")
@@ -121,20 +119,12 @@ public class OclConcept {
 		this.retired = retired;
 	}
 	
-	public String getSource() {
-		return source;
+	public String getUrl() {
+		return url;
 	}
 	
-	public void setSource(String source) {
-		this.source = source;
-	}
-	
-	public String getSourceUrl() {
-		return sourceUrl;
-	}
-	
-	public void setSourceUrl(String sourceUrl) {
-		this.sourceUrl = sourceUrl;
+	public void setUrl(String url) {
+		this.url = url;
 	}
 	
 	public String getVersionUrl() {
@@ -289,13 +279,13 @@ public class OclConcept {
 			this.uuid = uuid;
 		}
 		
-        public String getExternalId() {
-	        return externalId;
-        }
-        
-        public void setExternalId(String externalId) {
-	        this.externalId = externalId;
-        }
+		public String getExternalId() {
+			return externalId;
+		}
+		
+		public void setExternalId(String externalId) {
+			this.externalId = externalId;
+		}
 		
 		public Locale getLocale() {
 			return locale;

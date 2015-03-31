@@ -17,7 +17,7 @@ import org.openmrs.Concept;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
@@ -57,7 +57,7 @@ public class DetailsFragmentController {
 					//get the start date
 					upgradeStartDate = fetchedUpdate.getLocalDateStarted();
 					upgradeStopDate = fetchedUpdate.getLocalDateStopped();
-					Integer itemsUpdated =service.getUpdateItemsCount(fetchedUpdate, new HashSet<State>());
+					Integer itemsUpdated = service.getUpdateItemsCount(fetchedUpdate, new HashSet<ItemState>());
 					List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 100);
 					//loop through and find those with errors
 					for (Item item : itemsUpdatedLimited) {
@@ -65,8 +65,8 @@ public class DetailsFragmentController {
 					detailsList.add(new Details(item, concept));
 					}
 
-					Set<State> states = new HashSet<State>();
-					states.add(State.ERROR);
+					Set<ItemState> states = new HashSet<ItemState>();
+					states.add(ItemState.ERROR);
 
 					Integer errorsItems = service.getUpdateItemsCount(fetchedUpdate, states);
 
@@ -102,7 +102,7 @@ public class DetailsFragmentController {
 		private Integer conceptId;
 		public Details(Item item, Concept concept) {
 			this.updateId = item.getUpdate().getUpdateId();
-			this.type = item.getType();
+			this.type = item.getType().toString();
 			if (concept != null) {
 				if (concept.getName() != null) {
 					this.name = concept.getName().getName();
@@ -112,7 +112,7 @@ public class DetailsFragmentController {
 				}
 				this.conceptId = concept.getConceptId();
 			}
-			if (State.ERROR.equals(item.getState())) {
+			if (ItemState.ERROR.equals(item.getState())) {
 				this.status = "<pre style=\"font-size: 70%\">" + item.getErrorMessage() + "</pre>";
 			} else {
 				this.status = item.getState().name();

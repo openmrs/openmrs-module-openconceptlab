@@ -13,7 +13,7 @@
  */
 package org.openmrs.module.openconceptlab.fragment.controller.status;
 
-import org.openmrs.module.openconceptlab.State;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
@@ -34,8 +34,8 @@ public class NextUpdatesFragmentController {
 
 		Update lastUpdate = service.getLastUpdate();
 
-		Set<State> states = new HashSet<State>();
-		states.add(State.ERROR);
+		Set<ItemState> states = new HashSet<ItemState>();
+		states.add(ItemState.ERROR);
 		int errorsItems = 0;
 		if (lastUpdate != null) {
 			model.addAttribute("lastUpdateId", lastUpdate.getUpdateId());

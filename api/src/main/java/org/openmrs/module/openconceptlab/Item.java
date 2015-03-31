@@ -26,12 +26,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclMapping;
 
 @Entity(name = "OclItem")
 @Table(name = "openconceptlab_item")
@@ -46,13 +46,17 @@ public class Item {
 	@JoinColumn(name = "update_id")
 	private Update update;
 	
-	@Basic
+	@Enumerated(EnumType.STRING)
 	@Column(name = "type")
-	private String type;
+	private ItemType type;
 	
 	@Basic
 	@Column(name = "uuid")
 	private String uuid;
+	
+	@Basic
+	@Column(name = "url")
+	private String url;
 	
 	@Basic
 	@Column(name = "version_url")
@@ -60,7 +64,7 @@ public class Item {
 	
 	@Enumerated(EnumType.ORDINAL)
 	@Column(name = "state")
-	private State state;
+	private ItemState state;
 	
 	@Basic
 	@Column(name = "error_message")
@@ -70,18 +74,29 @@ public class Item {
 		//for persistence only
 	}
 	
-	public Item(Update update, OclConcept concept, State state) {
+	public Item(Update update, OclConcept concept, ItemState state) {
 		this.update = update;
+		this.url = concept.getUrl();
 		this.versionUrl = concept.getVersionUrl();
-		if (StringUtils.isBlank(concept.getType())) {
-			this.type = "Concept";
-		} else {
-			this.type = concept.getType();
-		}
+		this.type = ItemType.CONCEPT;
 		this.uuid = concept.getExternalId();
 		this.state = state;
 	}
 	
+	public Item(Update update, OclMapping oclMapping, ItemState state) {
+	    this(update, oclMapping, state, null);
+    }
+	
+	public Item(Update update, OclMapping oclMapping, ItemState state, String errorMessage) {
+	    this.update = update;
+	    this.url = oclMapping.getUrl();
+	    this.versionUrl = oclMapping.getUrl();
+	    this.type = ItemType.MAPPING;
+	    this.uuid = oclMapping.getExternalId();
+	    this.state = state;
+	    this.errorMessage = errorMessage;
+    }
+
 	public Long getItemId() {
 		return itemId;
 	}
@@ -90,7 +105,7 @@ public class Item {
 		return update;
 	}
 	
-	public String getType() {
+	public ItemType getType() {
 		return type;
 	}
 	
@@ -98,15 +113,19 @@ public class Item {
 		return uuid;
 	}
 	
+    public String getUrl() {
+	    return url;
+    }
+	
 	public String getVersionUrl() {
 		return versionUrl;
 	}
 	
-	public State getState() {
+	public ItemState getState() {
 		return state;
 	}
 	
-	public void setState(State state) {
+	public void setState(ItemState state) {
 		this.state = state;
 	}
 	
