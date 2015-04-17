@@ -79,7 +79,7 @@ public class UpdaterTest extends MockTest {
 		Update lastUpdate = new Update();
 		Date updatedSince = new Date();
 		lastUpdate.setOclDateStarted(updatedSince);
-		when(updateService.getLastSuccessfulUpdate()).thenReturn(lastUpdate);
+		when(updateService.getLastSuccessfulSubscriptionUpdate()).thenReturn(lastUpdate);
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
@@ -104,7 +104,7 @@ public class UpdaterTest extends MockTest {
 		Date updatedSince = new Date();
 		lastUpdate.setOclDateStarted(updatedSince);
 		
-		when(updateService.getLastSuccessfulUpdate()).thenReturn(lastUpdate);
+		when(updateService.getLastSuccessfulSubscriptionUpdate()).thenReturn(lastUpdate);
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);

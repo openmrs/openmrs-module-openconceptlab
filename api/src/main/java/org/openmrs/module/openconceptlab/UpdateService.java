@@ -89,9 +89,10 @@ public class UpdateService {
 	}
 	
 	@Transactional(readOnly = true)
-	public Update getLastSuccessfulUpdate() {
+	public Update getLastSuccessfulSubscriptionUpdate() {
 		Criteria update = getSession().createCriteria(Update.class);
 		update.add(Restrictions.isNull("errorMessage"));
+		update.add(Restrictions.isNotNull("oclDateStarted"));
 		update.addOrder(Order.desc("updateId"));
 		update.setMaxResults(1);
 		
@@ -293,7 +294,8 @@ public class UpdateService {
 	 * @param max maximum limit
 	 * @return a list of items
 	 */
-	public List<Item> getUpdateItems(Update update, int first, int max, Set<ItemState> states) {
+	@SuppressWarnings("unchecked")
+    public List<Item> getUpdateItems(Update update, int first, int max, Set<ItemState> states) {
 		Criteria items = getSession().createCriteria(Item.class);
 		items.add(Restrictions.eq("update", update));
 		if (!states.isEmpty()) {
@@ -302,6 +304,7 @@ public class UpdateService {
 		items.addOrder(Order.desc("state"));
 		items.setFirstResult(first);
 		items.setMaxResults(max);
+		
 		return items.list();
 	}
 	

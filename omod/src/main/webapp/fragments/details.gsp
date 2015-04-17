@@ -27,21 +27,18 @@
 			<table width="100%" cellspacing="0" cellpadding="0" border="0" id="mainTbDetails">
 				<thead>
 					<tr>
-						<th>Type</th>
-						<th>UUID</th>
+						<th>Type (UUID)</th>
 						<th>Status</th>
-						<th>Action</th>
 					</tr>
 				</thead>
 				<tbody>
 					<% allItemsUpdated.each { item -> %>
 					<tr>
-						<td>${ item.type }</td>
-						<td>${ item.uuid }</td>
-						<td>${ item.status}</td>
-						<td>
-							<button onclick="window.location='${ item.versionUrl }'">View in OCL</button>
+						<td class="small">${ item.type }\n
+							(${ item.uuid })\n
+							<a href="${ item.versionUrl }">View in OCL</a>
 						</td>
+						<td>${ item.status}</td>
 					</tr>
 					<% } %>
 				</tbody>

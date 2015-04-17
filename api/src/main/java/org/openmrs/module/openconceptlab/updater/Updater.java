@@ -63,7 +63,7 @@ public class Updater implements Runnable {
 			@Override
 			public void run() throws Exception {
 				Subscription subscription = updateService.getSubscription();
-				Update lastUpdate = updateService.getLastSuccessfulUpdate();
+				Update lastUpdate = updateService.getLastSuccessfulSubscriptionUpdate();
 				Date updatedSince = null;
 				if (lastUpdate != null) {
 					updatedSince = lastUpdate.getOclDateStarted();
@@ -96,7 +96,6 @@ public class Updater implements Runnable {
 			
 			@Override
 			public void run() throws IOException {
-				updateService.updateOclDateStarted(update, new Date());
 				in = new CountingInputStream(inputStream);
 				
 				processInput();
