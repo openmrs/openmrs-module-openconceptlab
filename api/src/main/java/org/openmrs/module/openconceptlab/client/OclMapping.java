@@ -39,7 +39,7 @@ public class OclMapping {
 		
 		public static final String Q_AND_A = "Q-AND-A";
 		
-		public static final String SET = "SET";
+		public static final String SET = "CONCEPT-SET";
 	}
 	
 	public String getId() {
@@ -76,6 +76,10 @@ public class OclMapping {
 	
 	public Boolean getRetired() {
 		return retired;
+	}
+	
+	public boolean isRetired() {
+		return Boolean.TRUE.equals(retired);
 	}
 	
 	public void setRetired(Boolean retired) {

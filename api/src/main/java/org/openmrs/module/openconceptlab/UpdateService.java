@@ -24,6 +24,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.openmrs.ConceptMap;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
@@ -292,9 +293,12 @@ public class UpdateService {
 	 * @param max maximum limit
 	 * @return a list of items
 	 */
-	public List<Item> getUpdateItems(Update update, int first, int max) {
+	public List<Item> getUpdateItems(Update update, int first, int max, Set<ItemState> states) {
 		Criteria items = getSession().createCriteria(Item.class);
 		items.add(Restrictions.eq("update", update));
+		if (!states.isEmpty()) {
+			items.add(Restrictions.in("state", states));
+		}
 		items.addOrder(Order.desc("state"));
 		items.setFirstResult(first);
 		items.setMaxResults(max);
@@ -330,5 +334,12 @@ public class UpdateService {
 		}
 		
 		return isSubscribed;
+	}
+	
+	@Transactional(readOnly = true)
+	public ConceptMap getConceptMapByUuid(String uuid) {
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(ConceptMap.class);
+		criteria.add(Restrictions.eq("uuid", uuid));
+		return (ConceptMap) criteria.uniqueResult();
 	}
 }

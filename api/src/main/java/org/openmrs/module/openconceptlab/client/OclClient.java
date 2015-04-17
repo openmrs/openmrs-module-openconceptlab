@@ -69,6 +69,10 @@ public class OclClient {
 		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
 		client.executeMethod(get);
 		
+		if (get.getStatusCode() != 200) {
+			throw new IOException(get.getStatusLine().toString());
+		}
+		
 		return extractResponse(get);
 	}
 	

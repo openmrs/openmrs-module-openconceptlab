@@ -62,8 +62,6 @@ public class Updater implements Runnable {
 			
 			@Override
 			public void run() throws Exception {
-				updateService.startUpdate(update);
-				
 				Subscription subscription = updateService.getSubscription();
 				Update lastUpdate = updateService.getLastSuccessfulUpdate();
 				Date updatedSince = null;
@@ -98,7 +96,6 @@ public class Updater implements Runnable {
 			
 			@Override
 			public void run() throws IOException {
-				updateService.startUpdate(update);
 				updateService.updateOclDateStarted(update, new Date());
 				in = new CountingInputStream(inputStream);
 				
@@ -114,7 +111,9 @@ public class Updater implements Runnable {
 	}
 	
 	private void runAndHandleErrors(Task task) {
-		Update update = new Update();
+		Update newUpdate = new Update();
+		updateService.startUpdate(newUpdate);
+		update = newUpdate;
 		totalBytesToProcess = -1; //unknown
 		
 		try {
@@ -203,7 +202,7 @@ public class Updater implements Runnable {
 			
 			Item item = null;
 			try {
-				item = importer.importItem(update, oclConcept);
+				item = importer.importConcept(update, oclConcept);
 			}
 			catch (ImportException e) {
 				item = new Item(update, oclConcept, ItemState.ERROR);
@@ -224,7 +223,7 @@ public class Updater implements Runnable {
 			
 			Item item = null;
 			try {
-				item = importer.importItem(update, oclMapping);
+				item = importer.importMapping(update, oclMapping);
 			}
 			catch (ImportException e) {
 				item = new Item(update, oclMapping, ItemState.ERROR);

@@ -118,7 +118,7 @@ public class UpdaterTest extends MockTest {
 				Update update = (Update) invocation.getArguments()[0];
 				OclConcept oclConcept = (OclConcept) invocation.getArguments()[1];
 	            return new Item(update, oclConcept, ItemState.ADDED);
-            }}).when(importer).importItem(any(Update.class), any(OclConcept.class));
+            }}).when(importer).importConcept(any(Update.class), any(OclConcept.class));
 		
 		doAnswer(new Answer<Item>() {
 
@@ -129,7 +129,7 @@ public class UpdaterTest extends MockTest {
 	            return new Item(update, oclMapping, ItemState.ADDED);
             }
 			
-		}).when(importer).importItem(any(Update.class), any(OclMapping.class));
+		}).when(importer).importMapping(any(Update.class), any(OclMapping.class));
 		
 		updater.run();
 		

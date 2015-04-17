@@ -58,14 +58,12 @@ public class Importer {
 	 * @should fail if datatype missing
 	 */
 	@Transactional
-	public Item importItem(Update update, OclConcept oclConcept) throws ImportException {
+	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
 			concept = new Concept();
 			concept.setUuid(oclConcept.getExternalId());
 		}
-		
-		concept.setVersion(oclConcept.getVersionUrl());
 		
 		final Item item;
 		if (concept.getId() == null) {
@@ -111,8 +109,22 @@ public class Importer {
 		return item;
 	}
 	
+	/**
+	 * 
+	 * @param update
+	 * @param oclMapping
+	 * @return
+	 * 
+	 * @should add concept answer
+	 * @should add concept set member
+	 * @should remove concept answer
+	 * @should remove concept set member
+	 * @should add concept mapping and term
+	 * @should add concept mapping and unretire term
+	 * @should remove concept mapping and retire term
+	 */
 	@Transactional
-	public Item importItem(Update update, OclMapping oclMapping) {
+	public Item importMapping(Update update, OclMapping oclMapping) {
 		Item item = null;
 		
 		Item fromItem = null;
@@ -151,26 +163,13 @@ public class Importer {
 			}
 			
 			conceptService.saveConcept(fromConcept);
-		} else {
-			ConceptReferenceTerm term = conceptService.getConceptReferenceTermByUuid(oclMapping.getExternalId());
-			
-			if (term == null) {
-				term = new ConceptReferenceTerm();
-				term.setUuid(oclMapping.getExternalId());
-			}
-			
-			String toSourceName = oclMapping.getToSourceName();
-			ConceptSource toSource = conceptService.getConceptSourceByName(toSourceName);
+		} else {			
+			ConceptSource toSource = conceptService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
 				toSource = new ConceptSource();
-				toSource.setName(toSourceName);
+				toSource.setName(oclMapping.getToSourceName());
 				conceptService.saveConceptSource(toSource);
 			}
-			
-			term.setConceptSource(toSource);
-			term.setCode(oclMapping.getToSourceCode());
-			
-			conceptService.saveConceptReferenceTerm(term);
 			
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
 			ConceptMapType mapType = conceptService.getConceptMapTypeByName(mapTypeName);
@@ -180,29 +179,30 @@ public class Importer {
 			}
 			
 			if (fromConcept != null) {
-				boolean found = false;
-					
-				Iterator<ConceptMap> it = fromConcept.getConceptMappings().iterator();
-				while (it.hasNext()) {
-					ConceptMap conceptMap = it.next();
+				ConceptMap conceptMap = updateService.getConceptMapByUuid(oclMapping.getExternalId());
 				
-					if (conceptMap.getConceptReferenceTerm().equals(term)) {
-						found = true;
+				ConceptReferenceTerm term = createOrUpdateConceptReferenceTerm(oclMapping, conceptMap, toSource);
+				
+				if (conceptMap != null) {
+					if (!conceptMap.getConcept().equals(fromConcept)) {
+						//Concept changed, it would be unusual, but still probable
+						Concept previousConcept = conceptMap.getConcept();
+						previousConcept.removeConceptMapping(conceptMap);
+						conceptService.saveConcept(previousConcept);
 						
-						if (Boolean.TRUE.equals(oclMapping.getRetired())) {
-							item = new Item(update, oclMapping, ItemState.RETIRED);
-							it.remove();
-						} else {
-							item = new Item(update, oclMapping, ItemState.UPDATED);
-							conceptMap.setConceptMapType(mapType);
-						} 
-						
-						break;
+						fromConcept.addConceptMapping(conceptMap);
 					}
-				}
-				
-				if (!found) {
-					ConceptMap conceptMap = new ConceptMap();
+					
+					if (Boolean.TRUE.equals(oclMapping.getRetired())) {
+						item = new Item(update, oclMapping, ItemState.RETIRED);
+						fromConcept.removeConceptMapping(conceptMap);
+					} else {
+						item = new Item(update, oclMapping, ItemState.UPDATED);
+						conceptMap.setConceptMapType(mapType);
+					}
+				} else {
+					conceptMap = new ConceptMap();
+					conceptMap.setUuid(oclMapping.getExternalId());
 					conceptMap.setConceptReferenceTerm(term);
 					conceptMap.setConceptMapType(mapType);
 					fromConcept.addConceptMapping(conceptMap);
@@ -213,8 +213,38 @@ public class Importer {
 		}
 		return item;
 	}
+
+	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
+            ConceptSource toSource) {
+	    ConceptReferenceTerm term = null;
+	    if (conceptMap == null) {
+	    	term = conceptService.getConceptReferenceTermByCode(oclMapping.getToSourceCode(), toSource);
+	    } else {
+	    	term = conceptMap.getConceptReferenceTerm();
+	    }
+	    
+	    if (term == null) {
+	    	term = new ConceptReferenceTerm();
+	    }
+	    
+	    term.setConceptSource(toSource);
+	    term.setCode(oclMapping.getToSourceCode());
+	    
+	    if (term.isRetired() != oclMapping.isRetired()) {
+	    	term.setRetired(oclMapping.isRetired());
+	    	if (oclMapping.isRetired()) {
+	    		term.setRetireReason("OCL subscription");
+	    	} else {
+	    		term.setRetireReason(null);
+	    		term.setRetiredBy(null);
+	    	}
+	    }
+	    
+	    conceptService.saveConceptReferenceTerm(term);
+	    return term;
+    }
 	
-	private Item updateOrAddSetMemebersFromOcl(Update update, OclMapping oclMapping, Concept set, Concept member) {
+	Item updateOrAddSetMemebersFromOcl(Update update, OclMapping oclMapping, Concept set, Concept member) {
 		Item item = null;
 		
 		boolean found = false;
@@ -242,6 +272,7 @@ public class Importer {
 			conceptSet.setConceptSet(set);
 			conceptSet.setConcept(member);
 			conceptSet.setUuid(oclMapping.getExternalId());
+			conceptSet.setSortWeight(1.0);
 			set.getConceptSets().add(conceptSet);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
@@ -249,7 +280,7 @@ public class Importer {
 		return item;
 	}
 	
-	private Item updateOrAddAnswersFromOcl(Update update, OclMapping oclMapping, Concept question, Concept answer) {
+	Item updateOrAddAnswersFromOcl(Update update, OclMapping oclMapping, Concept question, Concept answer) {
 		Item item = null;
 		
 		boolean found = false;
@@ -274,7 +305,7 @@ public class Importer {
 		
 		if (!found) {
 			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
-			question.setUuid(oclMapping.getExternalId());
+			conceptAnswer.setUuid(oclMapping.getExternalId());
 			question.addAnswer(conceptAnswer);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
