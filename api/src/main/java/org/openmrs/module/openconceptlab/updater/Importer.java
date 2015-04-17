@@ -12,6 +12,7 @@ import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
@@ -23,6 +24,7 @@ import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
+import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,9 +61,18 @@ public class Importer {
 	 */
 	@Transactional
 	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
+		ConceptDatatype datatype = conceptService.getConceptDatatypeByName(oclConcept.getDatatype());
+		if (datatype == null) {
+			throw new ImportException("Datatype " + oclConcept.getDatatype() + " is not supported in OpenMRS");
+		}
+		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
-			concept = new Concept();
+			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
+				concept = new ConceptNumeric();
+			} else {
+				concept = new Concept();
+			}
 			concept.setUuid(oclConcept.getExternalId());
 		}
 		
@@ -82,13 +93,30 @@ public class Importer {
 		}
 		concept.setConceptClass(conceptClass);
 		
-		ConceptDatatype datatype = conceptService.getConceptDatatypeByName(oclConcept.getDatatype());
-		if (datatype == null) {
-			throw new ImportException("Datatype " + oclConcept.getDatatype() + " is not supported in OpenMRS");
-		}
-		
 		try {
 			concept.setDatatype(datatype);
+			
+			if (concept instanceof ConceptNumeric) {
+				ConceptNumeric numeric = (ConceptNumeric) concept;
+				
+				Extras extras = oclConcept.getExtras();
+				
+				numeric.setHiAbsolute(extras.getHiAbsolute());
+				
+				numeric.setHiCritical(extras.getHiCritical());
+				
+				numeric.setHiNormal(extras.getHiNormal());
+				
+				numeric.setLowAbsolute(extras.getLowAbsolute());
+				
+				numeric.setLowCritical(extras.getLowCritical());
+				
+				numeric.setLowNormal(extras.getLowNormal());
+				
+				numeric.setUnits(extras.getUnits());
+				
+				numeric.setPrecise(extras.getPrecise());
+			}
 			
 			concept.setRetired(oclConcept.isRetired());
 			

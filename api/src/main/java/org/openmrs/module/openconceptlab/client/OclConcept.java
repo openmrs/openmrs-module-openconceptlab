@@ -47,6 +47,8 @@ public class OclConcept {
 	@JsonProperty("updated_on")
 	private Date dateUpdated;
 	
+	private Extras extras;
+	
 	public String getType() {
 		return type;
 	}
@@ -149,6 +151,14 @@ public class OclConcept {
 	
 	public void setDateUpdated(Date dateUpdated) {
 		this.dateUpdated = dateUpdated;
+	}
+	
+	public Extras getExtras() {
+		return extras;
+	}
+	
+	public void setExtras(Extras extras) {
+		this.extras = extras;
 	}
 	
 	public static class Name {
@@ -332,6 +342,96 @@ public class OclConcept {
 		public String toString() {
 			return new ToStringBuilder(this).append("description", description).append("locale", locale).build();
 		}
+	}
+	
+	public static class Extras {
+		
+		@JsonProperty("hi_absolute")
+		private Double hiAbsolute;
+		
+		@JsonProperty("hi_critical")
+		private Double hiCritical;
+		
+		@JsonProperty("hi_normal")
+		private Double hiNormal;
+		
+		@JsonProperty("low_absolute")
+		private Double lowAbsolute;
+		
+		@JsonProperty("low_critical")
+		private Double lowCritical;
+		
+		@JsonProperty("low_normal")
+		private Double lowNormal;
+		
+		private String units;
+		
+		private Boolean precise = false;
+		
+		public Double getHiAbsolute() {
+			return hiAbsolute;
+		}
+		
+		public void setHiAbsolute(Double hiAbsolute) {
+			this.hiAbsolute = hiAbsolute;
+		}
+		
+		public Double getHiCritical() {
+			return hiCritical;
+		}
+		
+		public void setHiCritical(Double hiCritical) {
+			this.hiCritical = hiCritical;
+		}
+		
+		public Double getHiNormal() {
+			return hiNormal;
+		}
+		
+		public void setHiNormal(Double hiNormal) {
+			this.hiNormal = hiNormal;
+		}
+		
+		public Double getLowAbsolute() {
+			return lowAbsolute;
+		}
+		
+		public void setLowAbsolute(Double lowAbsolute) {
+			this.lowAbsolute = lowAbsolute;
+		}
+		
+		public Double getLowCritical() {
+			return lowCritical;
+		}
+		
+		public void setLowCritical(Double lowCritical) {
+			this.lowCritical = lowCritical;
+		}
+		
+		public Double getLowNormal() {
+			return lowNormal;
+		}
+		
+		public void setLowNormal(Double lowNormal) {
+			this.lowNormal = lowNormal;
+		}
+		
+		public String getUnits() {
+			return units;
+		}
+		
+		public void setUnits(String units) {
+			this.units = units;
+		}
+		
+		public Boolean getPrecise() {
+			return precise;
+		}
+		
+		public void setPrecise(Boolean precise) {
+			this.precise = precise;
+		}
+		
 	}
 	
 }
