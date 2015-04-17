@@ -327,7 +327,7 @@ public class UpdateService {
 	public Boolean isSubscribedConcept(String uuid) {
 		boolean isSubscribed = false;
 		Criteria items = getSession().createCriteria(Item.class);
-		items.add(Restrictions.eq("type", "Concept"));
+		items.add(Restrictions.eq("type", ItemType.CONCEPT));
 		items.add(Restrictions.eq("uuid", uuid));
 		if ((Long) (items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
 			isSubscribed = true;
