@@ -79,7 +79,7 @@ public class OclClient {
 		//create a while loop to check if the last update contained items more than 1000
 		Integer pages = 1;
 		Update lastUpdate = updateService.getLastUpdate();
-		while(lastUpdate.getItems().size() > 1000) {
+		while(lastUpdate.getItems().size() >= 1000) {
 			pages++;
 			get.getParams().setParameter("page", pages);
 			client.executeMethod(get);
