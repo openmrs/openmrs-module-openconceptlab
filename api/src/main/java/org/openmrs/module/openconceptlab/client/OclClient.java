@@ -20,7 +20,11 @@ import org.apache.commons.httpclient.util.DateParseException;
 import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component("openconceptlab.oclClient")
@@ -37,6 +41,10 @@ public class OclClient {
 	private volatile long bytesDownloaded = 0;
 	
 	private volatile long totalBytesToDownload = 0;
+
+	@Autowired
+	@Qualifier("openconceptlab.updateService")
+	private UpdateService updateService;
 	
 	public OclClient() {
 		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
@@ -57,7 +65,7 @@ public class OclClient {
 		}
 		NameValuePair[] query = new NameValuePair[] { new NameValuePair("includeMappings", "true"),
 		        new NameValuePair("includeConcepts", "true"), new NameValuePair("includeRetired", "true"),
-		        new NameValuePair("limit", "100000")};
+		        new NameValuePair("limit", "1000")};
 		get.setQueryString(query);
 		
 		if (updatedSince != null) {
@@ -67,12 +75,19 @@ public class OclClient {
 		
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
-		client.executeMethod(get);
-		
+
+		//create a while loop to check if the last update contained items more than 1000
+		Integer pages = 1;
+		Update lastUpdate = updateService.getLastUpdate();
+		while(lastUpdate.getItems().size() >= 1000) {
+			pages++;
+			get.getParams().setParameter("page", pages);
+			client.executeMethod(get);
+		}
+
 		if (get.getStatusCode() != 200) {
 			throw new IOException(get.getStatusLine().toString());
 		}
-		
 		return extractResponse(get);
 	}
 	
