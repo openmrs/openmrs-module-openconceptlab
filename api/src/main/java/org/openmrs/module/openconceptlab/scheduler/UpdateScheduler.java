@@ -1,6 +1,7 @@
 package org.openmrs.module.openconceptlab.scheduler;
 
 import java.util.Calendar;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
 import org.openmrs.module.openconceptlab.Subscription;
@@ -44,5 +45,17 @@ public class UpdateScheduler {
 	
 	public void scheduleNow() {
 		scheduler.submit(updaterDaemonRunner);
+		
+		//delay at most 10 seconds until the update starts
+		try {
+			for (int i = 0; i < 100; i++) {
+				Thread.sleep(100);
+				if (updaterDaemonRunner.updater.isRunning()) {
+					break;
+				}
+			}
+		} catch(InterruptedException ex) {
+		    //ignore
+		}
 	}
 }

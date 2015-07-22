@@ -45,10 +45,6 @@
             </column>
         </createTable>
         <addForeignKeyConstraint constraintName="openconceptlab_item_update" baseTableName="openconceptlab_item" baseColumnNames="update_id" referencedTableName="openconceptlab_update" referencedColumnNames="update_id"/>
-        <createIndex indexName="openconceptlab_item_type_uuid" tableName="openconceptlab_item">
-        	<column name="type" />
-        	<column name="uuid" />
-        </createIndex>
     </changeSet>
     
     <changeSet author="rkorytkowski" id="20141124-1">

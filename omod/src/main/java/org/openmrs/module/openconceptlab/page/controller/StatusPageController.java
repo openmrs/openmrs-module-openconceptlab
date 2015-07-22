@@ -15,7 +15,6 @@ package org.openmrs.module.openconceptlab.page.controller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
@@ -38,8 +37,8 @@ public class StatusPageController {
 		if(StringUtils.isEmpty(subscription_url)) {
 			checkIfSubscribed = false;
 		}
-		Update lastUpdate = service.getLastUpdate();
-		if (lastUpdate != null && !lastUpdate.isStopped()) {
+		
+		if (service.isUpdateRunning()) {
 			checkIfUpdatesIsRunning = true;
 		}
 

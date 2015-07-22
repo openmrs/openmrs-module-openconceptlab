@@ -84,8 +84,22 @@ public class UpdateService {
 		Criteria update = getSession().createCriteria(Update.class);
 		update.addOrder(Order.desc("updateId"));
 		update.setMaxResults(1);
-		
 		return (Update) update.uniqueResult();
+	}
+	
+	@Transactional
+	public boolean isUpdateRunning() {
+		Update lastUpdate = getLastUpdate();
+		if (lastUpdate == null) {
+			return false;
+		}
+		
+		if (!updater.isRunning() && !lastUpdate.isStopped()) {
+			lastUpdate.setErrorMessage("Process terminated before completion");
+			stopUpdate(lastUpdate);
+		}
+		
+		return updater.isRunning();
 	}
 	
 	@Transactional(readOnly = true)

@@ -14,6 +14,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -32,6 +33,8 @@ public class Updater implements Runnable {
 	
 	private Log log = LogFactory.getLog(getClass());
 	
+	public final static int BATCH_SIZE = 100;
+	
 	@Autowired
 	UpdateService updateService;
 	
@@ -41,7 +44,7 @@ public class Updater implements Runnable {
 	@Autowired
 	Importer importer;
 	
-	private Update update;
+	private volatile Update update;
 	
 	private CountingInputStream in = null;
 	
@@ -70,7 +73,12 @@ public class Updater implements Runnable {
 				}
 				
 				OclResponse oclResponse;
-				oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
+				
+				if (updatedSince == null) {
+					oclResponse = oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
+				} else {
+					oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), updatedSince);
+				}
 				
 				updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
 				
@@ -181,6 +189,10 @@ public class Updater implements Runnable {
 		return totalBytesToProcess == getBytesProcessed();
 	}
 	
+	public boolean isRunning() {
+		return update != null;
+	}
+	
 	private void processInput() throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		JsonParser parser = objectMapper.getJsonFactory().createJsonParser(in);
@@ -196,6 +208,7 @@ public class Updater implements Runnable {
 			return;
 		}
 		
+		int batch = 0;
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			
@@ -209,6 +222,13 @@ public class Updater implements Runnable {
 			} finally {
 				updateService.saveItem(item);
 			}
+			
+			batch++;
+			if (batch == BATCH_SIZE) {
+				batch = 0;
+				Context.flushSession();
+				Context.clearSession();
+			}
 		}
 		
 		token = advanceToListOf("mappings", parser);
@@ -217,6 +237,7 @@ public class Updater implements Runnable {
 			return;
 		}
 		
+		batch = 0;
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
 			
@@ -229,6 +250,13 @@ public class Updater implements Runnable {
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
 				updateService.saveItem(item);
+			}
+			
+			batch++;
+			if (batch == BATCH_SIZE) {
+				batch = 0;
+				Context.flushSession();
+				Context.clearSession();
 			}
 		}
 	}

@@ -7,19 +7,28 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.util.DateParseException;
-import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.stereotype.Component;
 
@@ -76,6 +85,31 @@ public class OclClient {
 		return extractResponse(get);
 	}
 	
+	public OclResponse fetchInitialUpdates(String url, String token) throws IOException, HttpException {
+		totalBytesToDownload = -1; //unknown yet
+		bytesDownloaded = 0;
+		
+		if (url.endsWith("/")) {
+			url = url.substring(0, url.length() - 1);
+		}
+		
+		String latestVersion = fetchLatestVersion(url, token);
+		
+		String exportUrl = fetchExportUrl(url, token, latestVersion);
+		
+		GetMethod exportUrlGet = new GetMethod(exportUrl);
+		
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.executeMethod(exportUrlGet);
+		
+		if (exportUrlGet.getStatusCode() != 200) {
+			throw new IOException(exportUrlGet.getStatusLine().toString());
+		}
+		
+		return extractResponse(exportUrlGet);
+    }
+	
 	/**
 	 * @should extract date and json
 	 */
@@ -83,9 +117,10 @@ public class OclClient {
 		Header dateHeader = get.getResponseHeader("date");
 		Date date;
 		try {
-			date = DateUtil.parseDate(dateHeader.getValue());
+			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+			date = format.parse(dateHeader.getValue());
 		}
-		catch (DateParseException e) {
+		catch (ParseException e) {
 			throw new IOException("Cannot parse date header", e);
 		}
 		
@@ -93,7 +128,55 @@ public class OclClient {
 		download(get.getResponseBodyAsStream(), get.getResponseContentLength(), file);
 		
 		InputStream response = new FileInputStream(file);
-		return unzipResponse(response, date);
+		Header contentTypeHeader = get.getResponseHeader("Content-Type");
+		if (contentTypeHeader != null && "application/zip".equals(contentTypeHeader.getValue())) {
+			return unzipResponse(response, date);
+		} else {
+			date = parseDateFromPath(get.getPath());
+			
+			return ungzipAndUntarResponse(response, date);
+		}
+	}
+
+	Date parseDateFromPath(String path) throws IOException {
+	    Pattern pattern = Pattern.compile("[0-9]*.tgz");
+	    Matcher matcher = pattern.matcher(path);
+	    if (matcher.find()) {
+	    	String foundDate = matcher.group();
+	    	foundDate = foundDate.substring(0, foundDate.indexOf(".tgz"));
+	    	try {
+	    		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+	            return format.parse(foundDate);
+	        }
+	        catch (ParseException e) {
+	        	throw new IOException("Cannot parse date from path " + path, e);
+	        }
+	    }
+	    throw new IOException("Cannot find date in path " + path);
+    }
+	
+	@SuppressWarnings("resource")
+    public OclResponse ungzipAndUntarResponse(InputStream response, Date date) throws IOException {
+		GZIPInputStream gzipIn = new GZIPInputStream(response);
+		TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn);
+		boolean foundEntry = false;
+		try {
+			TarArchiveEntry entry = tarIn.getNextTarEntry();
+			while (entry != null) {
+				if (entry.getName().equals("export.json")) {
+					foundEntry = true;
+					return new OclResponse(tarIn, entry.getSize(), date);
+				}
+				entry = tarIn.getNextTarEntry();
+			}
+			
+			tarIn.close();
+		} finally {
+			if (!foundEntry) {
+				IOUtils.closeQuietly(tarIn);
+			}
+		}
+		throw new IOException("Unsupported format of response. Expected tar.gz archive with export.json.");
 	}
 	
 	@SuppressWarnings("resource")
@@ -195,4 +278,46 @@ public class OclClient {
 			return contentLength;
 		}
 	}
+
+	private String fetchExportUrl(String url, String token, String latestVersion) throws IOException, HttpException {
+	    String latestVersionExportUrl = url + "/" + latestVersion + "/export";
+		
+		GetMethod latestVersionExportUrlGet = new GetMethod(latestVersionExportUrl);
+		if (!StringUtils.isBlank(token)) {
+			latestVersionExportUrlGet.addRequestHeader("Authorization", "Token " + token);
+		}
+		
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.executeMethod(latestVersionExportUrlGet);
+		if (latestVersionExportUrlGet.getStatusCode() != 200) {
+			throw new IOException(latestVersionExportUrlGet.getPath() + " responded with " + latestVersionExportUrlGet.getStatusLine().toString());
+		}
+		
+		String exportUrl = latestVersionExportUrlGet.getResponseHeader("exportURL").getValue();
+	    return exportUrl;
+    }
+
+	private String fetchLatestVersion(String url, String token) throws IOException, HttpException, JsonParseException,
+            JsonMappingException {
+	    String latestVersionUrl = url + "/latest";
+		
+		GetMethod latestVersionGet = new GetMethod(latestVersionUrl);
+		if (!StringUtils.isBlank(token)) {
+			latestVersionGet.addRequestHeader("Authorization", "Token " + token);
+		}
+		
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.executeMethod(latestVersionGet);
+		if (latestVersionGet.getStatusCode() != 200) {
+			throw new IOException(latestVersionGet.getStatusLine().toString());
+		}
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		@SuppressWarnings("unchecked")
+        Map<String, Object> latestVersionResponse = objectMapper.readValue(latestVersionGet.getResponseBodyAsStream(), Map.class);
+		String latestVersion = (String) latestVersionResponse.get("id");
+	    return latestVersion;
+    }
 }

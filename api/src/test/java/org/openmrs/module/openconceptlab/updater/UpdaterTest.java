@@ -59,7 +59,7 @@ public class UpdaterTest extends MockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(updateService.getLastUpdate()).thenReturn(null);
-		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), null)).thenReturn(oclResponse);
+		when(oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
 		
 		updater.run();
 		
