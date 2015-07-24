@@ -3,6 +3,7 @@ package org.openmrs.module.openconceptlab.updater;
 import java.util.Iterator;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
@@ -138,11 +139,9 @@ public class Importer {
 	}
 	
 	/**
-	 * 
 	 * @param update
 	 * @param oclMapping
 	 * @return
-	 * 
 	 * @should add concept answer
 	 * @should add concept set member
 	 * @should remove concept answer
@@ -153,37 +152,37 @@ public class Importer {
 	 */
 	@Transactional
 	public Item importMapping(Update update, OclMapping oclMapping) {
-		Item item = null;
+		final Item item;
 		
 		Item fromItem = null;
-		if (oclMapping.getFromConceptUrl() != null) {
-			fromItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
-		}
 		Concept fromConcept = null;
-		if (fromItem != null) {
-			fromConcept = conceptService.getConceptByUuid(fromItem.getUuid());
+		if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
+			fromItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
+			if (fromItem != null) {
+				fromConcept = conceptService.getConceptByUuid(fromItem.getUuid());
+			}
+			
+			if (fromConcept == null) {
+				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping from concept with URL "
+				        + oclMapping.getFromConceptUrl() + ", because the concept has not been imported");
+			}
 		}
 		
 		Item toItem = null;
-		if (oclMapping.getToConceptUrl() != null) {
-			toItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
-		}
 		Concept toConcept = null;
-		if (toItem != null) {
-			toConcept = conceptService.getConceptByUuid(toItem.getUuid());
+		if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
+			toItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
+			if (toItem != null) {
+				toConcept = conceptService.getConceptByUuid(toItem.getUuid());
+			}
+			
+			if (toConcept == null) {
+				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping to concept with URL "
+				        + oclMapping.getToConceptUrl() + ", because the concept has not been imported");
+			}
 		}
 		
 		if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
-			if (fromConcept == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Concept (from) with URL "
-				        + oclMapping.getFromConceptUrl() + " has not been imported");
-			}
-
-			if (toConcept == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Concept (to) with URL " + oclMapping.getToConceptUrl()
-				        + " has not been imported");
-			}
-			
 			if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
 				item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
 			} else {
@@ -191,19 +190,19 @@ public class Importer {
 			}
 			
 			conceptService.saveConcept(fromConcept);
-		} else {			
+		} else {
 			ConceptSource toSource = conceptService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
 				toSource = new ConceptSource();
 				toSource.setName(oclMapping.getToSourceName());
+				toSource.setDescription("Imported from " + oclMapping.getUrl());
 				conceptService.saveConceptSource(toSource);
 			}
 			
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
 			ConceptMapType mapType = conceptService.getConceptMapTypeByName(mapTypeName);
 			if (mapType == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName
-			        + " does not exist");
+				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName + " does not exist");
 			}
 			
 			if (fromConcept != null) {
@@ -234,43 +233,47 @@ public class Importer {
 					conceptMap.setConceptReferenceTerm(term);
 					conceptMap.setConceptMapType(mapType);
 					fromConcept.addConceptMapping(conceptMap);
+					
+					item = new Item(update, oclMapping, ItemState.ADDED);
 				}
 				
 				conceptService.saveConcept(fromConcept);
+			} else {
+				return new Item(update, oclMapping, ItemState.ERROR, "Mapping " + oclMapping.getUrl() + " is not supported");
 			}
 		}
 		return item;
 	}
-
+	
 	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
-            ConceptSource toSource) {
-	    ConceptReferenceTerm term = null;
-	    if (conceptMap == null) {
-	    	term = conceptService.getConceptReferenceTermByCode(oclMapping.getToSourceCode(), toSource);
-	    } else {
-	    	term = conceptMap.getConceptReferenceTerm();
-	    }
-	    
-	    if (term == null) {
-	    	term = new ConceptReferenceTerm();
-	    }
-	    
-	    term.setConceptSource(toSource);
-	    term.setCode(oclMapping.getToSourceCode());
-	    
-	    if (term.isRetired() != oclMapping.isRetired()) {
-	    	term.setRetired(oclMapping.isRetired());
-	    	if (oclMapping.isRetired()) {
-	    		term.setRetireReason("OCL subscription");
-	    	} else {
-	    		term.setRetireReason(null);
-	    		term.setRetiredBy(null);
-	    	}
-	    }
-	    
-	    conceptService.saveConceptReferenceTerm(term);
-	    return term;
-    }
+	        ConceptSource toSource) {
+		ConceptReferenceTerm term = null;
+		if (conceptMap == null) {
+			term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
+		} else {
+			term = conceptMap.getConceptReferenceTerm();
+		}
+		
+		if (term == null) {
+			term = new ConceptReferenceTerm();
+		}
+		
+		term.setConceptSource(toSource);
+		term.setCode(oclMapping.getToConceptCode());
+		
+		if (term.isRetired() != oclMapping.isRetired()) {
+			term.setRetired(oclMapping.isRetired());
+			if (oclMapping.isRetired()) {
+				term.setRetireReason("OCL subscription");
+			} else {
+				term.setRetireReason(null);
+				term.setRetiredBy(null);
+			}
+		}
+		
+		conceptService.saveConceptReferenceTerm(term);
+		return term;
+	}
 	
 	Item updateOrAddSetMemebersFromOcl(Update update, OclMapping oclMapping, Concept set, Concept member) {
 		Item item = null;

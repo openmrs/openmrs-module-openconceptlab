@@ -13,6 +13,9 @@
  */
 package org.openmrs.module.openconceptlab.page.controller;
 
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -20,11 +23,21 @@ import org.springframework.web.bind.annotation.RequestParam;
  * Page controller for the details page
  */
 public class DetailsPageController {
-
-	public void controller(PageModel model,
-						   @RequestParam(value="updateId", required = false) Long updateId
-						   ) {
-
-		model.addAttribute("updateId",updateId);
+	
+	public void get(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId) {
+		
+		model.addAttribute("updateId", updateId);
+	}
+	
+	public void post(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId,
+	        @RequestParam(value = "ignoreAllErrors", required = false) Boolean ignoreAllErrors,
+	        @SpringBean("openconceptlab.updateService") UpdateService updateService) {
+		
+		if (Boolean.TRUE.equals(ignoreAllErrors)) {
+			Update update = updateService.getUpdate(updateId);
+			updateService.ignoreAllErrors(update);
+		}
+		
+		model.addAttribute("updateId", updateId);
 	}
 }

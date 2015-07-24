@@ -2,8 +2,11 @@ package org.openmrs.module.openconceptlab.updater;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 
+import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -21,9 +24,9 @@ import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
-import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -208,15 +211,29 @@ public class Updater implements Runnable {
 			return;
 		}
 		
+		String baseUrl = updateService.getSubscription().getUrl();
+		if (baseUrl != null) {
+			try {
+				URI uri = new URI(baseUrl);
+				baseUrl = uri.getScheme() + "://" + uri.getHost();
+				if (uri.getPort() != -1) {
+					baseUrl += ":" + uri.getPort();
+				}
+			} catch (Exception e) {
+				throw new IllegalStateException(baseUrl + " is not valid", e);
+			}
+		}
+		
 		int batch = 0;
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
+			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
 			
 			Item item = null;
 			try {
 				item = importer.importConcept(update, oclConcept);
 			}
-			catch (ImportException e) {
+			catch (Exception e) {
 				item = new Item(update, oclConcept, ItemState.ERROR);
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
@@ -240,12 +257,16 @@ public class Updater implements Runnable {
 		batch = 0;
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
+			oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
+			oclMapping.setFromConceptUrl(prependBaseUrl(baseUrl, oclMapping.getFromConceptUrl()));
+			oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
+			oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
 			
 			Item item = null;
 			try {
 				item = importer.importMapping(update, oclMapping);
 			}
-			catch (ImportException e) {
+			catch (Exception e) {
 				item = new Item(update, oclMapping, ItemState.ERROR);
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
@@ -259,6 +280,20 @@ public class Updater implements Runnable {
 				Context.clearSession();
 			}
 		}
+	}
+	
+	private String prependBaseUrl(String baseUrl, String url) {
+		if (baseUrl == null) {
+			return url;
+		}
+		if (url == null) {
+			return null;
+		}
+		
+		if (!url.startsWith("/")) {
+			url = "/" + url;
+		}
+		return baseUrl + url;
 	}
 
 	private JsonToken advanceToListOf(String field, JsonParser parser) throws IOException, JsonParseException {

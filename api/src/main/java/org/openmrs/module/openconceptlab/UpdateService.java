@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
@@ -111,6 +112,18 @@ public class UpdateService {
 		update.setMaxResults(1);
 		
 		return (Update) update.uniqueResult();
+	}
+	
+	@Transactional
+	public void ignoreAllErrors(Update update) {
+		Query query = getSession().createQuery("update OclItem i set i.state = :newState where i.update = :update and i.state = :oldState");
+		query.setParameter("newState", ItemState.IGNORED_ERROR);
+		query.setParameter("update", update);
+		query.setParameter("oldState", ItemState.ERROR);
+		query.executeUpdate();
+		
+		update.setErrorMessage("");
+		getSession().saveOrUpdate(update);
 	}
 	
 	public void runUpdateNow() {

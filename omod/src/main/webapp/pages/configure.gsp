@@ -10,6 +10,7 @@
 			jq('#subscribe-sub-id').html("Save Changes");
 			jq('#title').html("Edit Open Concept Lab Subscription");
 			jq('#unsubscribe').show();
+			jq('#status-box').show();
 		}
 	}
 	jq(document).ready(function () {
@@ -59,11 +60,22 @@
 
 					<div align="right">
 						<button type="submit" id="subscribe-sub-id" name="subscribeSub">Subscribe</button>
-						<input type="button" value="Cancel" onclick="window.location.href='status.page'" />
+						<input type="button" value="Discard Changes" onclick="window.location.href='configure.page'" />
 					</div>
 		</fieldset>
 	</div>
 </form>
+
+<div id="status-box" style="display: none">
+	<form id="check-status-form"">
+		<fieldset>
+			<legend>Check status</legend>
+					<p>
+						<input type="button" value="Check status" onclick="window.location.href='status.page'"/>
+					</p>
+		</fieldset>
+	</form>
+</div>
 
 <div id="unsubscribe" style="display: none">
 	<form id="unsubscribe-to-ocl-form" method="post" action="configure.page">

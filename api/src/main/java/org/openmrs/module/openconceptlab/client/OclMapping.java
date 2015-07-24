@@ -32,8 +32,8 @@ public class OclMapping {
 	@JsonProperty("to_source_name")
 	private String toSourceName;
 	
-	@JsonProperty("to_source_code")
-	private String toSourceCode;
+	@JsonProperty("to_concept_code")
+	private String toConceptCode;
 	
 	public static abstract class MapType {
 		
@@ -118,12 +118,12 @@ public class OclMapping {
 		this.toSourceName = toSourceName;
 	}
 	
-	public String getToSourceCode() {
-		return toSourceCode;
+	public String getToConceptCode() {
+		return toConceptCode;
 	}
 	
-	public void setToSourceCode(String toSourceCode) {
-		this.toSourceCode = toSourceCode;
+	public void setToConceptCode(String toConceptCode) {
+		this.toConceptCode = toConceptCode;
 	}
 	
 	public String getToConceptUrl() {

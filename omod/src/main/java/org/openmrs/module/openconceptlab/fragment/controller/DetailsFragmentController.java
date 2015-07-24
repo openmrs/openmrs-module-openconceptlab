@@ -20,14 +20,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.openmrs.Concept;
-import org.openmrs.api.ConceptService;
-import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
+import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.FragmentParam;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
@@ -43,8 +42,6 @@ public class DetailsFragmentController {
 		Update fetchedUpdate = service.getUpdate(updateId);
 		Date upgradeStartDate;
 		List<Details> detailsList = new ArrayList<Details>();
-		ConceptService conceptService = Context.getConceptService();
-		Concept concept;
 		Date upgradeStopDate;
 		Long timeTakenForUpgrade;
 		String duration = "";
@@ -61,7 +58,10 @@ public class DetailsFragmentController {
 			inError.add(ItemState.ERROR);
 			Integer errorsItems = service.getUpdateItemsCount(fetchedUpdate, inError);
 			
-			List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 100, inError);
+			String baseUrl = service.getSubscription().getUrl();
+			baseUrl = baseUrl.substring(0, baseUrl.indexOf("/"));
+			
+			List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 1000, inError);
 			for (Item item : itemsUpdatedLimited) {
 				detailsList.add(new Details(item));
 			}
@@ -76,12 +76,18 @@ public class DetailsFragmentController {
 				duration = minutes + " minutes" + "  " + seconds + " seconds";
 			}
 			
+			Set<ItemState> ignoredError = new HashSet<ItemState>();
+			ignoredError.add(ItemState.IGNORED_ERROR);
+			Integer ignoredErrorsCount = service.getUpdateItemsCount(fetchedUpdate, ignoredError);
+			
+			model.addAttribute("updateId", updateId);
 			model.addAttribute("allErrorItems", errorsItems);
 			model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
 			model.addAttribute("timeStarted", Utils.formatTime(upgradeStartDate));
 			model.addAttribute("duration", duration);
 			model.addAttribute("allItemsUpdatedSize", itemsUpdated - errorsItems);
 			model.addAttribute("allItemsUpdated", detailsList);
+			model.addAttribute("ignoredErrorsCount", ignoredErrorsCount);
 		}
 		
 	}
@@ -107,7 +113,7 @@ public class DetailsFragmentController {
 				this.status = item.getState().name();
 			}
 			this.uuid = item.getUuid();
-			this.versionUrl = "http://dev.openconceptlab.com" + item.getVersionUrl();
+			this.versionUrl = item.getVersionUrl();
 		}
 		
 		public Long getUpdateId() {

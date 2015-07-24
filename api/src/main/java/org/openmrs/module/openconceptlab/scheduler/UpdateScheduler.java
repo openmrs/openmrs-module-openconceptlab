@@ -1,7 +1,6 @@
 package org.openmrs.module.openconceptlab.scheduler;
 
 import java.util.Calendar;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
 import org.openmrs.module.openconceptlab.Subscription;
@@ -33,14 +32,17 @@ public class UpdateScheduler {
 		if (scheduledUpdate != null) {
 			scheduledUpdate.cancel(false);
 		}
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(Calendar.HOUR_OF_DAY, subscription.getHours());
-		calendar.set(Calendar.MINUTE, subscription.getMinutes());
-		calendar.set(Calendar.SECOND, 0);
-		calendar.set(Calendar.MILLISECOND, 0);
 		
-		scheduledUpdate = scheduler.scheduleAtFixedRate(updaterDaemonRunner, calendar.getTime(), subscription.getDays()
-		        * DAY_PERIOD);
+		if (subscription.getDays() != 0 || subscription.getHours() != 0 || subscription.getMinutes() != 0) {
+			Calendar calendar = Calendar.getInstance();
+			calendar.set(Calendar.HOUR_OF_DAY, subscription.getHours());
+			calendar.set(Calendar.MINUTE, subscription.getMinutes());
+			calendar.set(Calendar.SECOND, 0);
+			calendar.set(Calendar.MILLISECOND, 0);
+			
+			scheduledUpdate = scheduler.scheduleAtFixedRate(updaterDaemonRunner, calendar.getTime(), subscription.getDays()
+			        * DAY_PERIOD);
+		}
 	}
 	
 	public void scheduleNow() {

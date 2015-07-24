@@ -423,7 +423,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToSourceCode("1001");
+		oclMapping.setToConceptCode("1001");
 		
 		importer.importMapping(update, oclMapping);
 		
@@ -446,7 +446,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToSourceCode("1001");
+		oclMapping.setToConceptCode("1001");
 		oclMapping.setRetired(true);
 		
 		importer.importMapping(update, oclMapping);
@@ -472,7 +472,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToSourceCode("1001");
+		oclMapping.setToConceptCode("1001");
 		oclMapping.setRetired(false);
 		
 		importer.importMapping(update, oclMapping);

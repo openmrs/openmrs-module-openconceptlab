@@ -16,5 +16,5 @@ package org.openmrs.module.openconceptlab;
 
 public enum ItemState {
 	
-	ADDED, UPDATED, RETIRED, UNRETIRED, ERROR;
+	ADDED, UPDATED, RETIRED, UNRETIRED, ERROR, IGNORED_ERROR;
 }
