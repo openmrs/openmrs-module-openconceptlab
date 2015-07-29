@@ -17,9 +17,9 @@
 			<p>
 
 				<% if ( manual ) { %>
-						No update is scheduled <a href="configure.page">Adjust schedule</a>
+						No update is scheduled <a href="configure.page">Adjust configuration</a>
 				<% } else { %>
-						The next update is planned on<span class="formatFields"> ${ nextUpdateDate }</span> at <span class="formatFields">${ nextUpdateTime }</span>. <a href="configure.page">Adjust schedule</a>
+						The next update is planned on<span class="formatFields"> ${ nextUpdateDate }</span> at <span class="formatFields">${ nextUpdateTime }</span>. <a href="configure.page">Adjust configuration</a>
 				<% } %>
 			</p>
 			<p>

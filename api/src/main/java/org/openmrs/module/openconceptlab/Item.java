@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.security.MessageDigest;
 import java.util.Comparator;
 
 import javax.persistence.Basic;
@@ -59,6 +60,10 @@ public class Item {
 	private String url;
 	
 	@Basic
+	@Column(name = "hashed_url")
+	private byte[] hashedUrl;
+	
+	@Basic
 	@Column(name = "version_url")
 	private String versionUrl;
 	
@@ -77,6 +82,7 @@ public class Item {
 	public Item(Update update, OclConcept concept, ItemState state) {
 		this.update = update;
 		this.url = concept.getUrl();
+		this.hashedUrl = hashUrl(url);
 		this.versionUrl = concept.getVersionUrl();
 		this.type = ItemType.CONCEPT;
 		this.uuid = concept.getExternalId();
@@ -90,12 +96,26 @@ public class Item {
 	public Item(Update update, OclMapping oclMapping, ItemState state, String errorMessage) {
 	    this.update = update;
 	    this.url = oclMapping.getUrl();
+	    this.hashedUrl = hashUrl(url);
 	    this.versionUrl = oclMapping.getUrl();
 	    this.type = ItemType.MAPPING;
 	    this.uuid = oclMapping.getExternalId();
 	    this.state = state;
 	    this.errorMessage = errorMessage;
     }
+	
+	public static final byte[] hashUrl(String url) {
+		if (url == null) {
+			return null;
+		}
+		
+		try {
+	        return MessageDigest.getInstance("MD5").digest(url.getBytes("UTF-8"));
+        }
+        catch (Exception e) {
+	        throw new IllegalArgumentException("Cannot hash " + url, e);
+        }
+	}
 
 	public Long getItemId() {
 		return itemId;
@@ -117,6 +137,10 @@ public class Item {
 	    return url;
     }
 	
+    public byte[] getHashedUrl() {
+    	return hashedUrl;
+    }
+
 	public String getVersionUrl() {
 		return versionUrl;
 	}

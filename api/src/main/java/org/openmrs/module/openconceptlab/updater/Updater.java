@@ -3,10 +3,8 @@ package org.openmrs.module.openconceptlab.updater;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Date;
 
-import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -137,6 +135,7 @@ public class Updater implements Runnable {
 			
 			try {
 				if (update != null && update.getUpdateId() != null) {
+					update = updateService.getUpdate(update.getUpdateId());
 					updateService.stopUpdate(update);
 				}
 			} catch (Exception e) {
@@ -228,6 +227,7 @@ public class Updater implements Runnable {
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
+			oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
 			
 			Item item = null;
 			try {

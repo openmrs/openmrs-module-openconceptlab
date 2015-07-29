@@ -55,8 +55,6 @@ public class Importer {
 	 * @should void descriptions from concept
 	 * @should retire concept
 	 * @should unretire concept
-	 * @should update datatype
-	 * @should update concept class
 	 * @should fail if concept class missing
 	 * @should fail if datatype missing
 	 */
@@ -64,7 +62,7 @@ public class Importer {
 	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
 		ConceptDatatype datatype = conceptService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
-			throw new ImportException("Datatype " + oclConcept.getDatatype() + " is not supported in OpenMRS");
+			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
 		}
 		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
@@ -90,7 +88,7 @@ public class Importer {
 		
 		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
-			throw new ImportException("Concept class named '" + oclConcept.getConceptClass() + "' is missing");
+			throw new ImportException("Concept class '" + oclConcept.getConceptClass() + "' is missing");
 		}
 		concept.setConceptClass(conceptClass);
 		

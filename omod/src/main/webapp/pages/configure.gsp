@@ -35,7 +35,8 @@
 	});
 
 </script>
-
+<p><a href="status.page">Go to the status page</a></p>
+<br/>
 <form id="subscribe-to-ocl-form" method="post" action="configure.page">
 	<div id="subscription-to-be-shown">
 		<fieldset>
@@ -66,17 +67,6 @@
 	</div>
 </form>
 
-<div id="status-box" style="display: none">
-	<form id="check-status-form"">
-		<fieldset>
-			<legend>Check status</legend>
-					<p>
-						<input type="button" value="Check status" onclick="window.location.href='status.page'"/>
-					</p>
-		</fieldset>
-	</form>
-</div>
-
 <div id="unsubscribe" style="display: none">
 	<form id="unsubscribe-to-ocl-form" method="post" action="configure.page">
 
@@ -89,7 +79,7 @@
 					</p>
 					<p>
 						<i>
-							If you unsubscribe, no concepts will be deleted nor changed.<br /> All information about the subscription will be deleted from from your system
+							If you unsubscribe, no concepts will be deleted nor changed.<br /> All information about the subscription will be deleted from your system
 						</i>
 					</p>
 		</fieldset>

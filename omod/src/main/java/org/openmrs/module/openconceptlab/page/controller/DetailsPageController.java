@@ -24,13 +24,16 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 public class DetailsPageController {
 	
-	public void get(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId) {
+	public void get(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId,
+			@RequestParam(value = "debug", required = false) Boolean debug) {
 		
 		model.addAttribute("updateId", updateId);
+		model.addAttribute("debug", debug);
 	}
 	
 	public void post(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId,
 	        @RequestParam(value = "ignoreAllErrors", required = false) Boolean ignoreAllErrors,
+	        @RequestParam(value = "debug", required = false) Boolean debug,
 	        @SpringBean("openconceptlab.updateService") UpdateService updateService) {
 		
 		if (Boolean.TRUE.equals(ignoreAllErrors)) {
@@ -39,5 +42,6 @@ public class DetailsPageController {
 		}
 		
 		model.addAttribute("updateId", updateId);
+		model.addAttribute("debug", debug);
 	}
 }

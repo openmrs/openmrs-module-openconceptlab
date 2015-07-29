@@ -122,7 +122,7 @@ public class UpdateService {
 		query.setParameter("oldState", ItemState.ERROR);
 		query.executeUpdate();
 		
-		update.setErrorMessage("");
+		update.setErrorMessage(null);
 		getSession().saveOrUpdate(update);
 	}
 	
@@ -174,7 +174,7 @@ public class UpdateService {
 	@Transactional(readOnly = true)
 	public Item getLastSuccessfulItemByUrl(String url) {
 		Criteria criteria = getSession().createCriteria(Item.class);
-		criteria.add(Restrictions.eq("url", url));
+		criteria.add(Restrictions.eq("hashedUrl", Item.hashUrl(url)));
 		criteria.add(Restrictions.not(Restrictions.eq("state", ItemState.ERROR)));
 		criteria.addOrder(Order.desc("itemId"));
 		criteria.setMaxResults(1);

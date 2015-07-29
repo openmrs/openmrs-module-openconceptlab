@@ -22,7 +22,9 @@ import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
@@ -58,6 +60,9 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	
 	@Autowired
 	UpdateService updateService;
+	
+	@Rule
+	public ExpectedException exception = ExpectedException.none();
 	
 	@Before
 	public void startUpdate() {
@@ -288,26 +293,18 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
-	 * @verifies update datatype
-	 */
-	@Test
-	public void importConcept_shouldUpdateDatatype() throws Exception {
-	}
-	
-	/**
-	 * @see Importer#importConcept(OclConcept,ImportQueue)
-	 * @verifies update concept class
-	 */
-	@Test
-	public void importConcept_shouldUpdateConceptClass() throws Exception {
-	}
-	
-	/**
-	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies fail if concept class missing
 	 */
 	@Test
 	public void importConcept_shouldFailIfConceptClassMissing() throws Exception {
+		Update update = updateService.getLastUpdate();
+		
+		OclConcept concept = newOclConcept();
+		concept.setConceptClass("Some missing concept class");
+		
+		exception.expect(ImportException.class);
+		exception.expectMessage("Concept class 'Some missing concept class' is missing");
+		importer.importConcept(update, concept);
 	}
 	
 	/**
@@ -316,6 +313,14 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void importConcept_shouldFailIfDatatypeMissing() throws Exception {
+		Update update = updateService.getLastUpdate();
+		
+		OclConcept concept = newOclConcept();
+		concept.setDatatype("Some missing datatype");
+		
+		exception.expect(ImportException.class);
+		exception.expectMessage("Datatype 'Some missing datatype' is not supported by OpenMRS");
+		importer.importConcept(update, concept);
 	}
 	
 	@Test

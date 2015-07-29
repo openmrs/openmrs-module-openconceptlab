@@ -15,8 +15,6 @@
 		});
 	});
 </script>
-<br /><br />
-
 		<p>
 			The update started on<span class="formatFields"> ${ startDate } </span>at<span class="formatFields"> ${ timeStarted }</span>. It completed in <span class="formatFields">${ duration }</span>
 		</p>
@@ -30,12 +28,14 @@
 		</p>
 		<% if (allErrorItems > 0) { %>
 		<p>
-		Please fix all errors so that you can continue to get updates. It may require fixing concepts locally (e.g. creating concept classes, changing concept names to eliminate duplicates) or contacting OCL and asking them to for fixes.
+		Please fix all errors so that you can continue to get updates. It may require fixing concepts locally (e.g. creating concept classes, changing concept names to eliminate duplicates, etc.) or contacting OCL and asking them to for fixes.
+		<% if (debug) { %>
 			<form method="POST">
 				<input type="hidden" name="updateId" value="${updateId}" />
 				<input type="hidden" name="ignoreAllErrors" value="true" />
 				<input type="submit" value="Ignore all errors (testing only)" />
 			</form>
+		<% } %>
 		</p>
 		<p>&nbsp;</p>
 		<% } %>

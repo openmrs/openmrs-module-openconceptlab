@@ -23,10 +23,8 @@ import java.util.concurrent.TimeUnit;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
-import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.FragmentParam;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
@@ -37,7 +35,8 @@ import org.openmrs.ui.framework.fragment.FragmentModel;
 public class DetailsFragmentController {
 	
 	public void controller(FragmentModel model, @SpringBean("openconceptlab.updateService") UpdateService service,
-	        @FragmentParam(value = "updateId", required = false) Long updateId) {
+	        @FragmentParam(value = "updateId", required = false) Long updateId,
+	        @FragmentParam(value = "debug", required = false) Boolean debug) {
 		//fetch  update
 		Update fetchedUpdate = service.getUpdate(updateId);
 		Date upgradeStartDate;
@@ -80,6 +79,7 @@ public class DetailsFragmentController {
 			ignoredError.add(ItemState.IGNORED_ERROR);
 			Integer ignoredErrorsCount = service.getUpdateItemsCount(fetchedUpdate, ignoredError);
 			
+			model.addAttribute("debug", debug);
 			model.addAttribute("updateId", updateId);
 			model.addAttribute("allErrorItems", errorsItems);
 			model.addAttribute("startDate", Utils.formatedDate(upgradeStartDate));
