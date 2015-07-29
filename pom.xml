@@ -52,6 +52,9 @@
 	</modules>
 	
 	<properties>
+		<!-- Needed until 1.9.10 is released -->
+		<ignoreSnapshots>true</ignoreSnapshots>
+	
 		<openMRSVersion>1.9.10-SNAPSHOT</openMRSVersion>
 
 		<!-- Module dependencies -->
