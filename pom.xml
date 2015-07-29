@@ -28,8 +28,8 @@
 	</organization>
 
 	<scm>
-		<connection>scm:git:https://github.com/openmrs/openmrs-module-openconceptlab</connection>
-		<developerConnection>scm:git:https://github.com/openmrs/openmrs-module-openconceptlab</developerConnection>
+		<connection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</connection>
+		<developerConnection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</developerConnection>
 		<url>https://github.com/openmrs/openmrs-module-openconceptlab</url>
 	</scm>
 	
