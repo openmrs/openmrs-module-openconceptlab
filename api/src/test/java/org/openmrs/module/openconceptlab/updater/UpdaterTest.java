@@ -31,17 +31,17 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.MockTest;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.TestResources;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
-import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.openmrs.test.BaseContextMockTest;
 
-public class UpdaterTest extends MockTest {
+public class UpdaterTest extends BaseContextMockTest {
 	
 	@Mock
 	OclClient oclClient;
