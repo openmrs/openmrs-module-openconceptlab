@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.openmrs.module</groupId>
 		<artifactId>openconceptlab</artifactId>
-		<version>1.0-alpha</version>
+		<version>1.0-beta-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>openconceptlab-api</artifactId>
