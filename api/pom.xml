@@ -105,23 +105,25 @@
 					<include>**/*.properties</include>
 				</includes>
 			</resource>
-			<resource>
+		</resources>
+		<testResources>
+			<testResource>
 				<directory>src/test/resources</directory>
 				<filtering>false</filtering>
 				<excludes>
 					<exclude>**/*.xml</exclude>
 					<exclude>**/*.properties</exclude>
 				</excludes>
-			</resource>
-			<resource>
+			</testResource>
+			<testResource>
 				<directory>src/test/resources</directory>
 				<filtering>true</filtering>
 				<includes>
 					<include>**/*.xml</include>
 					<include>**/*.properties</include>
 				</includes>
-			</resource>
-		</resources>
+			</testResource>
+		</testResources>
 	</build>
 
 </project>
