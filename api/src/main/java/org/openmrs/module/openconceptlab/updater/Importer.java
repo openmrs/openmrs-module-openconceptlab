@@ -11,7 +11,6 @@ package org.openmrs.module.openconceptlab.updater;
 
 import java.util.Iterator;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
@@ -64,6 +63,7 @@ public class Importer {
 	 * @should save new concept
 	 * @should add new names to concept
 	 * @should update name type in concept
+	 * @should update names with different uuids
 	 * @should void names from concept
 	 * @should add new descriptions to concept
 	 * @should void descriptions from concept
@@ -175,8 +175,6 @@ public class Importer {
 			}
 			
 			if (fromConcept == null) {
-				
-				
 				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping from concept with URL "
 				        + oclMapping.getFromConceptUrl() + ", because the concept has not been imported");
 			}
@@ -366,18 +364,24 @@ public class Importer {
 			boolean nameFound = false;
 			for (ConceptName name : concept.getNames(false)) {
 				if (isMatch(oclName, name)) {
-					if (!ObjectUtils.equals(name.getConceptNameType(), oclNameType)) {
-						name.setConceptNameType(oclNameType);
-					}
+					//Let's make sure all is the same
+					name.setName(oclName.getName());
+					name.setLocale(oclName.getLocale());
+					name.setConceptNameType(oclNameType);
+					name.setLocalePreferred(oclName.isLocalePreferred());
+					
 					nameFound = true;
+					break;
 				}
 			}
 			
 			if (!nameFound) {
-				ConceptName conceptName = new ConceptName(oclName.getName(), oclName.getLocale());
-				conceptName.setUuid(oclName.getExternalId());
-				conceptName.setConceptNameType(oclNameType);
-				concept.addName(conceptName);
+				ConceptName name = new ConceptName(oclName.getName(), oclName.getLocale());
+				name.setUuid(oclName.getExternalId());
+				name.setConceptNameType(oclNameType);
+				name.setLocalePreferred(oclName.isLocalePreferred());
+				
+				concept.addName(name);
 			}
 		}
 	}
@@ -388,6 +392,7 @@ public class Importer {
 			for (OclConcept.Name oclName : oclConcept.getNames()) {
 				if (isMatch(oclName, name)) {
 					nameFound = true;
+					break;
 				}
 			}
 			if (!nameFound) {
@@ -402,7 +407,11 @@ public class Importer {
 			boolean nameFound = false;
 			for (ConceptDescription description : concept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
+					//Let's make sure all is the same
+					description.setDescription(oclDescription.getDescription());
+					description.setLocale(oclDescription.getLocale());
 					nameFound = true;
+					break;
 				}
 			}
 			
@@ -422,6 +431,7 @@ public class Importer {
 			for (Description oclDescription : oclConcept.getDescriptons()) {
 				if (isMatch(oclDescription, description)) {
 					descriptionFound = true;
+					break;
 				}
 			}
 			if (!descriptionFound) {
@@ -430,15 +440,11 @@ public class Importer {
 		}
 	}
 	
-	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
-		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals()
-		        || new EqualsBuilder().append(name.getLocale(), oclName.getLocale())
-		                .append(name.getName(), oclName.getName()).isEquals();
+	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {		
+		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals();
 	}
 	
 	public boolean isMatch(OclConcept.Description oclDescription, ConceptDescription description) {
-		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals()
-		        || new EqualsBuilder().append(description.getLocale(), oclDescription.getLocale())
-		                .append(description.getDescription(), oclDescription.getDescription()).isEquals();
+		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals();
 	}
 }

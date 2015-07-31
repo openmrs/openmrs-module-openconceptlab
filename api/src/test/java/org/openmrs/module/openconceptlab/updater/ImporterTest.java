@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
@@ -130,7 +131,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		fourthName.setName("Fourth name");
 		fourthName.setLocale(Context.getLocale());
 		fourthName.setLocalePreferred(false);
-		fourthName.setNameType(ConceptNameType.SHORT.toString());
+		fourthName.setNameType(ConceptNameType.INDEX_TERM.toString());
 		return fourthName;
 	}
 	
@@ -145,12 +146,34 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		for (Name name : oclConcept.getNames()) {
 			if (name.getNameType() == null) {
-				name.setNameType(ConceptNameType.SHORT.toString());
+				name.setNameType(ConceptNameType.INDEX_TERM.toString());
 			}
 		}
 		
 		importer.importConcept(null, oclConcept);
 		assertImported(oclConcept);
+	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies update name type in same name with different uuid
+	 */
+	@Test
+	public void importConcept_shouldUpdateNamesWithDifferentUuids() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		importer.importConcept(null, oclConcept);
+		
+		for (Name name : oclConcept.getNames()) {
+			name.setExternalId(UUID.randomUUID().toString());
+		}
+		
+		importer.importConcept(null, oclConcept);
+		assertImported(oclConcept);
+		
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertThat(concept.getNames(false).size(), is(3));
+		//3 concepts must have been voided
+		assertThat(concept.getNames(true).size(), is(6));
 	}
 	
 	/**
@@ -538,6 +561,14 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		secondName.setLocale(Context.getLocale());
 		secondName.setLocalePreferred(false);
 		names.add(secondName);
+		
+		Name secondNameShort = new Name();
+		secondNameShort.setExternalId("ebfd0b33-44e5-43d1-b2d9-9a08f9f3c230");
+		secondNameShort.setName("Second name");
+		secondNameShort.setLocale(Context.getLocale());
+		secondNameShort.setLocalePreferred(false);
+		secondNameShort.setNameType(ConceptNameType.SHORT.toString());
+		names.add(secondNameShort);
 		
 		oclConcept.setNames(names);
 		
