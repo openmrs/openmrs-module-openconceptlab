@@ -25,6 +25,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -47,6 +48,9 @@ public class Updater implements Runnable {
 	
 	@Autowired
 	UpdateService updateService;
+	
+	@Autowired
+	CacheService cacheService;
 	
 	@Autowired
 	OclClient oclClient;
@@ -128,6 +132,8 @@ public class Updater implements Runnable {
 	}
 	
 	private void runAndHandleErrors(Task task) {
+		cacheService.clearCache();
+		
 		Update newUpdate = new Update();
 		updateService.startUpdate(newUpdate);
 		update = newUpdate;
@@ -136,7 +142,7 @@ public class Updater implements Runnable {
 		try {
 			task.run();
 		} catch (Exception e) {
-			update.setErrorMessage(getErrorMessage(e));
+			updateService.failUpdate(update, getErrorMessage(e));
 			throw new ImportException(e);
 		}
 		finally {
@@ -144,7 +150,6 @@ public class Updater implements Runnable {
 			
 			try {
 				if (update != null && update.getUpdateId() != null) {
-					update = updateService.getUpdate(update.getUpdateId());
 					updateService.stopUpdate(update);
 				}
 			} catch (Exception e) {
@@ -243,6 +248,8 @@ public class Updater implements Runnable {
 				item = importer.importConcept(update, oclConcept);
 			}
 			catch (Exception e) {
+				updateService.failUpdate(update);
+				
 				item = new Item(update, oclConcept, ItemState.ERROR);
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
@@ -254,6 +261,12 @@ public class Updater implements Runnable {
 				batch = 0;
 				Context.flushSession();
 				Context.clearSession();
+				
+				//Fetch update again after clearing the session
+				//The if statement is for testing so that mocking is easier.
+				if (update.getUpdateId() != null) {
+					update = updateService.getUpdate(update.getUpdateId());
+				}
 			}
 		}
 		
@@ -276,6 +289,8 @@ public class Updater implements Runnable {
 				item = importer.importMapping(update, oclMapping);
 			}
 			catch (Exception e) {
+				updateService.failUpdate(update);
+				
 				item = new Item(update, oclMapping, ItemState.ERROR);
 				item.setErrorMessage(getErrorMessage(e));
 			} finally {
@@ -287,6 +302,12 @@ public class Updater implements Runnable {
 				batch = 0;
 				Context.flushSession();
 				Context.clearSession();
+				
+				//Fetch update again after clearing the session.
+				//The if statement is for testing so that mocking is easier.
+				if (update.getUpdateId() != null) {
+					update = updateService.getUpdate(update.getUpdateId());
+				}
 			}
 		}
 	}

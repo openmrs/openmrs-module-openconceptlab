@@ -101,13 +101,13 @@ public class UpdateService {
 	
 	@Transactional(readOnly = true)
 	public Update getLastSuccessfulSubscriptionUpdate() {
-		Criteria update = getSession().createCriteria(Update.class);
-		update.add(Restrictions.isNull("errorMessage"));
-		update.add(Restrictions.isNotNull("oclDateStarted"));
-		update.addOrder(Order.desc("updateId"));
-		update.setMaxResults(1);
+		Criteria updateCriteria = getSession().createCriteria(Update.class);
+		updateCriteria.add(Restrictions.isNull("errorMessage"));
+		updateCriteria.add(Restrictions.isNotNull("oclDateStarted"));
+		updateCriteria.addOrder(Order.desc("updateId"));
+		updateCriteria.setMaxResults(1);
 		
-		return (Update) update.uniqueResult();
+		return (Update) updateCriteria.uniqueResult();
 	}
 	
 	@Transactional
@@ -119,6 +119,21 @@ public class UpdateService {
 		query.executeUpdate();
 		
 		update.setErrorMessage(null);
+		getSession().saveOrUpdate(update);
+	}
+	
+	@Transactional
+	public void failUpdate(Update update) {
+		failUpdate(update, null);
+	}
+	
+	@Transactional
+	public void failUpdate(Update update, String errorMessage) {
+		if (!StringUtils.isBlank(errorMessage)) {
+			update.setErrorMessage(errorMessage);
+		} else {
+			update.setErrorMessage("Errors found");
+		}
 		getSession().saveOrUpdate(update);
 	}
 	

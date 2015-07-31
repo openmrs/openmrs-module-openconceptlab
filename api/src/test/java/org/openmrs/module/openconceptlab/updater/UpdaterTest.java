@@ -30,6 +30,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.api.db.ContextDAO;
+import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -52,6 +53,9 @@ public class UpdaterTest extends BaseContextMockTest {
 	
 	@Mock
 	UpdateService updateService;
+	
+	@Mock
+	CacheService CacheService;
 	
 	@Mock
 	Importer importer;

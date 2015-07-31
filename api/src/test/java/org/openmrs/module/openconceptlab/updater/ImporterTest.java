@@ -47,6 +47,7 @@ import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -70,11 +71,15 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Autowired
 	UpdateService updateService;
 	
+	@Autowired
+	CacheService cacheService;
+	
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 	
 	@Before
 	public void startUpdate() {
+		cacheService.clearCache();
 		Update update = new Update();
 		updateService.startUpdate(update);
 	}
@@ -266,7 +271,6 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void importConcept_shouldRetireConcept() throws Exception {
-		
 		OclConcept oclConcept = newOclConcept();
 		assertFalse(oclConcept.isRetired());
 		importer.importConcept(null, oclConcept);

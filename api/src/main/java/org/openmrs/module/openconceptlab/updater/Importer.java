@@ -28,6 +28,7 @@ import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
@@ -44,6 +45,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service("openconceptlab.importer")
 public class Importer {
+	
+	@Autowired
+	@Qualifier("openconceptlab.cacheService")
+	CacheService cacheService;
 	
 	@Autowired
 	@Qualifier("conceptService")
@@ -69,12 +74,12 @@ public class Importer {
 	 */
 	@Transactional
 	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
-		ConceptDatatype datatype = conceptService.getConceptDatatypeByName(oclConcept.getDatatype());
+		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
 		}
 		
-		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		Concept concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
@@ -95,7 +100,7 @@ public class Importer {
 			item = new Item(update, oclConcept, ItemState.UPDATED);
 		}
 		
-		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());
+		ConceptClass conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
 			throw new ImportException("Concept class '" + oclConcept.getConceptClass() + "' is missing");
 		}
@@ -166,10 +171,12 @@ public class Importer {
 		if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
 			fromItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
 			if (fromItem != null) {
-				fromConcept = conceptService.getConceptByUuid(fromItem.getUuid());
+				fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 			}
 			
 			if (fromConcept == null) {
+				
+				
 				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping from concept with URL "
 				        + oclMapping.getFromConceptUrl() + ", because the concept has not been imported");
 			}
@@ -180,7 +187,7 @@ public class Importer {
 		if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
 			toItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
 			if (toItem != null) {
-				toConcept = conceptService.getConceptByUuid(toItem.getUuid());
+				toConcept = cacheService.getConceptByUuid(toItem.getUuid());
 			}
 			
 			if (toConcept == null) {
@@ -198,7 +205,7 @@ public class Importer {
 			
 			conceptService.saveConcept(fromConcept);
 		} else {
-			ConceptSource toSource = conceptService.getConceptSourceByName(oclMapping.getToSourceName());
+			ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
 				toSource = new ConceptSource();
 				toSource.setName(oclMapping.getToSourceName());
@@ -207,7 +214,7 @@ public class Importer {
 			}
 			
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
-			ConceptMapType mapType = conceptService.getConceptMapTypeByName(mapTypeName);
+			ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 			if (mapType == null) {
 				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName + " does not exist");
 			}
