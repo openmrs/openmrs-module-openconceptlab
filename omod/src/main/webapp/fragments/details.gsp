@@ -28,7 +28,7 @@
 		</p>
 		<% if (allErrorItems > 0) { %>
 		<p>
-		Please fix all errors so that you can continue to get updates. It may require fixing concepts locally (e.g. creating concept classes, changing concept names to eliminate duplicates, etc.) or contacting OCL and asking them to for fixes.
+		Please fix all errors so that you can continue to get updates. It may require fixing concepts locally (e.g. creating concept classes, changing concept names to eliminate duplicates, etc.) or asking your dictionary manager for fixes in the OCL.
 		<% if (debug) { %>
 			<form method="POST">
 				<input type="hidden" name="updateId" value="${updateId}" />
