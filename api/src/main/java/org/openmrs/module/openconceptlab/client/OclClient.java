@@ -52,6 +52,8 @@ public class OclClient {
 	
 	private final int bufferSize = 64 * 1024;
 	
+	public final static int TIMEOUT_IN_MS = 128000;
+	
 	private volatile long bytesDownloaded = 0;
 	
 	private volatile long totalBytesToDownload = 0;
@@ -84,7 +86,7 @@ public class OclClient {
 		}
 		
 		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(get);
 		
 		if (get.getStatusCode() != 200) {
@@ -109,7 +111,7 @@ public class OclClient {
 		GetMethod exportUrlGet = new GetMethod(exportUrl);
 		
 		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(exportUrlGet);
 		
 		if (exportUrlGet.getStatusCode() != 200) {
@@ -297,7 +299,7 @@ public class OclClient {
 		}
 		
 		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(latestVersionExportUrlGet);
 		if (latestVersionExportUrlGet.getStatusCode() != 200) {
 			throw new IOException(latestVersionExportUrlGet.getPath() + " responded with " + latestVersionExportUrlGet.getStatusLine().toString());
@@ -317,7 +319,7 @@ public class OclClient {
 		}
 		
 		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(30000);
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(latestVersionGet);
 		if (latestVersionGet.getStatusCode() != 200) {
 			throw new IOException(latestVersionGet.getStatusLine().toString());

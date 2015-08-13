@@ -217,10 +217,11 @@ public class Updater implements Runnable {
 		if (token != JsonToken.START_OBJECT) {
 			throw new IOException("JSON must start from an object");
 		}
+		token = parser.nextToken();
 		
-		token = advanceToListOf("concepts", parser);
+		token = advanceToListOf("concepts", "mappings", parser);
 		
-		if (token == JsonToken.END_OBJECT) {
+		if (token == JsonToken.END_OBJECT || token == null) {
 			return;
 		}
 		
@@ -270,7 +271,7 @@ public class Updater implements Runnable {
 			}
 		}
 		
-		token = advanceToListOf("mappings", parser);
+		token = advanceToListOf("mappings", null, parser);
 		
 		if (token == JsonToken.END_OBJECT) {
 			return;
@@ -326,19 +327,39 @@ public class Updater implements Runnable {
 		return baseUrl + url;
 	}
 
-	private JsonToken advanceToListOf(String field, JsonParser parser) throws IOException, JsonParseException {
-	    JsonToken token;
-		while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
-			if (parser.getText().equals(field)) {
+	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException, JsonParseException {
+	    JsonToken token = parser.getCurrentToken();
+	    if (token == null) {
+	    	token = parser.nextToken();
+	    }
+	    
+		do {
+			if (token == JsonToken.START_OBJECT) {
+				String text = parser.getText();
+				while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
+					if (token == null) {
+						throw new IOException("Missing end of object: " + text);
+					}
+				}
+			} else if (parser.getText().equals(field)) {
 				token = parser.nextToken();
 				if (token != JsonToken.START_ARRAY) {
-					throw new IOException("JSON must have a list of " + field);
+					throw new ImportException(field + " must be a list");
 				}
-				break;
+				return token;
+			} else if (token == JsonToken.START_ARRAY) {
+				String text = parser.getText();
+				while ((token = parser.nextToken()) != JsonToken.END_ARRAY) {
+					if (token == null) {
+						throw new IOException("Missing end of array: " + text);
+					}
+				}
+			} else if (stopAtField != null && parser.getText().equals(stopAtField)) {
+				return token;
 			}
-		}
+		} while ((token = parser.nextToken()) != null);
 		
-		return token;
+		return null;
     }
 	
 }

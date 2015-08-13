@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
@@ -84,7 +85,8 @@ public class OclClientTest extends MockTest {
 		
 		assertThat(subscription.getUpdatedTo(), is(DateUtil.parseDate(date)));
 		assertThat(json, startsWith("{\"type\": \"Source\", \"uuid\": \"54e74b378a86f251d2e737d8\""));
-		assertThat(json.length(), is(266183));
+		assertThat(json, containsString("\"extras\": {\"about\": \"Source managed by Andrew Kanter\"}"));
+		assertThat(json.length(), is(266223));
 	}
 	
 	@Test
