@@ -9,8 +9,12 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -357,6 +361,46 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		exception.expect(ImportException.class);
 		exception.expectMessage("Datatype 'Some missing datatype' is not supported by OpenMRS");
 		importer.importConcept(update, concept);
+	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies change duplicate synonym to index term
+	 */
+	@Test
+	public void importConcept_shouldChangeDuplicateSynonymToIndexTerm() throws Exception {
+		Update update = updateService.getLastUpdate();
+		
+		OclConcept concept = newOclConcept();
+		
+		Name polishName = new Name();
+		polishName.setExternalId(UUID.randomUUID().toString());
+		polishName.setName("Nazwa");
+		polishName.setLocale(new Locale("pl"));
+		polishName.setNameType("FULLY_SPECIFIED");
+		polishName.setLocalePreferred(true);
+		concept.getNames().add(polishName);
+		
+		importer.importConcept(update, concept);
+		
+		OclConcept conceptWithSynonym = newOtherOclConcept();
+		Name otherPolishName = new Name();
+		otherPolishName.setExternalId(UUID.randomUUID().toString());
+		otherPolishName.setName("Nazwa");
+		otherPolishName.setLocale(new Locale("pl"));
+		otherPolishName.setLocalePreferred(true);
+		conceptWithSynonym.getNames().add(otherPolishName);
+		
+		importer.importConcept(update, conceptWithSynonym);
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		Concept importedConceptWithIndexTerm = conceptService.getConceptByUuid(conceptWithSynonym.getExternalId());
+		
+		assertThat(importedConcept.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.FULLY_SPECIFIED)),
+			hasProperty("name", equalTo("Nazwa")))));
+		
+		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
+			hasProperty("name", equalTo("Nazwa")))));
 	}
 	
 	@Test

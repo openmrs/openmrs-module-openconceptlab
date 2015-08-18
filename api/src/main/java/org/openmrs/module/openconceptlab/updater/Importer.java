@@ -10,7 +10,11 @@
 package org.openmrs.module.openconceptlab.updater;
 
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
@@ -27,6 +31,7 @@ import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.DuplicateConceptNameException;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
@@ -71,6 +76,7 @@ public class Importer {
 	 * @should unretire concept
 	 * @should fail if concept class missing
 	 * @should fail if datatype missing
+	 * @should change duplicate synonym to index term
 	 */
 	@Transactional
 	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
@@ -141,7 +147,24 @@ public class Importer {
 			
 			addDescriptionsFromOcl(concept, oclConcept);
 			
-			conceptService.saveConcept(concept);
+			boolean save = true;
+			while (save) {
+				try {
+					conceptService.saveConcept(concept);
+					save = false;
+				}
+				catch (DuplicateConceptNameException e) {
+					save = changeSynonymToIndexTermIfPossible(concept, e);
+					
+					if (save) {
+						conceptService.saveConcept(concept);
+						save = false;
+					} else {
+						throw e;
+					}
+				}
+			}
+			
 		}
 		catch (Exception e) {
 			throw new ImportException("Cannot save concept with UUID " + concept.getUuid(), e);
@@ -149,6 +172,30 @@ public class Importer {
 		
 		return item;
 	}
+
+	private boolean changeSynonymToIndexTermIfPossible(Concept concept, DuplicateConceptNameException e) {
+	    boolean fixed = false;
+	    Pattern pattern = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
+	    String message = e.getMessage();
+	    Matcher matcher = pattern.matcher(message);
+	    if (matcher.find()) {
+	    	String name = matcher.group(1);
+	    	Locale locale = LocaleUtils.toLocale(matcher.group(2));
+	    	for (ConceptName conceptName : concept.getNames()) {
+	    		if (conceptName.isVoided()) {
+	    			continue;
+	    		}
+	    		if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+	    			if (conceptName.isSynonym()) {
+	    				conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
+	    				conceptName.setLocalePreferred(false);
+	    				fixed = true;
+	    			}
+	    		}
+	    	}
+	    }
+	    return fixed;
+    }
 	
 	/**
 	 * @param update
@@ -440,7 +487,7 @@ public class Importer {
 		}
 	}
 	
-	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {		
+	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
 		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals();
 	}
 	
