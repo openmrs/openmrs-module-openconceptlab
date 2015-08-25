@@ -249,6 +249,8 @@ public class Updater implements Runnable {
 				item = importer.importConcept(update, oclConcept);
 			}
 			catch (Exception e) {
+				clearSession();
+				
 				updateService.failUpdate(update);
 				
 				item = new Item(update, oclConcept, ItemState.ERROR);
@@ -261,13 +263,7 @@ public class Updater implements Runnable {
 			if (batch == BATCH_SIZE) {
 				batch = 0;
 				Context.flushSession();
-				Context.clearSession();
-				
-				//Fetch update again after clearing the session
-				//The if statement is for testing so that mocking is easier.
-				if (update.getUpdateId() != null) {
-					update = updateService.getUpdate(update.getUpdateId());
-				}
+				clearSession();
 			}
 		}
 		
@@ -290,6 +286,8 @@ public class Updater implements Runnable {
 				item = importer.importMapping(update, oclMapping);
 			}
 			catch (Exception e) {
+				clearSession();
+				
 				updateService.failUpdate(update);
 				
 				item = new Item(update, oclMapping, ItemState.ERROR);
@@ -302,16 +300,19 @@ public class Updater implements Runnable {
 			if (batch == BATCH_SIZE) {
 				batch = 0;
 				Context.flushSession();
-				Context.clearSession();
-				
-				//Fetch update again after clearing the session.
-				//The if statement is for testing so that mocking is easier.
-				if (update.getUpdateId() != null) {
-					update = updateService.getUpdate(update.getUpdateId());
-				}
+				clearSession();
 			}
 		}
 	}
+
+	private void clearSession() {
+	    Context.clearSession();
+	    //Fetch update again after clearing the session
+	    //The if statement is for testing so that mocking is easier.
+	    if (update.getUpdateId() != null) {
+	    	update = updateService.getUpdate(update.getUpdateId());
+	    }
+    }
 	
 	private String prependBaseUrl(String baseUrl, String url) {
 		if (baseUrl == null) {

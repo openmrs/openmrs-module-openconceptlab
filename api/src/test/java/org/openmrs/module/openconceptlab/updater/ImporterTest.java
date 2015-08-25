@@ -11,6 +11,7 @@ package org.openmrs.module.openconceptlab.updater;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -175,9 +176,17 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		assertImported(oclConcept);
 		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
-		assertThat(concept.getNames(false).size(), is(3));
-		//3 concepts must have been voided
+		
+		List<Matcher<? super ConceptName>> matchers = new ArrayList<Matcher<? super ConceptName>>();
+		for (Name name : oclConcept.getNames()) {
+			ConceptNameType nameType = (name.getNameType() != null) ? ConceptNameType.valueOf(name.getNameType()) : null;
+	        matchers.add(allOf(hasProperty("name", is(name.getName())), hasProperty("conceptNameType", is(nameType))));
+        }
+		
+		assertThat(concept.getNames(false), containsInAnyOrder(matchers));
 		assertThat(concept.getNames(true).size(), is(6));
+		//3 names must have been voided
+		assertThat(concept.getNames(false).size(), is(3));		
 	}
 	
 	/**
