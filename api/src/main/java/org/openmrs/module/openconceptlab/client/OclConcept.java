@@ -170,6 +170,7 @@ public class OclConcept {
 		this.extras = extras;
 	}
 	
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Name {
 		
 		private String uuid;
@@ -279,6 +280,7 @@ public class OclConcept {
 		}
 	}
 	
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Description {
 		
 		private String uuid;
@@ -353,6 +355,7 @@ public class OclConcept {
 		}
 	}
 	
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Extras {
 		
 		@JsonProperty("hi_absolute")
