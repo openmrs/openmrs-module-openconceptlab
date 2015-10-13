@@ -47,10 +47,10 @@ public class PreviousUpdatesFragmentController {
 						//loop through each item object to count error
 						duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();String status;
 
-						if( errors > 0) {
-							status = errors + " errors";
-						} else if (!StringUtils.isBlank(update.getErrorMessage())){
+						if (!StringUtils.isBlank(update.getErrorMessage())){
 							status = update.getErrorMessage();
+						} else if( errors > 0) {
+							status = errors + " errors";
 						}
 						else {
 							status = totalItems + " items updated";
