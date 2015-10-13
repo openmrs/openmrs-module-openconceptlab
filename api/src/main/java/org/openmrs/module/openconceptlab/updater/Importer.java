@@ -163,6 +163,12 @@ public class Importer {
 		}
 		
 		concept.setRetired(oclConcept.isRetired());
+		if (oclConcept.isRetired()) {
+			concept.setRetireReason("Retired in OCL");
+		} else {
+			concept.setRetireReason(null);
+			concept.setRetiredBy(null);
+		}
 		
 		voidNamesRemovedFromOcl(concept, oclConcept);
 		
@@ -407,13 +413,18 @@ public class Importer {
 			        : null;
 			
 			boolean nameFound = false;
-			for (ConceptName name : concept.getNames(false)) {
+			for (ConceptName name : concept.getNames(true)) {
 				if (isMatch(oclName, name)) {
 					//Let's make sure all is the same
 					name.setName(oclName.getName());
 					name.setLocale(oclName.getLocale());
 					name.setConceptNameType(oclNameType);
 					name.setLocalePreferred(oclName.isLocalePreferred());
+					
+					//Unvoiding if necessary
+					name.setVoided(false);
+					name.setVoidReason(null);
+					name.setVoidedBy(null);
 					
 					nameFound = true;
 					break;
@@ -432,7 +443,7 @@ public class Importer {
 	}
 	
 	void voidNamesRemovedFromOcl(Concept concept, OclConcept oclConcept) {
-		for (ConceptName name : concept.getNames(false)) {
+		for (ConceptName name : concept.getNames(true)) {
 			boolean nameFound = false;
 			for (OclConcept.Name oclName : oclConcept.getNames()) {
 				if (isMatch(oclName, name)) {
@@ -440,7 +451,7 @@ public class Importer {
 					break;
 				}
 			}
-			if (!nameFound) {
+			if (!nameFound && !name.isVoided()) {
 				name.setVoided(true);
 				name.setVoidReason("Removed from OCL");
 			}
