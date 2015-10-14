@@ -59,4 +59,13 @@
     		<column name="state" />
     	</createIndex>
     </changeSet>
+    
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-4" dbms="mysql">
+    	<comment>Change character set to UTF-8</comment>
+    	<sql>
+    		ALTER TABLE openconceptlab_update CHARACTER SET utf8;
+    		ALTER TABLE openconceptlab_item CHARACTER SET utf8;
+    	</sql>
+    </changeSet>
+    
 </databaseChangeLog>
