@@ -100,7 +100,12 @@ public class Importer {
 				Context.clearSession();
 				cacheService.clearCache();
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
-				trySaving = fixSynonymToIndexTerm(oclConcept, e);
+				try {
+					trySaving = fixSynonymToIndexTerm(oclConcept, e);
+				} catch (Exception ex) {
+					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
+				        + " after attempting to fix duplicates", ex);
+				}
 				concept = toConcept(cacheService, oclConcept);
 				if (!trySaving) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
@@ -216,6 +221,10 @@ public class Importer {
 							fixed = true;
 						}
 					}
+				}
+				
+				if (fixed) {
+					conceptService.saveConcept(localConcept);
 				}
 			}
 			
