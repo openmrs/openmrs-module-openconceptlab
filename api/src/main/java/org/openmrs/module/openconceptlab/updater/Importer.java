@@ -103,7 +103,8 @@ public class Importer {
 				trySaving = fixSynonymToIndexTerm(oclConcept, e);
 				concept = toConcept(cacheService, oclConcept);
 				if (!trySaving) {
-					throw new ImportException("Cannot save concept with UUID " + concept.getUuid() + " after attempting to fix duplicates", e);
+					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
+					        + " after attempting to fix duplicates", e);
 				}
 			}
 			catch (Exception e) {
@@ -131,7 +132,14 @@ public class Importer {
 		}
 		ConceptClass conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
-			throw new ImportException("Concept class '" + oclConcept.getConceptClass() + "' is missing");
+			synchronized (Importer.class) {
+				conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
+				if (conceptClass == null) {
+					conceptClass = new ConceptClass();
+					conceptClass.setName(oclConcept.getConceptClass());
+					conceptService.saveConceptClass(conceptClass);
+				}
+			}
 		}
 		concept.setConceptClass(conceptClass);
 		
@@ -177,43 +185,43 @@ public class Importer {
 		
 		return concept;
 	}
-
+	
 	private boolean fixSynonymToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
-	    Pattern pattern = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
-	    String message = e.getMessage();
-	    Matcher matcher = pattern.matcher(message);
-	    if (matcher.find()) {
-	    	boolean fixed = false;
-	    	
-	    	String name = matcher.group(1);
-	    	Locale locale = LocaleUtils.toLocale(matcher.group(2));
-	    	for (Name conceptName : concept.getNames()) {
-	    		if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-	    			if (StringUtils.isBlank(conceptName.getNameType())) {
-	    				conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
-	    				conceptName.setLocalePreferred(false);
-	    				fixed = true;
-	    			}
-	    		}
-	    	}
-	    	
-	    	List<Concept> localConcepts = conceptService.getConceptsByName(name, locale, true);
-	    	for (Concept localConcept : localConcepts) {
-	    		for (ConceptName conceptName : localConcept.getNames()) {
-		    		if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-		    			if (conceptName.getConceptNameType() == null) {
-		    				conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
-		    				conceptName.setLocalePreferred(false);
-		    				fixed = true;
-		    			}
-		    		}
-		    	}
-            }
-	    	
-	    	return fixed;
-	    }
-	    return false;
-    }
+		Pattern pattern = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
+		String message = e.getMessage();
+		Matcher matcher = pattern.matcher(message);
+		if (matcher.find()) {
+			boolean fixed = false;
+			
+			String name = matcher.group(1);
+			Locale locale = LocaleUtils.toLocale(matcher.group(2));
+			for (Name conceptName : concept.getNames()) {
+				if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+					if (StringUtils.isBlank(conceptName.getNameType())) {
+						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
+						conceptName.setLocalePreferred(false);
+						fixed = true;
+					}
+				}
+			}
+			
+			List<Concept> localConcepts = conceptService.getConceptsByName(name, locale, true);
+			for (Concept localConcept : localConcepts) {
+				for (ConceptName conceptName : localConcept.getNames()) {
+					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+						if (conceptName.getConceptNameType() == null) {
+							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
+							conceptName.setLocalePreferred(false);
+							fixed = true;
+						}
+					}
+				}
+			}
+			
+			return fixed;
+		}
+		return false;
+	}
 	
 	/**
 	 * @param update
@@ -226,7 +234,7 @@ public class Importer {
 	 * @should add concept mapping and term
 	 * @should add concept mapping and unretire term
 	 * @should remove concept mapping and retire term
-	 */	
+	 */
 	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
 		final Item item;
 		
@@ -277,7 +285,7 @@ public class Importer {
 						toSource.setDescription("Imported from " + oclMapping.getUrl());
 						conceptService.saveConceptSource(toSource);
 					}
-                }
+				}
 			}
 			
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
