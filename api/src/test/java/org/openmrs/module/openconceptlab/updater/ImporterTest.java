@@ -338,18 +338,19 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
-	 * @verifies fail if concept class missing
+	 * @verifies create concept class missing if missing
 	 */
 	@Test
-	public void importConcept_shouldFailIfConceptClassMissing() throws Exception {
+	public void importConcept_shouldCreateConceptClassIfMissing() throws Exception {
 		Update update = updateService.getLastUpdate();
 		
 		OclConcept concept = newOclConcept();
 		concept.setConceptClass("Some missing concept class");
 		
-		exception.expect(ImportException.class);
-		exception.expectMessage("Concept class 'Some missing concept class' is missing");
 		importer.importConcept(new CacheService(conceptService), update, concept);
+		
+		ConceptClass conceptClass = conceptService.getConceptClassByName(concept.getConceptClass());
+		assertThat(conceptClass, notNullValue());
 	}
 	
 	/**

@@ -76,8 +76,8 @@ public class Importer {
 	 * @should void descriptions from concept
 	 * @should retire concept
 	 * @should unretire concept
-	 * @should fail if concept class missing
 	 * @should fail if datatype missing
+	 * @should create concept class if missing
 	 * @should change duplicate synonym to index term
 	 */
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
@@ -137,6 +137,7 @@ public class Importer {
 				if (conceptClass == null) {
 					conceptClass = new ConceptClass();
 					conceptClass.setName(oclConcept.getConceptClass());
+					conceptClass.setDescription("Imported from Open Concept Lab");
 					conceptService.saveConceptClass(conceptClass);
 				}
 			}
