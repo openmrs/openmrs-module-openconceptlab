@@ -10,6 +10,7 @@
 package org.openmrs.module.openconceptlab.updater;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +50,6 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service("openconceptlab.importer")
 public class Importer {
@@ -183,6 +183,8 @@ public class Importer {
 	    String message = e.getMessage();
 	    Matcher matcher = pattern.matcher(message);
 	    if (matcher.find()) {
+	    	boolean fixed = false;
+	    	
 	    	String name = matcher.group(1);
 	    	Locale locale = LocaleUtils.toLocale(matcher.group(2));
 	    	for (Name conceptName : concept.getNames()) {
@@ -190,10 +192,25 @@ public class Importer {
 	    			if (StringUtils.isBlank(conceptName.getNameType())) {
 	    				conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
 	    				conceptName.setLocalePreferred(false);
-	    				return true;
+	    				fixed = true;
 	    			}
 	    		}
 	    	}
+	    	
+	    	List<Concept> localConcepts = conceptService.getConceptsByName(name, locale, true);
+	    	for (Concept localConcept : localConcepts) {
+	    		for (ConceptName conceptName : localConcept.getNames()) {
+		    		if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+		    			if (conceptName.getConceptNameType() == null) {
+		    				conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
+		    				conceptName.setLocalePreferred(false);
+		    				fixed = true;
+		    			}
+		    		}
+		    	}
+            }
+	    	
+	    	return fixed;
 	    }
 	    return false;
     }
@@ -209,8 +226,7 @@ public class Importer {
 	 * @should add concept mapping and term
 	 * @should add concept mapping and unretire term
 	 * @should remove concept mapping and retire term
-	 */
-	@Transactional
+	 */	
 	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
 		final Item item;
 		
@@ -253,10 +269,15 @@ public class Importer {
 		} else {
 			ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
-				toSource = new ConceptSource();
-				toSource.setName(oclMapping.getToSourceName());
-				toSource.setDescription("Imported from " + oclMapping.getUrl());
-				conceptService.saveConceptSource(toSource);
+				synchronized (Importer.class) {
+					toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
+					if (toSource == null) {
+						toSource = new ConceptSource();
+						toSource.setName(oclMapping.getToSourceName());
+						toSource.setDescription("Imported from " + oclMapping.getUrl());
+						conceptService.saveConceptSource(toSource);
+					}
+                }
 			}
 			
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");

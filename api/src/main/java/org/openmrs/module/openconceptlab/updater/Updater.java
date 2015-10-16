@@ -182,11 +182,14 @@ public class Updater implements Runnable {
 	public static String getErrorMessage(Exception e) {
 		String message = "Failed with '" + e.getMessage() + "'";
 		Throwable rootCause = ExceptionUtils.getRootCause(e);
-		if (rootCause != null) {
-			String[] stackFrames = ExceptionUtils.getStackFrames(rootCause);
-			int endIndex = stackFrames.length > 5 ? 5 : stackFrames.length;
-			message += " caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
+		if (rootCause == null) {
+			rootCause = e;
 		}
+		
+		String[] stackFrames = ExceptionUtils.getStackFrames(rootCause);
+		int endIndex = stackFrames.length > 5 ? 5 : stackFrames.length;
+		message += " caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
+		
 		if (message.length() > 1024) {
 			return message.substring(0, 1024);
 		} else {

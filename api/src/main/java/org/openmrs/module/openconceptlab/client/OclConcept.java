@@ -446,4 +446,8 @@ public class OclConcept {
 		
 	}
 	
+	@Override
+	public String toString() {
+	    return new ToStringBuilder(this).append("externalId", externalId).build();
+	}
 }

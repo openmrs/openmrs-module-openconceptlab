@@ -12,6 +12,8 @@ package org.openmrs.module.openconceptlab.updater;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
@@ -24,6 +26,8 @@ import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 
 public class ImportRunner implements Runnable {
+	
+	private final Log log = LogFactory.getLog(getClass());
 	
 	Importer importer;
 	
@@ -69,10 +73,10 @@ public class ImportRunner implements Runnable {
 							item = importer.importConcept(cacheService, update, oclConcept);
 						}
 						catch (Exception e) {
+							log.error("Failed to import concept " + oclConcept, e);
 							Context.clearSession();
 							cacheService.clearCache();
 							
-							update = updateService.getUpdate(update.getUpdateId());
 							updateService.failUpdate(update);
 							
 							item = new Item(update, oclConcept, ItemState.ERROR);
@@ -94,10 +98,10 @@ public class ImportRunner implements Runnable {
 							item = importer.importMapping(cacheService, update, oclMapping);
 						}
 						catch (Exception e) {
+							log.error("Failed to import mapping " + oclMapping, e);
 							Context.clearSession();
 							cacheService.clearCache();
 							
-							update = updateService.getUpdate(update.getUpdateId());
 							updateService.failUpdate(update);
 							
 							item = new Item(update, oclMapping, ItemState.ERROR);

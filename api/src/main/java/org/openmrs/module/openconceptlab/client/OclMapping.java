@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -143,4 +144,8 @@ public class OclMapping {
 		this.toConceptUrl = toConceptUrl;
 	}
 	
+	@Override
+	public String toString() {
+	    return new ToStringBuilder(this).append("externalId", externalId).build();
+	}
 }

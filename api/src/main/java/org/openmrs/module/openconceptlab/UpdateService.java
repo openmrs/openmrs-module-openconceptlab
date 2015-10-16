@@ -129,6 +129,8 @@ public class UpdateService {
 	
 	@Transactional
 	public void failUpdate(Update update, String errorMessage) {
+		update = getUpdate(update.getUpdateId());
+		
 		if (!StringUtils.isBlank(errorMessage)) {
 			update.setErrorMessage(errorMessage);
 		} else {
@@ -176,6 +178,8 @@ public class UpdateService {
 		if (update.getLocalDateStopped() != null) {
 			throw new IllegalStateException("Cannot stop the update twice.");
 		}
+		
+		update = getUpdate(update.getUpdateId());
 		
 		update.stop();
 		

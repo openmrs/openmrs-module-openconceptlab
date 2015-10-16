@@ -68,4 +68,57 @@
     	</sql>
     </changeSet>
     
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-5">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists tableName="concept_reference_map" columnNames="uuid"/></not>
+    	</preConditions>
+    	<comment>Add concept_reference_map_uuid index</comment>
+    	<createIndex tableName="concept_reference_map" indexName="concept_reference_map_uuid">
+    		<column name="uuid" />
+    	</createIndex>
+    </changeSet>
+    
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-6">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists tableName="concept_reference_source" columnNames="name"/></not>
+    	</preConditions>
+    	<comment>Add concept_reference_source_name index</comment>
+    	<createIndex tableName="concept_reference_source" indexName="concept_reference_source_name">
+    		<column name="name" />
+    	</createIndex>
+    </changeSet>
+    
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-7">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists tableName="concept_map_type" columnNames="name"/></not>
+    	</preConditions>
+    	<comment>Add concept_map_type_name index</comment>
+    	<createIndex tableName="concept_map_type" indexName="concept_map_type_name">
+    		<column name="name" />
+    	</createIndex>
+    </changeSet>
+    
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-8">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists tableName="concept_reference_term" columnNames="concept_source_id, code"/></not>
+    	</preConditions>
+    	<comment>Add concept_reference_term_code index</comment>
+    	<createIndex tableName="concept_reference_term" indexName="concept_reference_term_code">
+    		<column name="concept_source_id" />
+    		<column name="code" />
+    	</createIndex>
+    </changeSet>
+    
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-9">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists tableName="concept_name" columnNames="name, locale, voided"/></not>
+    	</preConditions>
+    	<comment>Add concept_name_duplicate index</comment>
+    	<createIndex tableName="concept_name" indexName="concept_name_duplicate">
+    		<column name="name" />
+    		<column name="locale" />
+    		<column name="voided" />
+    	</createIndex>
+    </changeSet>
+    
 </databaseChangeLog>
