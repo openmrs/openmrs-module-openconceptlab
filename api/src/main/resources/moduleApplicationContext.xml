@@ -23,4 +23,6 @@
 	<!-- Add here beans related to the API context -->
 	
 	<task:scheduler id="openconceptlab.scheduler" pool-size="1"/>
+	
+	
 </beans>

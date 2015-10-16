@@ -57,10 +57,6 @@ public class Importer {
 	protected final Log log = LogFactory.getLog(getClass());
 	
 	@Autowired
-	@Qualifier("openconceptlab.cacheService")
-	CacheService cacheService;
-	
-	@Autowired
 	@Qualifier("conceptService")
 	ConceptService conceptService;
 	
@@ -84,8 +80,8 @@ public class Importer {
 	 * @should fail if datatype missing
 	 * @should change duplicate synonym to index term
 	 */
-	public Item importConcept(Update update, OclConcept oclConcept) throws ImportException {
-		Concept concept = toConcept(oclConcept);
+	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
+		Concept concept = toConcept(cacheService, oclConcept);
 		
 		final Item item;
 		if (concept.getId() == null) {
@@ -102,9 +98,10 @@ public class Importer {
 			}
 			catch (DuplicateConceptNameException e) {
 				Context.clearSession();
+				cacheService.clearCache();
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				trySaving = fixSynonymToIndexTerm(oclConcept, e);
-				concept = toConcept(oclConcept);
+				concept = toConcept(cacheService, oclConcept);
 				if (!trySaving) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid() + " after attempting to fix duplicates", e);
 				}
@@ -117,7 +114,7 @@ public class Importer {
 		return item;
 	}
 	
-	public Concept toConcept(OclConcept oclConcept) throws ImportException {
+	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
 		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
@@ -214,7 +211,7 @@ public class Importer {
 	 * @should remove concept mapping and retire term
 	 */
 	@Transactional
-	public Item importMapping(Update update, OclMapping oclMapping) {
+	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
 		final Item item;
 		
 		Item fromItem = null;

@@ -18,24 +18,24 @@ import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-@Service("openconceptlab.cacheService")
 public class CacheService {
 	
-	@Autowired
 	ConceptService conceptService;
 	
-	Map<String, Integer> conceptDatatypes = new ConcurrentHashMap<String, Integer>();
+	public CacheService(ConceptService conceptService) {
+		this.conceptService = conceptService;
+	}
 	
-	Map<String, Integer> conceptClasses = new ConcurrentHashMap<String, Integer>();
+	Map<String, ConceptDatatype> conceptDatatypes = new ConcurrentHashMap<String, ConceptDatatype>();
 	
-	Map<String, Integer> conceptSources = new ConcurrentHashMap<String, Integer>();
+	Map<String, ConceptClass> conceptClasses = new ConcurrentHashMap<String, ConceptClass>();
 	
-	Map<String, Integer> conceptMapTypes = new ConcurrentHashMap<String, Integer>();
+	Map<String, ConceptSource> conceptSources = new ConcurrentHashMap<String, ConceptSource>();
 	
-	Map<String, Integer> conceptsByUuids = new ConcurrentHashMap<String, Integer>();
+	Map<String, ConceptMapType> conceptMapTypes = new ConcurrentHashMap<String, ConceptMapType>();
+	
+	Map<String, Concept> conceptsByUuids = new ConcurrentHashMap<String, Concept>();
 	
 	public void clearCache() {
 		conceptDatatypes.clear();
@@ -46,70 +46,65 @@ public class CacheService {
 	}
 	
 	public ConceptDatatype getConceptDatatypeByName(String name) {
-		Integer id = conceptDatatypes.get(name);
-		if (id != null) {
-			ConceptDatatype conceptDatatype = conceptService.getConceptDatatype(id);
+		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
+		if (conceptDatatype != null) {
 			return conceptDatatype;
 		} else {
-			ConceptDatatype conceptDatatype = conceptService.getConceptDatatypeByName(name);
+			conceptDatatype = conceptService.getConceptDatatypeByName(name);
 			if (conceptDatatype != null) {
-				conceptDatatypes.put(name, conceptDatatype.getId());
+				conceptDatatypes.put(name, conceptDatatype);
 			}
 			return conceptDatatype;
 		}
 	}
 	
 	public ConceptClass getConceptClassByName(String name) {
-		Integer id = conceptClasses.get(name);
-		if (id != null) {
-			ConceptClass conceptClass = conceptService.getConceptClass(id);
+		ConceptClass conceptClass = conceptClasses.get(name);
+		if (conceptClass != null) {
 			return conceptClass;
 		} else {
-			ConceptClass conceptClass = conceptService.getConceptClassByName(name);
+			conceptClass = conceptService.getConceptClassByName(name);
 			if (conceptClass != null) {
-				conceptClasses.put(name, conceptClass.getId());
+				conceptClasses.put(name, conceptClass);
 			}
 			return conceptClass;
 		}
 	}
 	
 	public ConceptSource getConceptSourceByName(String name) {
-		Integer id = conceptSources.get(name);
-		if (id != null) {
-			ConceptSource conceptSource = conceptService.getConceptSource(id);
+		ConceptSource conceptSource = conceptSources.get(name);
+		if (conceptSource != null) {
 			return conceptSource;
 		} else {
-			ConceptSource conceptSource = conceptService.getConceptSourceByName(name);
+			conceptSource = conceptService.getConceptSourceByName(name);
 			if (conceptSource != null) {
-				conceptSources.put(name, conceptSource.getId());
+				conceptSources.put(name, conceptSource);
 			}
 			return conceptSource;
 		}
 	}
 
 	public ConceptMapType getConceptMapTypeByName(String name) {
-		Integer id = conceptMapTypes.get(name);
-		if (id != null) {
-			ConceptMapType conceptMapType = conceptService.getConceptMapType(id);
+		ConceptMapType conceptMapType = conceptMapTypes.get(name);
+		if (conceptMapType != null) {
 			return conceptMapType;
 		} else {
-			ConceptMapType conceptMapType = conceptService.getConceptMapTypeByName(name);
+			conceptMapType = conceptService.getConceptMapTypeByName(name);
 			if (conceptMapType != null) {
-				conceptMapTypes.put(name, conceptMapType.getId());
+				conceptMapTypes.put(name, conceptMapType);
 			}
 			return conceptMapType;
 		}
     }
 
 	public Concept getConceptByUuid(String uuid) {
-		Integer id = conceptsByUuids.get(uuid);
-		if (id != null) {
-			Concept concept = conceptService.getConcept(id);
+		Concept concept = conceptsByUuids.get(uuid);
+		if (concept != null) {
 			return concept;
 		} else {
-			Concept concept = conceptService.getConceptByUuid(uuid);
+			concept = conceptService.getConceptByUuid(uuid);
 			if (concept != null) {
-				conceptsByUuids.put(uuid, concept.getId());
+				conceptsByUuids.put(uuid, concept);
 			}
 			return concept;
 		}

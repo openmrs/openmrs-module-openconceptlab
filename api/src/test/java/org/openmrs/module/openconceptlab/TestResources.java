@@ -10,6 +10,11 @@
 package org.openmrs.module.openconceptlab;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.Map;
+
+import org.openmrs.module.DaemonToken;
+import org.openmrs.module.ModuleFactory;
 
 
 public class TestResources {
@@ -21,4 +26,20 @@ public class TestResources {
 	public static InputStream getInitialResponseAsStream() {
 		return TestResources.class.getClassLoader().getResourceAsStream("CIEL_20150514-testdata.20150622121229.tar");
 	}
+	
+	@SuppressWarnings("unchecked")
+    public static void setupDaemonToken() {
+		Map<String, DaemonToken> daemonTokens;
+	    try {
+	    	Field field = ModuleFactory.class.getDeclaredField("daemonTokens");
+	    	field.setAccessible(true);
+	    	daemonTokens = (Map<String, DaemonToken>) field.get(null);
+	    } catch (Exception e) {
+	    	throw new RuntimeException(e);
+	    }
+		
+		DaemonToken daemonToken = new DaemonToken("openconceptlab");
+		daemonTokens.put(daemonToken.getId(), daemonToken);
+		new OpenConceptLabActivator().setDaemonToken(daemonToken);
+    }
 }

@@ -31,10 +31,10 @@ public class UpdateScheduler {
 	@Qualifier("openconceptlab.scheduler")
 	ThreadPoolTaskScheduler scheduler;
 	
-	ScheduledFuture<UpdateDaemonRunner> scheduledUpdate;
+	ScheduledFuture<Updater> scheduledUpdate;
 	
 	@Autowired
-	UpdateDaemonRunner updaterDaemonRunner;
+	Updater updater;
 	
 	@SuppressWarnings("unchecked")
 	public synchronized void schedule(Subscription subscription) {
@@ -49,19 +49,19 @@ public class UpdateScheduler {
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
 			
-			scheduledUpdate = scheduler.scheduleAtFixedRate(updaterDaemonRunner, calendar.getTime(), subscription.getDays()
+			scheduledUpdate = scheduler.scheduleAtFixedRate(updater, calendar.getTime(), subscription.getDays()
 			        * DAY_PERIOD);
 		}
 	}
 	
 	public void scheduleNow() {
-		scheduler.submit(updaterDaemonRunner);
+		scheduler.submit(updater);
 		
 		//delay at most 10 seconds until the update starts
 		try {
 			for (int i = 0; i < 100; i++) {
 				Thread.sleep(100);
-				if (updaterDaemonRunner.updater.isRunning()) {
+				if (updater.isRunning()) {
 					break;
 				}
 			}

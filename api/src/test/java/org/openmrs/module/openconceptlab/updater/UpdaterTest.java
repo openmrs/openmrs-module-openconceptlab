@@ -9,11 +9,11 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,8 +22,8 @@ import java.util.Date;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -63,6 +63,11 @@ public class UpdaterTest extends BaseContextMockTest {
 	@InjectMocks
 	Updater updater;
 	
+	@Before
+	public void before() {
+		TestResources.setupDaemonToken();
+	}
+	
 	/**
 	 * @see Updater#run()
 	 * @verifies start first update with response date
@@ -100,7 +105,8 @@ public class UpdaterTest extends BaseContextMockTest {
 		
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
-		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
+		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+		        .thenReturn(oclResponse);
 		
 		updater.run();
 		
@@ -126,42 +132,41 @@ public class UpdaterTest extends BaseContextMockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
 		
-		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted())).thenReturn(oclResponse);
+		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+		        .thenReturn(oclResponse);
 		
 		doAnswer(new Answer<Item>() {
-
-			@Override
-            public Item answer(InvocationOnMock invocation) throws Throwable {
-				Update update = (Update) invocation.getArguments()[0];
-				OclConcept oclConcept = (OclConcept) invocation.getArguments()[1];
-	            return new Item(update, oclConcept, ItemState.ADDED);
-            }}).when(importer).importConcept(any(Update.class), any(OclConcept.class));
-		
-		doAnswer(new Answer<Item>() {
-
-			@Override
-            public Item answer(InvocationOnMock invocation) throws Throwable {
-	            Update update = (Update) invocation.getArguments()[0];
-	            OclMapping oclMapping = (OclMapping) invocation.getArguments()[1];
-	            return new Item(update, oclMapping, ItemState.ADDED);
-            }
 			
-		}).when(importer).importMapping(any(Update.class), any(OclMapping.class));
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Update update = (Update) invocation.getArguments()[1];
+				OclConcept oclConcept = (OclConcept) invocation.getArguments()[2];
+				return new Item(update, oclConcept, ItemState.ADDED);
+			}
+		}).when(importer).importConcept(any(CacheService.class), any(Update.class), any(OclConcept.class));
+		
+		doAnswer(new Answer<Item>() {
+			
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Update update = (Update) invocation.getArguments()[1];
+				OclMapping oclMapping = (OclMapping) invocation.getArguments()[2];
+				return new Item(update, oclMapping, ItemState.ADDED);
+			}
+			
+		}).when(importer).importMapping(any(CacheService.class), any(Update.class), any(OclMapping.class));
 		
 		updater.run();
 		
-		//concepts must be saved fist
-		InOrder inOrder = inOrder(updateService);
-		
 		//concepts
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("1001AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("1003AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")));
+		verify(updateService).saveItems(
+		    argThat(hasItems(hasUuid("1001AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+		        hasUuid("1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), hasUuid("1003AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))));
 		
 		//mappings
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("697bf112-a7ca-3ae3-af4f-8b46e3af7f10")));
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("def16c32-0635-3afd-8a56-a080830e2bff")));
-		inOrder.verify(updateService).saveItem(argThat(hasUuid("b705416c-ad04-356f-9d43-8945ee382722")));
+		verify(updateService).saveItems(
+		    argThat(hasItems(hasUuid("697bf112-a7ca-3ae3-af4f-8b46e3af7f10"),
+		        hasUuid("def16c32-0635-3afd-8a56-a080830e2bff"), hasUuid("b705416c-ad04-356f-9d43-8945ee382722"))));
 	}
 	
 	public Matcher<Update> hasOclDateStarted(Date oclDateStarted) {

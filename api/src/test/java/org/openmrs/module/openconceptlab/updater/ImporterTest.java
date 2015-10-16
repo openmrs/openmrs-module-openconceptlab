@@ -77,15 +77,11 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Autowired
 	UpdateService updateService;
 	
-	@Autowired
-	CacheService cacheService;
-	
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 	
 	@Before
 	public void startUpdate() {
-		cacheService.clearCache();
 		Update update = new Update();
 		updateService.startUpdate(update);
 	}
@@ -102,7 +98,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldSaveNewConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		assertImported(oclConcept);
 	}
 	
@@ -113,7 +109,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldAddNewNamesToConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		Name thirdName = new Name();
 		thirdName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
@@ -126,7 +122,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Name fourthName = newFourthName();
 		oclConcept.getNames().add(fourthName);
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		assertImported(oclConcept);
 	}
 	
@@ -147,7 +143,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldUpdateNameTypeInConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		for (Name name : oclConcept.getNames()) {
 			if (name.getNameType() == null) {
@@ -155,7 +151,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 			}
 		}
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		assertImported(oclConcept);
 	}
 	
@@ -166,13 +162,13 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldUpdateNamesWithDifferentUuids() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		for (Name name : oclConcept.getNames()) {
 			name.setExternalId(UUID.randomUUID().toString());
 		}
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		assertImported(oclConcept);
 		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
@@ -198,7 +194,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		Name fourthName = newFourthName();
 		oclConcept.getNames().add(fourthName);
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		List<Name> voided = new ArrayList<OclConcept.Name>();
 		for (Iterator<Name> it = oclConcept.getNames().iterator(); it.hasNext();) {
@@ -210,7 +206,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		}
 		assertThat(voided, is(not(empty())));
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		Concept concept = assertImported(oclConcept);
 		
 		Collection<ConceptName> nonVoidedNames = concept.getNames(false);
@@ -227,14 +223,14 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldAddNewDescriptionsToConcept() throws Exception {
 		
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		Description desc1 = new Description();
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptons().add(desc1);
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		assertImported(oclConcept);
 		
@@ -248,7 +244,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldVoidDescriptionsFromConcept() throws Exception {
 		
 		OclConcept oclConcept = newOclConcept();
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		Description desc1 = new Description();
 		desc1.setExternalId("7cc35481-ce72-4615-b857-a944b25e9c43");
@@ -256,7 +252,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptons().add(desc1);
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		Concept concept = assertImported(oclConcept);
 		
 		//cloning object to save state of descriptions after importing again
@@ -275,7 +271,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		assertThat(voided, is(not(empty())));
 		
 		//at this point without cloning object original desc collecion is lost
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		concept = assertImported(oclConcept);
 		
 		final Collection<ConceptDescription> remainingDescriptions = concept.getDescriptions();
@@ -309,11 +305,11 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldRetireConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		assertFalse(oclConcept.isRetired());
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		oclConcept.setRetired(true);
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		Concept concept = assertImported(oclConcept);
 		assertTrue(concept.isRetired());
@@ -329,11 +325,11 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		oclConcept.setRetired(true);
 		assertTrue(oclConcept.isRetired());
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		oclConcept.setRetired(false);
 		
-		importer.importConcept(null, oclConcept);
+		importer.importConcept(new CacheService(conceptService), null, oclConcept);
 		
 		Concept concept = assertImported(oclConcept);
 		assertFalse(concept.isRetired());
@@ -353,7 +349,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		exception.expect(ImportException.class);
 		exception.expectMessage("Concept class 'Some missing concept class' is missing");
-		importer.importConcept(update, concept);
+		importer.importConcept(new CacheService(conceptService), update, concept);
 	}
 	
 	/**
@@ -369,7 +365,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		exception.expect(ImportException.class);
 		exception.expectMessage("Datatype 'Some missing datatype' is not supported by OpenMRS");
-		importer.importConcept(update, concept);
+		importer.importConcept(new CacheService(conceptService), update, concept);
 	}
 	
 	/**
@@ -390,7 +386,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		polishName.setLocalePreferred(true);
 		concept.getNames().add(polishName);
 		
-		importer.importConcept(update, concept);
+		importer.importConcept(new CacheService(conceptService), update, concept);
 		
 		OclConcept conceptWithSynonym = newOtherOclConcept();
 		Name otherPolishName = new Name();
@@ -400,7 +396,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		otherPolishName.setLocalePreferred(true);
 		conceptWithSynonym.getNames().add(otherPolishName);
 		
-		importer.importConcept(update, conceptWithSynonym);
+		importer.importConcept(new CacheService(conceptService), update, conceptWithSynonym);
 		
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		Concept importedConceptWithIndexTerm = conceptService.getConceptByUuid(conceptWithSynonym.getExternalId());
@@ -417,10 +413,10 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Update update = updateService.getLastUpdate();
 		
 		OclConcept question = newOclConcept();
-		updateService.saveItem(importer.importConcept(update, question));
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, question));
 		
 		OclConcept answer = newOtherOclConcept();
-		updateService.saveItem(importer.importConcept(update, answer));
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, answer));
 		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
@@ -429,7 +425,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept questionConcept = conceptService.getConceptByUuid(question.getExternalId());
 		Concept answerConcept = conceptService.getConceptByUuid(answer.getExternalId());
@@ -451,7 +447,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		oclMapping.setRetired(true);
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept questionConcept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		
@@ -463,10 +459,10 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Update update = updateService.getLastUpdate();
 		
 		OclConcept set = newOclConcept();
-		updateService.saveItem(importer.importConcept(update, set));
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, set));
 		
 		OclConcept member = newOtherOclConcept();
-		updateService.saveItem(importer.importConcept(update, member));
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, member));
 		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
@@ -475,7 +471,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept setConcept = conceptService.getConceptByUuid(set.getExternalId());
 		Concept memberConcept = conceptService.getConceptByUuid(member.getExternalId());
@@ -497,7 +493,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		oclMapping.setRetired(true);
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept setConcept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		
@@ -509,7 +505,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Update update = updateService.getLastUpdate();
 		
 		OclConcept oclConcept = newOclConcept();
-		updateService.saveItem(importer.importConcept(update, oclConcept));
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, oclConcept));
 		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
@@ -519,7 +515,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setToSourceName("SNOMED CT");
 		oclMapping.setToConceptCode("1001");
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		
@@ -543,7 +539,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setToConceptCode("1001");
 		oclMapping.setRetired(true);
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
@@ -569,7 +565,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setToConceptCode("1001");
 		oclMapping.setRetired(false);
 		
-		importer.importMapping(update, oclMapping);
+		importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		
 		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 		

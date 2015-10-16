@@ -197,6 +197,13 @@ public class UpdateService {
 		getSession().saveOrUpdate(item);
 	}
 	
+	@Transactional
+	public void saveItems(Iterable<? extends Item> items) {
+		for (Item item : items) {
+			saveItem(item);
+        }
+    }
+	
 	@Transactional(readOnly = true)
 	public Subscription getSubscription() {
 		String url = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
