@@ -40,7 +40,7 @@ public class Item {
 	private Long itemId;
 	
 	@ManyToOne
-	@JoinColumn(name = "update_id")
+	@JoinColumn(name = "update_id", insertable = false, updatable = false)
 	private Update update;
 	
 	@Enumerated(EnumType.STRING)

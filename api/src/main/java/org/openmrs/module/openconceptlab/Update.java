@@ -19,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -52,7 +53,8 @@ public class Update {
 	@Column(name = "error_message")
 	private String errorMessage;
 	
-	@OneToMany(mappedBy = "update", fetch = FetchType.LAZY)
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "update_id")
 	@Sort(type = SortType.COMPARATOR, comparator = Item.OrderByState.class)
 	private SortedSet<Item> items = new TreeSet<Item>(new Item.OrderByState());
 	

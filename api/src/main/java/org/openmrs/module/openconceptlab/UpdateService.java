@@ -229,7 +229,7 @@ public class UpdateService {
 	
 	@Transactional
 	public void saveItems(Iterable<? extends Item> items) {
-		for (Item item : items) {
+		for (Item item : items) {			
 			saveItem(item);
         }
     }
