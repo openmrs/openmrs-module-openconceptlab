@@ -83,11 +83,9 @@ public class Importer {
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
 		Concept concept = toConcept(cacheService, oclConcept);
 		
-		final Item item;
+		boolean added = false;
 		if (concept.getId() == null) {
-			item = new Item(update, oclConcept, ItemState.ADDED);
-		} else {
-			item = new Item(update, oclConcept, ItemState.UPDATED);
+			added = true;
 		}
 		
 		boolean trySaving = true;
@@ -99,6 +97,8 @@ public class Importer {
 			catch (DuplicateConceptNameException e) {
 				Context.clearSession();
 				cacheService.clearCache();
+				update = updateService.getUpdate(update.getUpdateId());
+				
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				try {
 					trySaving = changeSynonymToIndexTerm(oclConcept, e);
@@ -117,7 +117,7 @@ public class Importer {
 			}
 		}
 		
-		return item;
+		return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 	}
 	
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {

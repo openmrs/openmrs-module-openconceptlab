@@ -86,19 +86,19 @@ public class Item {
 	}
 	
 	public Item(Update update, OclMapping oclMapping, ItemState state) {
-	    this(update, oclMapping, state, null);
-    }
+		this(update, oclMapping, state, null);
+	}
 	
 	public Item(Update update, OclMapping oclMapping, ItemState state, String errorMessage) {
-	    this.update = update;
-	    this.url = oclMapping.getUrl();
-	    this.hashedUrl = hashUrl(url);
-	    this.versionUrl = oclMapping.getUrl();
-	    this.type = ItemType.MAPPING;
-	    this.uuid = oclMapping.getExternalId();
-	    this.state = state;
-	    this.errorMessage = errorMessage;
-    }
+		this.update = update;
+		this.url = oclMapping.getUrl();
+		this.hashedUrl = hashUrl(url);
+		this.versionUrl = oclMapping.getUrl();
+		this.type = ItemType.MAPPING;
+		this.uuid = oclMapping.getExternalId();
+		this.state = state;
+		this.errorMessage = errorMessage;
+	}
 	
 	public static final byte[] hashUrl(String url) {
 		if (url == null) {
@@ -106,19 +106,23 @@ public class Item {
 		}
 		
 		try {
-	        return MessageDigest.getInstance("MD5").digest(url.getBytes("UTF-8"));
-        }
-        catch (Exception e) {
-	        throw new IllegalArgumentException("Cannot hash " + url, e);
-        }
+			return MessageDigest.getInstance("MD5").digest(url.getBytes("UTF-8"));
+		}
+		catch (Exception e) {
+			throw new IllegalArgumentException("Cannot hash " + url, e);
+		}
 	}
-
+	
 	public Long getItemId() {
 		return itemId;
 	}
 	
 	public Update getUpdate() {
 		return update;
+	}
+	
+	public void setUpdate(Update update) {
+		this.update = update;
 	}
 	
 	public ItemType getType() {
@@ -129,14 +133,14 @@ public class Item {
 		return uuid;
 	}
 	
-    public String getUrl() {
-	    return url;
-    }
+	public String getUrl() {
+		return url;
+	}
 	
-    public byte[] getHashedUrl() {
-    	return hashedUrl;
-    }
-
+	public byte[] getHashedUrl() {
+		return hashedUrl;
+	}
+	
 	public String getVersionUrl() {
 		return versionUrl;
 	}

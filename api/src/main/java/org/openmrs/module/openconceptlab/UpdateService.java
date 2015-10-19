@@ -230,6 +230,9 @@ public class UpdateService {
 	@Transactional
 	public void saveItems(Iterable<? extends Item> items) {
 		for (Item item : items) {			
+			Update update = getUpdate(item.getUpdate().getUpdateId()); 
+			item.setUpdate(update); //replace with attached object
+			
 			saveItem(item);
         }
     }
