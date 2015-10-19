@@ -9,8 +9,11 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +24,9 @@ import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
+import org.openmrs.ConceptName;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
@@ -61,6 +66,27 @@ public class UpdateService {
 		@SuppressWarnings("unchecked")
 		List<Update> list = update.list();
 		return list;
+	}
+	
+	@Transactional(readOnly = true)
+	public List<Concept> getConceptsByName(String name, Locale locale) {
+		Criteria criteria = getSession().createCriteria(ConceptName.class);
+		criteria.add(Restrictions.eq("voided", false));
+		if (adminService.isDatabaseStringComparisonCaseSensitive()) {
+			criteria.add(Restrictions.eq("name", name).ignoreCase());
+		} else {
+			criteria.add(Restrictions.eq("name", name));
+		}
+		criteria.add(Restrictions.eq("locale", locale));
+		
+		@SuppressWarnings("unchecked")
+        List<ConceptName> conceptNames = criteria.list();
+		
+		Set<Concept> concepts = new LinkedHashSet<Concept>();
+		for (ConceptName conceptName : conceptNames) {
+	        concepts.add(conceptName.getConcept());
+        }
+		return new ArrayList<Concept>(concepts);
 	}
 	
 	/**
@@ -390,8 +416,14 @@ public class UpdateService {
 	
 	@Transactional(readOnly = true)
 	public ConceptMap getConceptMapByUuid(String uuid) {
-		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(ConceptMap.class);
+		Criteria criteria = getSession().createCriteria(ConceptMap.class);
 		criteria.add(Restrictions.eq("uuid", uuid));
 		return (ConceptMap) criteria.uniqueResult();
+	}
+	
+	@Transactional
+	public Concept updateConceptWithoutValidation(Concept concept) {
+		getSession().saveOrUpdate(concept);
+		return concept;
 	}
 }

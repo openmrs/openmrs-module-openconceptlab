@@ -101,7 +101,7 @@ public class Importer {
 				cacheService.clearCache();
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				try {
-					trySaving = fixSynonymToIndexTerm(oclConcept, e);
+					trySaving = changeSynonymToIndexTerm(oclConcept, e);
 				} catch (Exception ex) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
 				        + " after attempting to fix duplicates", ex);
@@ -192,12 +192,12 @@ public class Importer {
 		return concept;
 	}
 	
-	private boolean fixSynonymToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
+	private boolean changeSynonymToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
 		Pattern pattern = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
 		String message = e.getMessage();
 		Matcher matcher = pattern.matcher(message);
 		if (matcher.find()) {
-			boolean fixed = false;
+			boolean changed = false;
 			
 			String name = matcher.group(1);
 			Locale locale = LocaleUtils.toLocale(matcher.group(2));
@@ -206,29 +206,29 @@ public class Importer {
 					if (StringUtils.isBlank(conceptName.getNameType())) {
 						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
 						conceptName.setLocalePreferred(false);
-						fixed = true;
+						changed = true;
 					}
 				}
 			}
 			
-			List<Concept> localConcepts = conceptService.getConceptsByName(name, locale, true);
+			List<Concept> localConcepts = updateService.getConceptsByName(name, locale);
 			for (Concept localConcept : localConcepts) {
 				for (ConceptName conceptName : localConcept.getNames()) {
 					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
 						if (conceptName.getConceptNameType() == null) {
 							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
 							conceptName.setLocalePreferred(false);
-							fixed = true;
+							changed = true;
 						}
 					}
 				}
 				
-				if (fixed) {
+				if (changed) {
 					conceptService.saveConcept(localConcept);
 				}
 			}
 			
-			return fixed;
+			return changed;
 		}
 		return false;
 	}
@@ -283,7 +283,7 @@ public class Importer {
 				item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
 			}
 			
-			conceptService.saveConcept(fromConcept);
+			updateService.updateConceptWithoutValidation(fromConcept);
 		} else {
 			ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
@@ -313,8 +313,9 @@ public class Importer {
 					if (!conceptMap.getConcept().equals(fromConcept)) {
 						//Concept changed, it would be unusual, but still probable
 						Concept previousConcept = conceptMap.getConcept();
+						
 						previousConcept.removeConceptMapping(conceptMap);
-						conceptService.saveConcept(previousConcept);
+						updateService.updateConceptWithoutValidation(previousConcept);
 						
 						fromConcept.addConceptMapping(conceptMap);
 					}
@@ -336,7 +337,7 @@ public class Importer {
 					item = new Item(update, oclMapping, ItemState.ADDED);
 				}
 				
-				conceptService.saveConcept(fromConcept);
+				updateService.updateConceptWithoutValidation(fromConcept);
 			} else {
 				return new Item(update, oclMapping, ItemState.ERROR, "Mapping " + oclMapping.getUrl() + " is not supported");
 			}

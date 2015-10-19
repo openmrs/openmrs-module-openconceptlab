@@ -121,4 +121,15 @@
     	</createIndex>
     </changeSet>
     
+    <changeSet author="rkorytkowski" id="openconceptlab-v1-10">
+    	<preConditions onFail="MARK_RAN">
+    		<not><indexExists indexName="openconceptlab_item_update_state"/></not>
+    	</preConditions>
+    	<comment>Create openconceptlab_item_update_state index</comment>
+    	<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_update_state">
+    		<column name="update_id" />
+    		<column name="state" />
+    	</createIndex>
+    </changeSet>
+    
 </databaseChangeLog>
