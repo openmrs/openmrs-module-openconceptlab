@@ -40,7 +40,7 @@ public class ConfigurePageController {
 	    return subscription;
     }
 	
-	public void post(@SpringBean UpdateService updateService, @BindParams(value = "subscription") Subscription subscription,
+	public String post(@SpringBean UpdateService updateService, @BindParams(value = "subscription") Subscription subscription,
 	        @RequestParam(value = "unsubscribe", required = false) Boolean unsubscribe, PageModel model) {
 		if (unsubscribe != null && unsubscribe) {
 			updateService.unsubscribe();
@@ -50,5 +50,7 @@ public class ConfigurePageController {
 			updateService.saveSubscription(subscription);
 		}
 		model.put("subscription", subscription);
+		
+		return "redirect:status.page";
 	}
 }

@@ -25,6 +25,10 @@
 			<p>
 				<button type="submit" id="update-now">Update now</button>
 				<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
-			</p>
+				<% if ( errorItemSize > 0) { %>
+					<br/>
+					<i>All items from the last failing update will be imported again. Make sure all errors have been fixed locally or in the OpenConceptLab server.</i>			
+				<% } %>
+			</p>			
 	</fieldset>
 </form>

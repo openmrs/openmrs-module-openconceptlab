@@ -125,7 +125,7 @@ public class OclClient {
 	 * @should extract date and json
 	 */
 	OclResponse extractResponse(GetMethod get) throws IOException {
-		Header dateHeader = get.getResponseHeader("date");
+		Header dateHeader = get.getResponseHeader("Date");
 		Date date;
 		try {
 			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");

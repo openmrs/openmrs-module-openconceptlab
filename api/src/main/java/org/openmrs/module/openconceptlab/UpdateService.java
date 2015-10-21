@@ -329,7 +329,7 @@ public class UpdateService {
 		
 		Update lastUpdate = getLastUpdate();
 		long time = (new Date().getTime() - lastUpdate.getLocalDateStarted().getTime()) / 1000;
-		updateProgress.setTime((int) time);
+		updateProgress.setTime(time);
 		
 		if (!updater.isDownloaded()) {
 			double totalBytesToDownload = updater.getTotalBytesToDownload();

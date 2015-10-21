@@ -9,13 +9,16 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Class to show the update progress
  */
 public class UpdateProgress {
 
 	private Integer progress;
-	private Integer time;
+	private Long time;
+	private String timeText;
 
 	public Integer getProgress() {
 		return progress;
@@ -25,11 +28,28 @@ public class UpdateProgress {
 		this.progress = progress;
 	}
 
-	public Integer getTime() {
+	public Long getTime() {
 		return time;
 	}
 
-	public void setTime(Integer time) {
+	public void setTime(Long time) {
 		this.time = time;
+		
+		timeText = convertSecondsToText(time);
 	}
+
+	public static String convertSecondsToText(Long time) {
+		if (time < 60) {
+			return time + " seconds";
+		} else {
+		    long hours = TimeUnit.HOURS.convert(time, TimeUnit.SECONDS);
+		    long minutes = TimeUnit.MINUTES.convert(time, TimeUnit.SECONDS) - TimeUnit.MINUTES.convert(hours, TimeUnit.HOURS);
+		    long seconds = time - TimeUnit.SECONDS.convert(hours, TimeUnit.HOURS) - TimeUnit.SECONDS.convert(minutes, TimeUnit.MINUTES);
+		    return ((hours > 0) ? hours + " hours " : "") + ((minutes > 0) ? minutes + " minutes " : "") + seconds + " seconds";
+		}
+    }
+	
+    public String getTimeText() {
+	    return timeText;
+    }
 }

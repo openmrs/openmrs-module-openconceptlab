@@ -69,7 +69,7 @@ public class OclClientTest extends MockTest {
 		Header header = new Header("Date", date);
 		
 		when(get.getResponseHeader("Content-Type")).thenReturn(new Header("Content-Type", "application/zip"));
-		when(get.getResponseHeader("date")).thenReturn(header);
+		when(get.getResponseHeader("Date")).thenReturn(header);
 		when(get.getResponseBodyAsStream()).thenReturn(TestResources.getSimpleResponseAsStream());
 		
 		OclResponse subscription = oclClient.extractResponse(get);
@@ -96,7 +96,7 @@ public class OclClientTest extends MockTest {
 		
 		when(get.getPath()).thenReturn("https://ocl-source-export-staging.s3.amazonaws.com/CIEL/CIEL_20150514-testdata.20150622121229.tgz"
 				+ "?Signature=k%2FG0J%2Bt%2BlYJoscWxNFYbn%2BvtiPo%3D&Expires=1437567014&AWSAccessKeyId=AKIAJSVYSQTANHNWOOPQ");
-		when(get.getResponseHeader("date")).thenReturn(header);
+		when(get.getResponseHeader("Date")).thenReturn(header);
 		when(get.getResponseBodyAsStream()).thenReturn(TestResources.getInitialResponseAsStream());
 		
 		OclResponse subscription = oclClient.extractResponse(get);

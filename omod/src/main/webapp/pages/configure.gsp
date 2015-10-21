@@ -18,12 +18,12 @@
 		
 		jq("#auto-A-S").click(function () {
 			jq('input:radio[name=manualS]').attr('checked', false);
-			jq('#automatically-subscribe :input').prop('disabled', false);
+			jq('#automatically-subscribe').show();
 		});
 
 		jq("#manual-M-S").click(function () {
 			jq('input:radio[name=autoS]').attr('checked', false);
-			jq('#automatically-subscribe :input').prop('disabled', true);
+			jq('#automatically-subscribe').hide();
 		});
 		
 		var manual = ${subscription.manual};
@@ -35,7 +35,6 @@
 	});
 
 </script>
-<p><a href="status.page">Go to the status page</a></p>
 <br/>
 <form id="subscribe-to-ocl-form" method="post" action="configure.page">
 	<div id="subscription-to-be-shown">
@@ -61,7 +60,7 @@
 
 					<div align="right">
 						<button type="submit" id="subscribe-sub-id" name="subscribeSub">Subscribe</button>
-						<input type="button" value="Discard Changes" onclick="window.location.href='configure.page'" />
+						<input type="button" value="Cancel Changes" onclick="window.location.href='status.page'" />
 					</div>
 		</fieldset>
 	</div>

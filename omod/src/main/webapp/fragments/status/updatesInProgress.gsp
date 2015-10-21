@@ -7,7 +7,7 @@
 		var updateProgressbar = function() {
 			jq.getJSON('${ui.actionLink("openconceptlab", "status", "getUpdateProgress")}', function(result) {
 				jq('#completed').html(result.progress);
-				jq('#time').html(result.time);
+				jq('#time').html(result.timeText);
 				var progressbar = jq( "#progressbar" );
 				progressbar.progressbar( "value", result.progress);	
 				if (result.progress == 100) {
@@ -34,7 +34,7 @@
 <fieldset id="updates-progressing">
 	<legend id="progress-title">Update in progress</legend>
 		<p>
-			Upgrade is in progress for <span id="time"></span> seconds now
+			Upgrade is in progress for <span id="time"></span> now
 		</p>
 		<p>
 				Completed <span id="completed"></span> %

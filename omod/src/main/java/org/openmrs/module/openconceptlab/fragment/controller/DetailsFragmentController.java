@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.FragmentParam;
@@ -40,8 +41,6 @@ public class DetailsFragmentController {
 		Date upgradeStopDate;
 		Long timeTakenForUpgrade;
 		String duration = "";
-		int minutes;
-		int seconds;
 		//go through a set of items and find the number of items
 		if (fetchedUpdate != null) {
 			//get the start date
@@ -63,13 +62,7 @@ public class DetailsFragmentController {
 			
 			//calculate the time it take for the upgrade
 			timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
-			if (timeTakenForUpgrade < 60) {
-				duration = timeTakenForUpgrade + " seconds";
-			} else {
-				minutes = (int) (timeTakenForUpgrade / 60);
-				seconds = (int) (timeTakenForUpgrade % 60);
-				duration = minutes + " minutes" + "  " + seconds + " seconds";
-			}
+			duration = UpdateProgress.convertSecondsToText(timeTakenForUpgrade);
 			
 			Set<ItemState> ignoredError = new HashSet<ItemState>();
 			ignoredError.add(ItemState.IGNORED_ERROR);
