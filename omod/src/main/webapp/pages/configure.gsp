@@ -51,7 +51,7 @@
 							<input type="number" id="subscription.days" name="subscription.days" value="${subscription.days}" min="0" max="365" style="min-width: 5%; display: inline" /> days at
 							<input type="number" id="subscription.hours" name="subscription.hours" value="${subscription.hours}" min="0" max="23" style="min-width: 5%; display: inline" />:
 							<input type="number" id="subscription.minutes" name="subscription.minutes" value="${subscription.minutes}" min="0" max="59" style="min-width: 5%; display: inline" />
-							
+							<br />
 							<br />
 							<div id="message-sub">
 							<i>Avoid updating during data entry hours, because the <br />operation may significantly slow down the system</i>
