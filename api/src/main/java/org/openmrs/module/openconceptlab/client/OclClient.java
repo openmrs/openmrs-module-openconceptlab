@@ -18,7 +18,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,15 +77,19 @@ public class OclClient {
 			get.addRequestHeader("Authorization", "Token " + token);
 			get.addRequestHeader("Compress", "true");
 		}
-		NameValuePair[] query = new NameValuePair[] { new NameValuePair("includeMappings", "true"),
-		        new NameValuePair("includeConcepts", "true"), new NameValuePair("includeRetired", "true"),
-		        new NameValuePair("limit", "100000")};
-		get.setQueryString(query);
+		
+		List<NameValuePair> query = new ArrayList<NameValuePair>();
+		query.add(new NameValuePair("includeMappings", "true"));
+		query.add(new NameValuePair("includeConcepts", "true"));
+		query.add(new NameValuePair("includeRetired", "true"));
+		query.add(new NameValuePair("limit", "100000"));
 		
 		if (updatedSince != null) {
 			SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-			get.getParams().setParameter("updatedSince", dateFormat.format(updatedSince));
+			query.add(new NameValuePair("updatedSince", dateFormat.format(updatedSince)));
 		}
+		
+		get.setQueryString(query.toArray(new NameValuePair[0]));
 		
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
