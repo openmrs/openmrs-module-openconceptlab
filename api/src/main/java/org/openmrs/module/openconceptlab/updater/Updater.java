@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -34,6 +36,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
@@ -156,6 +159,11 @@ public class Updater implements Runnable {
 		
 		try {
 			task.run();
+			
+			Integer errors = updateService.getUpdateItemsCount(update, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
+			if (errors > 0) {
+				updateService.failUpdate(update);
+			}
 		}
 		catch (Exception e) {
 			updateService.failUpdate(update, getErrorMessage(e));

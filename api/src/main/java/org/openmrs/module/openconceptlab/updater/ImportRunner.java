@@ -76,9 +76,7 @@ public class ImportRunner implements Runnable {
 							log.error("Failed to import concept " + oclConcept, e);
 							Context.clearSession();
 							cacheService.clearCache();
-							
-							updateService.failUpdate(update);
-							
+
 							item = new Item(update, oclConcept, ItemState.ERROR);
 							item.setErrorMessage(Updater.getErrorMessage(e));
 						} finally {
@@ -101,9 +99,7 @@ public class ImportRunner implements Runnable {
 							log.error("Failed to import mapping " + oclMapping, e);
 							Context.clearSession();
 							cacheService.clearCache();
-							
-							updateService.failUpdate(update);
-							
+														
 							item = new Item(update, oclMapping, ItemState.ERROR);
 							item.setErrorMessage(Updater.getErrorMessage(e));
 						} finally {

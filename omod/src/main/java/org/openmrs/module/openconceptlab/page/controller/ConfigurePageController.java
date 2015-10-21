@@ -51,6 +51,6 @@ public class ConfigurePageController {
 		}
 		model.put("subscription", subscription);
 		
-		return "redirect:status.page";
+		return "redirect:openconceptlab/status.page";
 	}
 }
