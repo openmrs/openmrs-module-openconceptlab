@@ -41,9 +41,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.stereotype.Component;
 
-@Component("openconceptlab.oclClient")
 public class OclClient {
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";

@@ -47,11 +47,7 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclConcept.Name;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 
-@Service("openconceptlab.importer")
 public class Importer {
 	
 	protected final Log log = LogFactory.getLog(getClass());
@@ -62,12 +58,18 @@ public class Importer {
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
 	
-	@Autowired
-	@Qualifier("conceptService")
 	ConceptService conceptService;
 	
-	@Autowired
 	UpdateService updateService;
+	
+    public void setConceptService(ConceptService conceptService) {
+	    this.conceptService = conceptService;
+    }
+    
+    
+    public void setUpdateService(UpdateService updateService) {
+	    this.updateService = updateService;
+    }
 	
 	/**
 	 * @param oclConcept

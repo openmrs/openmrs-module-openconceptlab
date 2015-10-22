@@ -31,7 +31,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	public ExpectedException exception = ExpectedException.none();
 	
 	/**
-	 * @see UpdateService#getUpdate(Long)
+	 * @see UpdateServiceImpl#getUpdate(Long)
 	 * @verifies return update with id
 	 */
 	@Test
@@ -45,7 +45,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see UpdateService#getUpdate(Long)
+	 * @see UpdateServiceImpl#getUpdate(Long)
 	 * @verifies throw IllegalArgumentException if update does not exist
 	 */
 	@Test
@@ -56,7 +56,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see UpdateService#getUpdatesInOrder()
+	 * @see UpdateServiceImpl#getUpdatesInOrder()
 	 * @verifies return all updates ordered descending by ids
 	 */
 	@Test
@@ -74,7 +74,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	/**
-     * @see UpdateService#startUpdate(Update)
+     * @see UpdateServiceImpl#startUpdate(Update)
      * @verifies throw IllegalStateException if another update is in progress
      */
     @Test
@@ -88,7 +88,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     }
 
 	/**
-     * @see UpdateService#stopUpdate(Update)
+     * @see UpdateServiceImpl#stopUpdate(Update)
      * @verifies throw IllegalArgumentException if not scheduled
      */
     @Test
@@ -99,7 +99,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     }
 
 	/**
-     * @see UpdateService#stopUpdate(Update)
+     * @see UpdateServiceImpl#stopUpdate(Update)
      * @verifies throw IllegalStateException if trying to stop twice
      */
     @Test
@@ -113,7 +113,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     }
 
 	/**
-	 * @see UpdateService#saveSubscription(Subscription)
+	 * @see UpdateServiceImpl#saveSubscription(Subscription)
 	 * @Verifies saves the subscription
 	 */
 	@Test

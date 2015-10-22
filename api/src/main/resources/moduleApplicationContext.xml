@@ -24,5 +24,51 @@
 	
 	<task:scheduler id="openconceptlab.scheduler" pool-size="1"/>
 	
+	<bean id="openconceptlab.updateService"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager">
+			<ref bean="transactionManager" />
+		</property>
+		<property name="target">
+			<bean class="org.openmrs.module.openconceptlab.UpdateServiceImpl">
+				<property name="sessionFactory" ref="sessionFactory" />
+				<property name="adminService" ref="adminService" />
+			</bean>
+		</property>
+		<property name="preInterceptors">
+			<ref bean="serviceInterceptors" />
+		</property>
+		<property name="transactionAttributeSource">
+			<ref bean="transactionAttributeSource" />
+		</property>
+	</bean>
 	
+	<bean id="openconceptlab.oclClient" class="org.openmrs.module.openconceptlab.client.OclClient" />
+	
+	<bean id="openconceptlab.importer" class="org.openmrs.module.openconceptlab.updater.Importer">
+		<property name="conceptService" ref="conceptService" />
+		<property name="updateService" ref="openconceptlab.updateService" />
+	</bean>
+	
+	<bean id="openconceptlab.updater" class="org.openmrs.module.openconceptlab.updater.Updater">
+		<property name="updateService" ref="openconceptlab.updateService" />
+		<property name="conceptService" ref="conceptService" />
+		<property name="oclClient" ref="openconceptlab.oclClient" />
+		<property name="importer" ref="openconceptlab.importer" />
+	</bean>
+	
+	<bean id="openconceptlab.updateScheduler" class="org.openmrs.module.openconceptlab.scheduler.UpdateScheduler">
+		<property name="scheduler" ref="openconceptlab.scheduler"/>
+		<property name="updater" ref="openconceptlab.updater" />
+		<property name="updateService" ref="openconceptlab.updateService" />
+	</bean>
+	
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list>
+				<value>org.openmrs.module.openconceptlab.UpdateService</value>
+				<ref bean="openconceptlab.updateService"/>
+			</list>
+		</property>
+	</bean>
 </beans>

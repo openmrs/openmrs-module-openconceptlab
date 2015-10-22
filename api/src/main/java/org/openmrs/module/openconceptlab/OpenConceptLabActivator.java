@@ -16,6 +16,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.DaemonToken;
 import org.openmrs.module.DaemonTokenAware;
 import org.openmrs.module.ModuleActivator;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 
 /**
  * This class contains the logic that is run every time this module is either started or stopped.
@@ -41,8 +42,8 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 			Context.openSession();
 		}
 			
-		UpdateService updateService = Context.getRegisteredComponent("openconceptlab.updateService", UpdateService.class);
-		updateService.scheduleUpdate();
+		UpdateScheduler scheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
+		scheduler .scheduleUpdate();
 		
 		log.info("Open Concept Lab Module refreshed");
 	}

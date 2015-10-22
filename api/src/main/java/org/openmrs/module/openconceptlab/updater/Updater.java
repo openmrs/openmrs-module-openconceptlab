@@ -40,16 +40,14 @@ import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateProgress;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component("openconceptlab.updater")
 public class Updater implements Runnable {
 	
 	private Log log = LogFactory.getLog(getClass());
@@ -58,16 +56,12 @@ public class Updater implements Runnable {
 	
 	public final static int THREAD_POOL_SIZE = 16;
 	
-	@Autowired
 	UpdateService updateService;
 	
-	@Autowired
 	ConceptService conceptService;
 	
-	@Autowired
 	OclClient oclClient;
 	
-	@Autowired
 	Importer importer;
 	
 	private volatile Update update;
@@ -75,6 +69,25 @@ public class Updater implements Runnable {
 	private CountingInputStream in = null;
 	
 	private volatile long totalBytesToProcess;
+	
+	
+    public void setUpdateService(UpdateService updateService) {
+	    this.updateService = updateService;
+    }
+    
+    
+    public void setConceptService(ConceptService conceptService) {
+	    this.conceptService = conceptService;
+    }
+    
+    
+    public void setOclClient(OclClient oclClient) {
+	    this.oclClient = oclClient;
+    }
+    
+    public void setImporter(Importer importer) {
+	    this.importer = importer;
+    }
 	
 	/**
 	 * Runs an update for a configured subscription.
@@ -234,6 +247,16 @@ public class Updater implements Runnable {
 	}
 	
 	public boolean isRunning() {
+		Update lastUpdate = updateService.getLastUpdate();
+		if (lastUpdate == null) {
+			return false;
+		}
+		
+		if (update == null && !lastUpdate.isStopped()) {
+			lastUpdate.setErrorMessage("Process terminated before completion");
+			updateService.stopUpdate(lastUpdate);
+		}
+		
 		return update != null;
 	}
 	
@@ -410,6 +433,41 @@ public class Updater implements Runnable {
 		} while ((token = parser.nextToken()) != null);
 		
 		return null;
+	}
+	
+	public UpdateProgress getUpdateProgress() {
+		UpdateProgress updateProgress = new UpdateProgress();
+		
+		Update lastUpdate = updateService.getLastUpdate();
+		long time = (new Date().getTime() - lastUpdate.getLocalDateStarted().getTime()) / 1000;
+		updateProgress.setTime(time);
+		
+		if (!isDownloaded()) {
+			double totalBytesToDownload = getTotalBytesToDownload();
+			double progress = 0;
+			if (getBytesDownloaded() == 0) {
+				//simulate download progress until first bytes are downloaded
+				progress = (double) time / (time + 5) * 10.0;
+			} else if (getTotalBytesToDownload() == -1) {
+				//simulate download progress since total bytes to download are unknown
+				progress = 10.0 + ((double) time / (time + 100) * 20.0);
+			} else {
+				progress = 10.0 + ((double) getBytesDownloaded() / totalBytesToDownload * 20.0);
+			}
+			updateProgress.setProgress((int) progress);
+		} else if (!isProcessed()) {
+			double progress = 30;
+			if (getTotalBytesToProcess() == -1) {
+				progress = 30 + ((double) time / (time + 100) * 70.0);
+			} else {
+				progress = 30.0 + ((double) getBytesProcessed() / getTotalBytesToProcess() * 70.0);
+			}
+			updateProgress.setProgress((int) progress);
+		} else {
+			updateProgress.setProgress(100);
+		}
+		
+		return updateProgress;
 	}
 	
 }

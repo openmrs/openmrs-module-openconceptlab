@@ -13,31 +13,41 @@ import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
 
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.updater.Updater;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.stereotype.Component;
 
 /**
  * It is used to run {@link Updater#run()} either as a scheduled task or on request.
  */
-@Component("openconceptlab.updateScheduler")
 public class UpdateScheduler {
 	
 	public static final long DAY_PERIOD = 24 * 3600000;
 	
-	@Autowired
-	@Qualifier("openconceptlab.scheduler")
 	ThreadPoolTaskScheduler scheduler;
 	
 	ScheduledFuture<Updater> scheduledUpdate;
 	
-	@Autowired
 	Updater updater;
+	
+	UpdateService updateService;
+	
+    public void setScheduler(ThreadPoolTaskScheduler scheduler) {
+	    this.scheduler = scheduler;
+    }
+    
+    public void setUpdater(Updater updater) {
+	    this.updater = updater;
+    }
+    
+    public void setUpdateService(UpdateService updateService) {
+	    this.updateService = updateService;
+    }
 	
 	@SuppressWarnings("unchecked")
 	public synchronized void schedule(Subscription subscription) {
+		updateService.saveSubscription(subscription);
+		
 		if (scheduledUpdate != null) {
 			scheduledUpdate.cancel(false);
 		}
@@ -54,7 +64,27 @@ public class UpdateScheduler {
 		}
 	}
 	
+	public synchronized void unschedule() {
+		updateService.unsubscribe();
+		
+		if (scheduledUpdate != null) {
+			scheduledUpdate.cancel(false);
+			scheduledUpdate = null;
+		}
+	}
+	
+	public void scheduleUpdate() {
+		Subscription subscription = updateService.getSubscription();
+		if (subscription != null) {
+			schedule(subscription);
+		}
+	}
+	
 	public void scheduleNow() {
+		if (updater.isRunning()) {
+			throw new IllegalStateException("Cannot start the update, if there is another update in progress.");
+		}
+				
 		scheduler.submit(updater);
 		
 		//delay at most 10 seconds until the update starts

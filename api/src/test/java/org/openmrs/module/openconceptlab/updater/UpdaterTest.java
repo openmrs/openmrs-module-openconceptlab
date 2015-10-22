@@ -36,7 +36,7 @@ import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.TestResources;
 import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.UpdateServiceImpl;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -52,7 +52,7 @@ public class UpdaterTest extends BaseContextMockTest {
 	ContextDAO contextDAO;
 	
 	@Mock
-	UpdateService updateService;
+	UpdateServiceImpl updateService;
 	
 	@Mock
 	CacheService CacheService;

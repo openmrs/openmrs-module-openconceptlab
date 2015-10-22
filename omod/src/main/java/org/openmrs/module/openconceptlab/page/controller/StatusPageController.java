@@ -12,6 +12,7 @@ package org.openmrs.module.openconceptlab.page.controller;
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 
@@ -20,7 +21,7 @@ import org.openmrs.ui.framework.page.PageModel;
  */
 public class StatusPageController {
 	public void controller(PageModel model,
-						   @SpringBean UpdateService service){
+						   @SpringBean Updater updater, @SpringBean UpdateService service){
 
 		boolean checkIfUpdatesIsRunning = false;
 		boolean checkIfSubscribed = true;
@@ -34,7 +35,7 @@ public class StatusPageController {
 			checkIfSubscribed = false;
 		}
 		
-		if (service.isUpdateRunning()) {
+		if (updater.isRunning()) {
 			checkIfUpdatesIsRunning = true;
 		}
 

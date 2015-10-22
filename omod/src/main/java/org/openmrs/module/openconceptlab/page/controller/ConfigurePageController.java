@@ -11,6 +11,7 @@ package org.openmrs.module.openconceptlab.page.controller;
 
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.ui.framework.annotation.BindParams;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
@@ -40,14 +41,14 @@ public class ConfigurePageController {
 	    return subscription;
     }
 	
-	public String post(@SpringBean UpdateService updateService, @BindParams(value = "subscription") Subscription subscription,
+	public String post(@SpringBean UpdateScheduler updateScheduler, @BindParams(value = "subscription") Subscription subscription,
 	        @RequestParam(value = "unsubscribe", required = false) Boolean unsubscribe, PageModel model) {
 		if (unsubscribe != null && unsubscribe) {
-			updateService.unsubscribe();
+			updateScheduler.unschedule();
 			subscription = newBlankSubscription();
 			
 		} else {
-			updateService.saveSubscription(subscription);
+			updateScheduler.schedule(subscription);
 		}
 		model.put("subscription", subscription);
 		

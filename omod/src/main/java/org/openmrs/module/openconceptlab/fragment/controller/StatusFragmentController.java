@@ -12,7 +12,8 @@ package org.openmrs.module.openconceptlab.fragment.controller;
 import java.io.IOException;
 
 import org.openmrs.module.openconceptlab.UpdateProgress;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 
@@ -21,11 +22,11 @@ import org.openmrs.ui.framework.annotation.SpringBean;
  */
 public class StatusFragmentController {
 
-	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updateService") UpdateService updateService, UiUtils ui) {
-		return updateService.getUpdateProgress();
+	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updater") Updater updater, UiUtils ui) {
+		return updater.getUpdateProgress();
 	}
 
-	public void runUpdates(@SpringBean("openconceptlab.updateService") UpdateService updateService) throws IOException {
-		updateService.runUpdateNow();
+	public void runUpdates(@SpringBean("openconceptlab.updateScheduler") UpdateScheduler updateScheduler) throws IOException {
+		updateScheduler.scheduleNow();
 	}
 }
