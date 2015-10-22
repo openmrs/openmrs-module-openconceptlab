@@ -178,7 +178,7 @@ public class Updater implements Runnable {
 				updateService.failUpdate(update);
 			}
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 			updateService.failUpdate(update, getErrorMessage(e));
 			throw new ImportException(e);
 		}
@@ -200,7 +200,7 @@ public class Updater implements Runnable {
 		}
 	}
 	
-	public static String getErrorMessage(Exception e) {
+	public static String getErrorMessage(Throwable e) {
 		String message = "Failed with '" + e.getMessage() + "'";
 		Throwable rootCause = ExceptionUtils.getRootCause(e);
 		if (rootCause == null) {
