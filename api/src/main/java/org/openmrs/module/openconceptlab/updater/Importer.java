@@ -56,6 +56,12 @@ public class Importer {
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	
+	private static final Object CREATE_CONCEPT_REFERENCE_TERM_LOCK = new Object();
+	
+	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
+
+	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
+	
 	@Autowired
 	@Qualifier("conceptService")
 	ConceptService conceptService;
@@ -137,7 +143,7 @@ public class Importer {
 		}
 		ConceptClass conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
-			synchronized (Importer.class) {
+			synchronized (CREATE_CONCEPT_CLASS_LOCK) {
 				conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 				if (conceptClass == null) {
 					conceptClass = new ConceptClass();
@@ -287,7 +293,7 @@ public class Importer {
 		} else {
 			ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 			if (toSource == null) {
-				synchronized (Importer.class) {
+				synchronized (CREATE_CONCEPT_SOURCE_LOCK) {
 					toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 					if (toSource == null) {
 						toSource = new ConceptSource();
@@ -355,11 +361,18 @@ public class Importer {
 		}
 		
 		if (term == null) {
-			term = new ConceptReferenceTerm();
+			synchronized (CREATE_CONCEPT_REFERENCE_TERM_LOCK) {
+	            term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
+	            
+	            if (term == null) {
+	            	term = new ConceptReferenceTerm();
+	            	term.setConceptSource(toSource);
+	        		term.setCode(oclMapping.getToConceptCode());
+	        		
+	        		conceptService.saveConceptReferenceTerm(term);
+	            }
+            }
 		}
-		
-		term.setConceptSource(toSource);
-		term.setCode(oclMapping.getToConceptCode());
 		
 		if (term.isRetired() != oclMapping.isRetired()) {
 			term.setRetired(oclMapping.isRetired());
@@ -369,9 +382,10 @@ public class Importer {
 				term.setRetireReason(null);
 				term.setRetiredBy(null);
 			}
+
+			updateService.updateConceptReferenceTermWithoutValidation(term);
 		}
 		
-		conceptService.saveConceptReferenceTerm(term);
 		return term;
 	}
 	

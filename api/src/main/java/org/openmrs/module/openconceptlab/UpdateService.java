@@ -27,6 +27,7 @@ import org.hibernate.criterion.Restrictions;
 import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
@@ -429,4 +430,10 @@ public class UpdateService {
 		getSession().saveOrUpdate(concept);
 		return concept;
 	}
+
+	@Transactional
+	public ConceptReferenceTerm updateConceptReferenceTermWithoutValidation(ConceptReferenceTerm term) {
+		getSession().saveOrUpdate(term);
+		return term;
+    }
 }
