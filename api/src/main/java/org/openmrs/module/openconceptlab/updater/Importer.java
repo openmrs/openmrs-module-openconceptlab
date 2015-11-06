@@ -111,7 +111,7 @@ public class Importer {
 				
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				try {
-					trySaving = changeNameToIndexTerm(oclConcept, e);
+					trySaving = changeDuplicateNameToIndexTerm(oclConcept, e);
 				} catch (Exception ex) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
 				        + " after attempting to fix duplicates", ex);
@@ -203,7 +203,7 @@ public class Importer {
 		return concept;
 	}
 	
-	private boolean changeNameToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
+	private boolean changeDuplicateNameToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
 		String message = e.getMessage();
 		Matcher matcher = DUPLICATE_NAME_PATTERN.matcher(message);
 		if (matcher.find()) {
@@ -215,11 +215,9 @@ public class Importer {
 			for (Concept localConcept : localConcepts) {
 				for (ConceptName conceptName : localConcept.getNames()) {
 					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-						if (conceptName.getConceptNameType() == null) {
-							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
-							conceptName.setLocalePreferred(false);
-							changed = true;
-						}
+						conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
+						conceptName.setLocalePreferred(false);
+						changed = true;
 					}
 				}
 				
@@ -230,11 +228,9 @@ public class Importer {
 			
 			for (Name conceptName : concept.getNames()) {
 				if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-					if (StringUtils.isBlank(conceptName.getNameType())) {
-						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
-						conceptName.setLocalePreferred(false);
-						changed = true;
-					}
+					conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
+					conceptName.setLocalePreferred(false);
+					changed = true;
 				}
 			}
 			
@@ -515,6 +511,10 @@ public class Importer {
 	
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
 		for (OclConcept.Description oclDescription : oclConcept.getDescriptons()) {
+			if (StringUtils.isBlank(oclDescription.getDescription())) {
+				continue;
+			}
+			
 			boolean nameFound = false;
 			for (ConceptDescription description : concept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
