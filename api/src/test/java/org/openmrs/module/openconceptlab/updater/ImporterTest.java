@@ -411,6 +411,47 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 			hasProperty("name", equalTo("Nazwa")))));
 	}
 	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies change duplicate fully specified name to index term
+	 */
+	@Test
+	public void importConcept_shouldChangeDuplicateFullySpecifiedNamesToIndexTerm() throws Exception {
+		Update update = updateService.getLastUpdate();
+		
+		OclConcept concept = newOclConcept();
+		
+		Name polishName = new Name();
+		polishName.setExternalId(UUID.randomUUID().toString());
+		polishName.setName("Nazwa");
+		polishName.setLocale(new Locale("pl"));
+		polishName.setNameType("FULLY_SPECIFIED");
+		polishName.setLocalePreferred(true);
+		concept.getNames().add(polishName);
+		
+		importer.importConcept(new CacheService(conceptService), update, concept);
+		
+		OclConcept conceptWithSynonym = newOtherOclConcept();
+		Name otherPolishName = new Name();
+		otherPolishName.setExternalId(UUID.randomUUID().toString());
+		otherPolishName.setName("Nazwa");
+		otherPolishName.setLocale(new Locale("pl"));
+		otherPolishName.setNameType("FULLY_SPECIFIED");
+		otherPolishName.setLocalePreferred(true);
+		conceptWithSynonym.getNames().add(otherPolishName);
+		
+		importer.importConcept(new CacheService(conceptService), update, conceptWithSynonym);
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		Concept importedConceptWithIndexTerm = conceptService.getConceptByUuid(conceptWithSynonym.getExternalId());
+		
+		assertThat(importedConcept.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
+			hasProperty("name", equalTo("Nazwa")))));
+		
+		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
+			hasProperty("name", equalTo("Nazwa")))));
+	}
+	
 	@Test
 	public void importMapping_shouldAddConceptAnswer() throws Exception {
 		Update update = updateService.getLastUpdate();
