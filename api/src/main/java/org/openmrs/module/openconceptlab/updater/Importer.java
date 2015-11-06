@@ -57,6 +57,8 @@ public class Importer {
 	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
+
+	private static final Pattern DUPLICATE_NAME_PATTERN = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
 	
 	ConceptService conceptService;
 	
@@ -109,11 +111,12 @@ public class Importer {
 				
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				try {
-					trySaving = changeSynonymToIndexTerm(oclConcept, e);
+					trySaving = changeNameToIndexTerm(oclConcept, e);
 				} catch (Exception ex) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
 				        + " after attempting to fix duplicates", ex);
 				}
+				
 				concept = toConcept(cacheService, oclConcept);
 				if (!trySaving) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
@@ -200,24 +203,13 @@ public class Importer {
 		return concept;
 	}
 	
-	private boolean changeSynonymToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
-		Pattern pattern = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
+	private boolean changeNameToIndexTerm(OclConcept concept, DuplicateConceptNameException e) {
 		String message = e.getMessage();
-		Matcher matcher = pattern.matcher(message);
+		Matcher matcher = DUPLICATE_NAME_PATTERN.matcher(message);
 		if (matcher.find()) {
 			boolean changed = false;
-			
 			String name = matcher.group(1);
 			Locale locale = LocaleUtils.toLocale(matcher.group(2));
-			for (Name conceptName : concept.getNames()) {
-				if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-					if (StringUtils.isBlank(conceptName.getNameType())) {
-						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
-						conceptName.setLocalePreferred(false);
-						changed = true;
-					}
-				}
-			}
 			
 			List<Concept> localConcepts = updateService.getConceptsByName(name, locale);
 			for (Concept localConcept : localConcepts) {
@@ -233,6 +225,16 @@ public class Importer {
 				
 				if (changed) {
 					conceptService.saveConcept(localConcept);
+				}
+			}
+			
+			for (Name conceptName : concept.getNames()) {
+				if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+					if (StringUtils.isBlank(conceptName.getNameType())) {
+						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
+						conceptName.setLocalePreferred(false);
+						changed = true;
+					}
 				}
 			}
 			
