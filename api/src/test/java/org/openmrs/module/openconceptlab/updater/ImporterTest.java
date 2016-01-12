@@ -230,7 +230,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Description desc1 = new Description();
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
-		oclConcept.getDescriptons().add(desc1);
+		oclConcept.getDescriptions().add(desc1);
 		
 		importer.importConcept(new CacheService(conceptService), update, oclConcept);
 		
@@ -252,7 +252,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		desc1.setExternalId("7cc35481-ce72-4615-b857-a944b25e9c43");
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
-		oclConcept.getDescriptons().add(desc1);
+		oclConcept.getDescriptions().add(desc1);
 		
 		importer.importConcept(new CacheService(conceptService), update, oclConcept);
 		Concept concept = assertImported(oclConcept);
@@ -263,7 +263,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		Collection<ConceptDescription> descriptionsBeforeVoiding = cloned.getDescriptions();
 		
 		List<Description> voided = new ArrayList<OclConcept.Description>();
-		for (Iterator<Description> it = oclConcept.getDescriptons().iterator(); it.hasNext();) {
+		for (Iterator<Description> it = oclConcept.getDescriptions().iterator(); it.hasNext();) {
 			Description description = it.next();
 			if (description.getDescription().equals(desc1.getDescription())) {
 				it.remove();
@@ -637,7 +637,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		description.setDescription("Test description");
 		description.setLocale(Context.getLocale());
 		descriptons.add(description);
-		oclConcept.setDescriptons(descriptons);
+		oclConcept.setDescriptions(descriptons);
 		
 		List<Name> names = new ArrayList<OclConcept.Name>();
 		Name name = new Name();
@@ -687,7 +687,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		description.setDescription("Other description");
 		description.setLocale(Context.getLocale());
 		descriptons.add(description);
-		oclConcept.setDescriptons(descriptons);
+		oclConcept.setDescriptions(descriptons);
 		
 		List<Name> names = new ArrayList<OclConcept.Name>();
 		Name name = new Name();
@@ -720,7 +720,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		ConceptDatatype conceptDatatype = conceptService.getConceptDatatypeByName(oclConcept.getDatatype());
 		assertThat(concept.getDatatype(), is(conceptDatatype));
 		assertThat(concept.getNames(false), containsNamesInAnyOrder(oclConcept.getNames()));
-		assertThat(concept.getDescriptions(), containsDescriptionsInAnyOrder(oclConcept.getDescriptons()));
+		assertThat(concept.getDescriptions(), containsDescriptionsInAnyOrder(oclConcept.getDescriptions()));
 		
 		return concept;
 	}

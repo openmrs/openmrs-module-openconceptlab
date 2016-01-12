@@ -49,30 +49,30 @@ import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 
 public class Importer {
-	
+
 	protected final Log log = LogFactory.getLog(getClass());
-	
+
 	private static final Object CREATE_CONCEPT_REFERENCE_TERM_LOCK = new Object();
-	
+
 	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
 
 	private static final Pattern DUPLICATE_NAME_PATTERN = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
-	
+
 	ConceptService conceptService;
-	
+
 	UpdateService updateService;
-	
+
     public void setConceptService(ConceptService conceptService) {
 	    this.conceptService = conceptService;
     }
-    
-    
+
+
     public void setUpdateService(UpdateService updateService) {
 	    this.updateService = updateService;
     }
-	
+
 	/**
 	 * @param oclConcept
 	 * @param importQueue
@@ -93,12 +93,12 @@ public class Importer {
 	 */
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
 		Concept concept = toConcept(cacheService, oclConcept);
-		
+
 		boolean added = false;
 		if (concept.getId() == null) {
 			added = true;
 		}
-		
+
 		boolean trySaving = true;
 		boolean synonymsOnly = true;
 		while (trySaving) {
@@ -110,11 +110,11 @@ public class Importer {
 				Context.clearSession();
 				cacheService.clearCache();
 				update = updateService.getUpdate(update.getUpdateId());
-				
+
 				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
 				try {
 					trySaving = changeDuplicateNamesToIndexTerm(oclConcept, e, synonymsOnly);
-					
+
 					if (!trySaving) {
 						synonymsOnly = false;
 						trySaving = changeDuplicateNamesToIndexTerm(oclConcept, e, synonymsOnly);
@@ -128,7 +128,7 @@ public class Importer {
 				        + " after attempting to fix duplicates", ex);
 					}
 				}
-				
+
 				concept = toConcept(cacheService, oclConcept);
 				if (!trySaving) {
 					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
@@ -139,16 +139,16 @@ public class Importer {
 				throw new ImportException("Cannot save concept with UUID " + concept.getUuid(), e);
 			}
 		}
-		
+
 		return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 	}
-	
+
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
 		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
 		}
-		
+
 		Concept concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
@@ -171,31 +171,31 @@ public class Importer {
 			}
 		}
 		concept.setConceptClass(conceptClass);
-		
+
 		concept.setDatatype(datatype);
-		
+
 		if (concept instanceof ConceptNumeric) {
 			ConceptNumeric numeric = (ConceptNumeric) concept;
-			
+
 			Extras extras = oclConcept.getExtras();
-			
+
 			numeric.setHiAbsolute(extras.getHiAbsolute());
-			
+
 			numeric.setHiCritical(extras.getHiCritical());
-			
+
 			numeric.setHiNormal(extras.getHiNormal());
-			
+
 			numeric.setLowAbsolute(extras.getLowAbsolute());
-			
+
 			numeric.setLowCritical(extras.getLowCritical());
-			
+
 			numeric.setLowNormal(extras.getLowNormal());
-			
+
 			numeric.setUnits(extras.getUnits());
-			
+
 			numeric.setPrecise(extras.getPrecise());
 		}
-		
+
 		concept.setRetired(oclConcept.isRetired());
 		if (oclConcept.isRetired()) {
 			concept.setRetireReason("Retired in OCL");
@@ -203,18 +203,18 @@ public class Importer {
 			concept.setRetireReason(null);
 			concept.setRetiredBy(null);
 		}
-		
+
 		voidNamesRemovedFromOcl(concept, oclConcept);
-		
+
 		updateOrAddNamesFromOcl(concept, oclConcept);
-		
+
 		removeDescriptionsRemovedFromOcl(concept, oclConcept);
-		
+
 		addDescriptionsFromOcl(concept, oclConcept);
-		
+
 		return concept;
 	}
-	
+
 	private boolean changeDuplicateNamesToIndexTerm(OclConcept concept, DuplicateConceptNameException e, boolean synonymsOnly) {
 		String message = e.getMessage();
 		Matcher matcher = DUPLICATE_NAME_PATTERN.matcher(message);
@@ -222,39 +222,39 @@ public class Importer {
 			boolean changed = false;
 			String name = matcher.group(1);
 			Locale locale = LocaleUtils.toLocale(matcher.group(2));
-			
+
 			List<Concept> localConcepts = updateService.getConceptsByName(name, locale);
 			for (Concept localConcept : localConcepts) {
 				for (ConceptName conceptName : localConcept.getNames()) {
-					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-						if (!synonymsOnly || conceptName.getConceptNameType() == null) {
+					if (!synonymsOnly || conceptName.getConceptNameType() == null) {
+						if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
 							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
 							conceptName.setLocalePreferred(false);
 							changed = true;
 						}
 					}
 				}
-				
+
 				if (changed) {
 					conceptService.saveConcept(localConcept);
 				}
 			}
-			
+
 			for (Name conceptName : concept.getNames()) {
-				if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-					if (!synonymsOnly || StringUtils.isBlank(conceptName.getNameType())) {
+				if (!synonymsOnly || StringUtils.isBlank(conceptName.getNameType())) {
+					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
 						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
 						conceptName.setLocalePreferred(false);
 						changed = true;
 					}
 				}
 			}
-			
+
 			return changed;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @param update
 	 * @param oclMapping
@@ -269,7 +269,7 @@ public class Importer {
 	 */
 	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
 		final Item item;
-		
+
 		Item fromItem = null;
 		Concept fromConcept = null;
 		if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
@@ -277,13 +277,13 @@ public class Importer {
 			if (fromItem != null) {
 				fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 			}
-			
+
 			if (fromConcept == null) {
 				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping from concept with URL "
 				        + oclMapping.getFromConceptUrl() + ", because the concept has not been imported");
 			}
 		}
-		
+
 		Item toItem = null;
 		Concept toConcept = null;
 		if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
@@ -291,20 +291,20 @@ public class Importer {
 			if (toItem != null) {
 				toConcept = cacheService.getConceptByUuid(toItem.getUuid());
 			}
-			
+
 			if (toConcept == null) {
 				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping to concept with URL "
 				        + oclMapping.getToConceptUrl() + ", because the concept has not been imported");
 			}
 		}
-		
+
 		if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
 			if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
 				item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
 			} else {
 				item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
 			}
-			
+
 			updateService.updateConceptWithoutValidation(fromConcept);
 		} else {
 			ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
@@ -319,29 +319,29 @@ public class Importer {
 					}
 				}
 			}
-			
+
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
 			ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 			if (mapType == null) {
 				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName + " does not exist");
 			}
-			
+
 			if (fromConcept != null) {
 				ConceptMap conceptMap = updateService.getConceptMapByUuid(oclMapping.getExternalId());
-				
+
 				ConceptReferenceTerm term = createOrUpdateConceptReferenceTerm(oclMapping, conceptMap, toSource);
-				
+
 				if (conceptMap != null) {
 					if (!conceptMap.getConcept().equals(fromConcept)) {
 						//Concept changed, it would be unusual, but still probable
 						Concept previousConcept = conceptMap.getConcept();
-						
+
 						previousConcept.removeConceptMapping(conceptMap);
 						updateService.updateConceptWithoutValidation(previousConcept);
-						
+
 						fromConcept.addConceptMapping(conceptMap);
 					}
-					
+
 					if (Boolean.TRUE.equals(oclMapping.getRetired())) {
 						item = new Item(update, oclMapping, ItemState.RETIRED);
 						fromConcept.removeConceptMapping(conceptMap);
@@ -355,10 +355,10 @@ public class Importer {
 					conceptMap.setConceptReferenceTerm(term);
 					conceptMap.setConceptMapType(mapType);
 					fromConcept.addConceptMapping(conceptMap);
-					
+
 					item = new Item(update, oclMapping, ItemState.ADDED);
 				}
-				
+
 				updateService.updateConceptWithoutValidation(fromConcept);
 			} else {
 				return new Item(update, oclMapping, ItemState.ERROR, "Mapping " + oclMapping.getUrl() + " is not supported");
@@ -366,7 +366,7 @@ public class Importer {
 		}
 		return item;
 	}
-	
+
 	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
 	        ConceptSource toSource) {
 		ConceptReferenceTerm term = null;
@@ -375,21 +375,21 @@ public class Importer {
 		} else {
 			term = conceptMap.getConceptReferenceTerm();
 		}
-		
+
 		if (term == null) {
 			synchronized (CREATE_CONCEPT_REFERENCE_TERM_LOCK) {
 	            term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
-	            
+
 	            if (term == null) {
 	            	term = new ConceptReferenceTerm();
 	            	term.setConceptSource(toSource);
 	        		term.setCode(oclMapping.getToConceptCode());
-	        		
+
 	        		conceptService.saveConceptReferenceTerm(term);
 	            }
             }
 		}
-		
+
 		if (term.isRetired() != oclMapping.isRetired()) {
 			term.setRetired(oclMapping.isRetired());
 			if (oclMapping.isRetired()) {
@@ -401,21 +401,21 @@ public class Importer {
 
 			updateService.updateConceptReferenceTermWithoutValidation(term);
 		}
-		
+
 		return term;
 	}
-	
+
 	Item updateOrAddSetMemebersFromOcl(Update update, OclMapping oclMapping, Concept set, Concept member) {
 		Item item = null;
-		
+
 		boolean found = false;
 		Iterator<ConceptSet> it = set.getConceptSets().iterator();
 		while (it.hasNext()) {
 			ConceptSet conceptSet = it.next();
-			
+
 			if (conceptSet.getUuid().equals(oclMapping.getExternalId())) {
 				found = true;
-				
+
 				if (Boolean.TRUE.equals(oclMapping.getRetired())) {
 					item = new Item(update, oclMapping, ItemState.RETIRED);
 					it.remove();
@@ -423,11 +423,11 @@ public class Importer {
 					item = new Item(update, oclMapping, ItemState.UPDATED);
 					conceptSet.setConcept(member);
 				}
-				
+
 				break;
 			}
 		}
-		
+
 		if (!found) {
 			ConceptSet conceptSet = new ConceptSet();
 			conceptSet.setConceptSet(set);
@@ -437,21 +437,21 @@ public class Importer {
 			set.getConceptSets().add(conceptSet);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
-		
+
 		return item;
 	}
-	
+
 	Item updateOrAddAnswersFromOcl(Update update, OclMapping oclMapping, Concept question, Concept answer) {
 		Item item = null;
-		
+
 		boolean found = false;
 		Iterator<ConceptAnswer> it = question.getAnswers().iterator();
 		while (it.hasNext()) {
 			ConceptAnswer conceptAnswer = it.next();
-			
+
 			if (conceptAnswer.getUuid().equals(oclMapping.getExternalId())) {
 				found = true;
-				
+
 				if (Boolean.TRUE.equals(oclMapping.getRetired())) {
 					item = new Item(update, oclMapping, ItemState.RETIRED);
 					it.remove();
@@ -459,26 +459,26 @@ public class Importer {
 					item = new Item(update, oclMapping, ItemState.UPDATED);
 					conceptAnswer.setAnswerConcept(answer);
 				}
-				
+
 				break;
 			}
 		}
-		
+
 		if (!found) {
 			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
 			conceptAnswer.setUuid(oclMapping.getExternalId());
 			question.addAnswer(conceptAnswer);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
-		
+
 		return item;
 	}
-	
+
 	void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
 		for (OclConcept.Name oclName : oclConcept.getNames()) {
 			ConceptNameType oclNameType = oclName.getNameType() != null ? ConceptNameType.valueOf(oclName.getNameType())
 			        : null;
-			
+
 			boolean nameFound = false;
 			for (ConceptName name : concept.getNames(true)) {
 				if (isMatch(oclName, name)) {
@@ -487,28 +487,28 @@ public class Importer {
 					name.setLocale(oclName.getLocale());
 					name.setConceptNameType(oclNameType);
 					name.setLocalePreferred(oclName.isLocalePreferred());
-					
+
 					//Unvoiding if necessary
 					name.setVoided(false);
 					name.setVoidReason(null);
 					name.setVoidedBy(null);
-					
+
 					nameFound = true;
 					break;
 				}
 			}
-			
+
 			if (!nameFound) {
 				ConceptName name = new ConceptName(oclName.getName(), oclName.getLocale());
 				name.setUuid(oclName.getExternalId());
 				name.setConceptNameType(oclNameType);
 				name.setLocalePreferred(oclName.isLocalePreferred());
-				
+
 				concept.addName(name);
 			}
 		}
 	}
-	
+
 	void voidNamesRemovedFromOcl(Concept concept, OclConcept oclConcept) {
 		for (ConceptName name : concept.getNames(true)) {
 			boolean nameFound = false;
@@ -524,13 +524,13 @@ public class Importer {
 			}
 		}
 	}
-	
+
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
-		for (OclConcept.Description oclDescription : oclConcept.getDescriptons()) {
+		for (OclConcept.Description oclDescription : oclConcept.getDescriptions()) {
 			if (StringUtils.isBlank(oclDescription.getDescription())) {
 				continue;
 			}
-			
+
 			boolean nameFound = false;
 			for (ConceptDescription description : concept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
@@ -541,7 +541,7 @@ public class Importer {
 					break;
 				}
 			}
-			
+
 			if (!nameFound) {
 				ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
 				        oclDescription.getLocale());
@@ -550,12 +550,12 @@ public class Importer {
 			}
 		}
 	}
-	
+
 	void removeDescriptionsRemovedFromOcl(Concept concept, OclConcept oclConcept) {
 		for (Iterator<ConceptDescription> it = concept.getDescriptions().iterator(); it.hasNext();) {
 			ConceptDescription description = it.next();
 			boolean descriptionFound = false;
-			for (Description oclDescription : oclConcept.getDescriptons()) {
+			for (Description oclDescription : oclConcept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
 					descriptionFound = true;
 					break;
@@ -566,11 +566,11 @@ public class Importer {
 			}
 		}
 	}
-	
+
 	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
 		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals();
 	}
-	
+
 	public boolean isMatch(OclConcept.Description oclDescription, ConceptDescription description) {
 		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals();
 	}
