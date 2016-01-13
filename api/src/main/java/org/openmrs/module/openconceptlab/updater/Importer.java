@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -99,48 +100,65 @@ public class Importer {
 			added = true;
 		}
 
-		boolean trySaving = true;
-		boolean synonymsOnly = true;
-		while (trySaving) {
+		boolean retryOnFailure = true;
+		boolean fixSynonymsOnly = true;
+		List<String> resolutionLog = new ArrayList<String>();
+		boolean fixed = false;
+		while (true) {
 			try {
 				conceptService.saveConcept(concept);
-				trySaving = false;
+
+				return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 			}
 			catch (DuplicateConceptNameException e) {
+				if (fixed) {
+					if (fixSynonymsOnly) {
+						fixSynonymsOnly = false;
+					} else {
+						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
+					}
+				}
+
 				Context.clearSession();
 				cacheService.clearCache();
 				update = updateService.getUpdate(update.getUpdateId());
 
-				log.info("Attempting to fix " + e.getMessage() + " for concept with UUID " + concept.getUuid());
+				resolutionLog.add("Fixing '" + e.getMessage() + "' for " + concept.getUuid());
 				try {
-					trySaving = changeDuplicateNamesToIndexTerm(oclConcept, e, synonymsOnly);
-
-					if (!trySaving) {
-						synonymsOnly = false;
-						trySaving = changeDuplicateNamesToIndexTerm(oclConcept, e, synonymsOnly);
+					fixed = changeDuplicateNamesToIndexTerm(oclConcept, e, resolutionLog, fixSynonymsOnly);
+					if (!fixed && fixSynonymsOnly) {
+						fixSynonymsOnly = false;
+						fixed = changeDuplicateNamesToIndexTerm(oclConcept, e, resolutionLog, fixSynonymsOnly);
 					}
-				} catch (Exception ex) {
-					if (synonymsOnly) {
-						synonymsOnly = false;
-						trySaving = true;
+
+					if (!fixed) {
+						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
+					}
+				} catch (DuplicateConceptNameException ex) {
+					if (fixSynonymsOnly) {
+						fixed = false;
+						fixSynonymsOnly = false;
 					} else {
-						throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
-				        + " after attempting to fix duplicates", ex);
+						resolutionLog.add("Failing to fix duplicate name due to '" + ex.getMessage() + "'");
+						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), ex);
 					}
 				}
 
 				concept = toConcept(cacheService, oclConcept);
-				if (!trySaving) {
-					throw new ImportException("Cannot save concept with UUID " + concept.getUuid()
-					        + " after attempting to fix duplicates", e);
-				}
 			}
 			catch (Exception e) {
-				throw new ImportException("Cannot save concept with UUID " + concept.getUuid(), e);
+				if (retryOnFailure) {
+					resolutionLog.add("Retrying importing " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");
+					retryOnFailure = false;
+				} else {
+					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
+				}
 			}
 		}
+	}
 
-		return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
+	public String logToString(List<String> log) {
+		return StringUtils.join(log, "\n");
 	}
 
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
@@ -215,7 +233,7 @@ public class Importer {
 		return concept;
 	}
 
-	private boolean changeDuplicateNamesToIndexTerm(OclConcept concept, DuplicateConceptNameException e, boolean synonymsOnly) {
+	private boolean changeDuplicateNamesToIndexTerm(OclConcept concept, DuplicateConceptNameException e, List<String> resolutionLog, boolean synonymsOnly) {
 		String message = e.getMessage();
 		Matcher matcher = DUPLICATE_NAME_PATTERN.matcher(message);
 		if (matcher.find()) {
@@ -228,6 +246,7 @@ public class Importer {
 				for (ConceptName conceptName : localConcept.getNames()) {
 					if (!synonymsOnly || conceptName.getConceptNameType() == null) {
 						if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+							resolutionLog.add("Changing name '" + conceptName.getName() + "' to index in local " + localConcept.getUuid());
 							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
 							conceptName.setLocalePreferred(false);
 							changed = true;
@@ -243,6 +262,7 @@ public class Importer {
 			for (Name conceptName : concept.getNames()) {
 				if (!synonymsOnly || StringUtils.isBlank(conceptName.getNameType())) {
 					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
+						resolutionLog.add("Changing name '" + conceptName.getName() + "' to index in subscribed " + concept.getUuid());
 						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
 						conceptName.setLocalePreferred(false);
 						changed = true;

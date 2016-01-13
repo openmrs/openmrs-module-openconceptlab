@@ -49,51 +49,51 @@ import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 
 public class Updater implements Runnable {
-	
+
 	private Log log = LogFactory.getLog(getClass());
-	
+
 	public final static int BATCH_SIZE = 128;
-	
+
 	public final static int THREAD_POOL_SIZE = 16;
-	
+
 	UpdateService updateService;
-	
+
 	ConceptService conceptService;
-	
+
 	OclClient oclClient;
-	
+
 	Importer importer;
-	
+
 	private volatile Update update;
-	
+
 	private CountingInputStream in = null;
-	
+
 	private volatile long totalBytesToProcess;
-	
-	
+
+
     public void setUpdateService(UpdateService updateService) {
 	    this.updateService = updateService;
     }
-    
-    
+
+
     public void setConceptService(ConceptService conceptService) {
 	    this.conceptService = conceptService;
     }
-    
-    
+
+
     public void setOclClient(OclClient oclClient) {
 	    this.oclClient = oclClient;
     }
-    
+
     public void setImporter(Importer importer) {
 	    this.importer = importer;
     }
-	
+
 	/**
 	 * Runs an update for a configured subscription.
 	 * <p>
 	 * It is not run directly, rather by a dedicated scheduler {@link UpdateScheduler}.
-	 * 
+	 *
 	 * @should start first update with response date
 	 * @should start next update with updated since
 	 * @should create item for each concept and mapping
@@ -101,11 +101,11 @@ public class Updater implements Runnable {
 	@Override
 	public void run() {
 		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				runAndHandleErrors(new Task() {
-					
+
 					@Override
 					public void run() throws Exception {
 						Subscription subscription = updateService.getSubscription();
@@ -114,65 +114,65 @@ public class Updater implements Runnable {
 						if (lastUpdate != null) {
 							updatedSince = lastUpdate.getOclDateStarted();
 						}
-						
+
 						OclResponse oclResponse;
-						
+
 						if (updatedSince == null) {
 							oclResponse = oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
 						} else {
 							oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(),
 							    updatedSince);
 						}
-						
+
 						updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
-						
+
 						in = new CountingInputStream(oclResponse.getContentStream());
 						totalBytesToProcess = oclResponse.getContentLength();
-						
+
 						processInput();
-						
+
 						in.close();
 					}
 				});
 			}
 		}, OpenConceptLabActivator.getDaemonToken());
 	}
-	
+
 	/**
 	 * It can be used to run update from the given input e.g. from a resource bundled with a module.
 	 * <p>
 	 * It does not require any subscription to be setup.
-	 * 
+	 *
 	 * @param inputStream to JSON in OCL format
 	 */
 	public void run(final InputStream inputStream) {
 		runAndHandleErrors(new Task() {
-			
+
 			@Override
 			public void run() throws IOException {
 				in = new CountingInputStream(inputStream);
-				
+
 				processInput();
-				
+
 				in.close();
 			}
 		});
 	}
-	
+
 	private interface Task {
-		
+
 		public void run() throws Exception;
 	}
-	
+
 	private void runAndHandleErrors(Task task) {
 		Update newUpdate = new Update();
 		updateService.startUpdate(newUpdate);
 		update = newUpdate;
 		totalBytesToProcess = -1; //unknown
-		
+
 		try {
 			task.run();
-			
+
 			Integer errors = updateService.getUpdateItemsCount(update, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
 			if (errors > 0) {
 				updateService.failUpdate(update);
@@ -184,7 +184,7 @@ public class Updater implements Runnable {
 		}
 		finally {
 			IOUtils.closeQuietly(in);
-			
+
 			try {
 				if (update != null && update.getUpdateId() != null) {
 					updateService.stopUpdate(update);
@@ -193,43 +193,43 @@ public class Updater implements Runnable {
 			catch (Exception e) {
 				log.error("Failed to stop update", e);
 			}
-			
+
 			in = null;
 			totalBytesToProcess = 0;
 			update = null;
 		}
 	}
-	
+
 	public static String getErrorMessage(Throwable e) {
-		String message = "Failed with '" + e.getMessage() + "'";
+		String message = e.getMessage();
 		Throwable rootCause = ExceptionUtils.getRootCause(e);
 		if (rootCause == null) {
 			rootCause = e;
 		}
-		
+
 		String[] stackFrames = ExceptionUtils.getStackFrames(rootCause);
 		int endIndex = stackFrames.length > 5 ? 5 : stackFrames.length;
-		message += " caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
-		
+		message += "\n caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
+
 		if (message.length() > 1024) {
 			return message.substring(0, 1024);
 		} else {
 			return message;
 		}
 	}
-	
+
 	public long getBytesDownloaded() {
 		return oclClient.getBytesDownloaded();
 	}
-	
+
 	public long getTotalBytesToDownload() {
 		return oclClient.getTotalBytesToDownload();
 	}
-	
+
 	public boolean isDownloaded() {
 		return oclClient.isDownloaded();
 	}
-	
+
 	public long getBytesProcessed() {
 		if (in != null) {
 			return in.getByteCount();
@@ -237,45 +237,45 @@ public class Updater implements Runnable {
 			return 0;
 		}
 	}
-	
+
 	public long getTotalBytesToProcess() {
 		return totalBytesToProcess;
 	}
-	
+
 	public boolean isProcessed() {
 		return totalBytesToProcess == getBytesProcessed();
 	}
-	
+
 	public boolean isRunning() {
 		Update lastUpdate = updateService.getLastUpdate();
 		if (lastUpdate == null) {
 			return false;
 		}
-		
+
 		if (update == null && !lastUpdate.isStopped()) {
 			lastUpdate.setErrorMessage("Process terminated before completion");
 			updateService.stopUpdate(lastUpdate);
 		}
-		
+
 		return update != null;
 	}
-	
+
 	private void processInput() throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		JsonParser parser = objectMapper.getJsonFactory().createJsonParser(in);
-		
+
 		JsonToken token = parser.nextToken();
 		if (token != JsonToken.START_OBJECT) {
 			throw new IOException("JSON must start from an object");
 		}
 		token = parser.nextToken();
-		
+
 		token = advanceToListOf("concepts", "mappings", parser);
-		
+
 		if (token == JsonToken.END_OBJECT || token == null) {
 			return;
 		}
-		
+
 		String baseUrl = updateService.getSubscription().getUrl();
 		if (baseUrl != null) {
 			try {
@@ -289,34 +289,34 @@ public class Updater implements Runnable {
 				throw new IllegalStateException(baseUrl + " is not valid", e);
 			}
 		}
-		
+
 		ThreadPoolExecutor runner = newRunner();
 		List<OclConcept> oclConcepts = new ArrayList<OclConcept>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
 			oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
-			
+
 			oclConcepts.add(oclConcept);
-			
+
 			if (oclConcepts.size() >= BATCH_SIZE) {
 				ImportRunner importRunner = new ImportRunner(importer, new CacheService(conceptService), updateService,
 				        update);
 				importRunner.setOclConcepts(oclConcepts);
-				
+
 				oclConcepts = new ArrayList<OclConcept>();
-				
+
 				runner.execute(importRunner);
 			}
 		}
-		
+
 		if (oclConcepts.size() != 0) {
 			ImportRunner importRunner = new ImportRunner(importer, new CacheService(conceptService), updateService, update);
 			importRunner.setOclConcepts(oclConcepts);
-			
+
 			runner.execute(importRunner);
 		}
-		
+
 		runner.shutdown();
 		try {
 			runner.awaitTermination(32, TimeUnit.DAYS);
@@ -324,13 +324,13 @@ public class Updater implements Runnable {
 		catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-		
+
 		token = advanceToListOf("mappings", null, parser);
-		
+
 		if (token == JsonToken.END_OBJECT) {
 			return;
 		}
-		
+
 		runner = newRunner();
 		List<OclMapping> oclMappings = new ArrayList<OclMapping>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
@@ -339,27 +339,27 @@ public class Updater implements Runnable {
 			oclMapping.setFromConceptUrl(prependBaseUrl(baseUrl, oclMapping.getFromConceptUrl()));
 			oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
 			oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
-			
+
 			oclMappings.add(oclMapping);
-			
+
 			if (oclMappings.size() >= BATCH_SIZE) {
 				ImportRunner importRunner = new ImportRunner(importer, new CacheService(conceptService), updateService,
 				        update);
 				importRunner.setOclMappings(oclMappings);
-				
+
 				oclMappings = new ArrayList<OclMapping>();
-				
+
 				runner.execute(importRunner);
 			}
 		}
-		
+
 		if (oclMappings.size() != 0) {
 			ImportRunner importRunner = new ImportRunner(importer, new CacheService(conceptService), updateService, update);
 			importRunner.setOclMappings(oclMappings);
-			
+
 			runner.execute(importRunner);
 		}
-		
+
 		runner.shutdown();
 		try {
 			runner.awaitTermination(32, TimeUnit.DAYS);
@@ -368,11 +368,11 @@ public class Updater implements Runnable {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private ThreadPoolExecutor newRunner() {
 		return new ThreadPoolExecutor(0, THREAD_POOL_SIZE, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
 		        THREAD_POOL_SIZE / 2), new RejectedExecutionHandler() {
-					
+
 					@Override
 					public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
 						try {
@@ -384,7 +384,7 @@ public class Updater implements Runnable {
 					}
 				});
 	}
-	
+
 	private String prependBaseUrl(String baseUrl, String url) {
 		if (baseUrl == null) {
 			return url;
@@ -392,20 +392,20 @@ public class Updater implements Runnable {
 		if (url == null) {
 			return null;
 		}
-		
+
 		if (!url.startsWith("/")) {
 			url = "/" + url;
 		}
 		return baseUrl + url;
 	}
-	
+
 	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException,
 	        JsonParseException {
 		JsonToken token = parser.getCurrentToken();
 		if (token == null) {
 			token = parser.nextToken();
 		}
-		
+
 		do {
 			if (token == JsonToken.START_OBJECT) {
 				String text = parser.getText();
@@ -431,17 +431,17 @@ public class Updater implements Runnable {
 				return token;
 			}
 		} while ((token = parser.nextToken()) != null);
-		
+
 		return null;
 	}
-	
+
 	public UpdateProgress getUpdateProgress() {
 		UpdateProgress updateProgress = new UpdateProgress();
-		
+
 		Update lastUpdate = updateService.getLastUpdate();
 		long time = (new Date().getTime() - lastUpdate.getLocalDateStarted().getTime()) / 1000;
 		updateProgress.setTime(time);
-		
+
 		if (!isDownloaded()) {
 			double totalBytesToDownload = getTotalBytesToDownload();
 			double progress = 0;
@@ -466,8 +466,8 @@ public class Updater implements Runnable {
 		} else {
 			updateProgress.setProgress(100);
 		}
-		
+
 		return updateProgress;
 	}
-	
+
 }
