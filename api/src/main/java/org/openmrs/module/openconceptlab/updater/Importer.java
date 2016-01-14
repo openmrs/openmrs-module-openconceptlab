@@ -12,7 +12,6 @@ package org.openmrs.module.openconceptlab.updater;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -55,8 +54,6 @@ public class Importer {
 	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
-
-	private static final Pattern DUPLICATE_NAME_PATTERN = Pattern.compile("^'([^']*)' is a duplicate name in locale '([^']*)'$");
 
 	ConceptService conceptService;
 
