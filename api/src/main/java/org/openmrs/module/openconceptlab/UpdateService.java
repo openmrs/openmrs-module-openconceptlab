@@ -8,10 +8,11 @@ import java.util.Set;
 import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptReferenceTerm;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface UpdateService {
-	
+
 	/**
 	 * @should return all updates ordered descending by ids
 	 */
@@ -20,7 +21,7 @@ public interface UpdateService {
 
     @Transactional(readOnly = true)
 	List<Concept> getConceptsByName(String name, Locale locale);
-	
+
 	/**
 	 * @should return update with id
 	 * @should throw IllegalArgumentException if update does not exist
@@ -42,7 +43,7 @@ public interface UpdateService {
 
     @Transactional
 	void failUpdate(Update update, String errorMessage);
-	
+
 	/**
 	 * @should throw IllegalStateException if another update is in progress
 	 */
@@ -51,7 +52,7 @@ public interface UpdateService {
 
     @Transactional
 	void updateOclDateStarted(Update update, Date oclDateStarted);
-	
+
 	/**
 	 * @should throw IllegalArgumentException if not scheduled
 	 * @should throw IllegalStateException if trying to stop twice
@@ -85,7 +86,7 @@ public interface UpdateService {
 	 */
     @Transactional(readOnly = true)
 	List<Item> getUpdateItems(Update update, int first, int max, Set<ItemState> states);
-	
+
 	/**
 	 * @param update the update to be passed
 	 * @param states set of states passed
@@ -93,7 +94,7 @@ public interface UpdateService {
 	 */
     @Transactional(readOnly = true)
 	Integer getUpdateItemsCount(Update update, Set<ItemState> states);
-	
+
 	/**
 	 * @param uuid the uuid to search a concept with
 	 * @return true if subscribed else false
@@ -109,5 +110,8 @@ public interface UpdateService {
 
     @Transactional
 	ConceptReferenceTerm updateConceptReferenceTermWithoutValidation(ConceptReferenceTerm term);
-	
+
+    @Transactional(readOnly = true)
+	List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept);
+
 }

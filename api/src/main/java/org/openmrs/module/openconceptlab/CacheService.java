@@ -20,23 +20,23 @@ import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
 
 public class CacheService {
-	
+
 	ConceptService conceptService;
-	
+
 	public CacheService(ConceptService conceptService) {
 		this.conceptService = conceptService;
 	}
-	
+
 	Map<String, ConceptDatatype> conceptDatatypes = new ConcurrentHashMap<String, ConceptDatatype>();
-	
+
 	Map<String, ConceptClass> conceptClasses = new ConcurrentHashMap<String, ConceptClass>();
-	
+
 	Map<String, ConceptSource> conceptSources = new ConcurrentHashMap<String, ConceptSource>();
-	
+
 	Map<String, ConceptMapType> conceptMapTypes = new ConcurrentHashMap<String, ConceptMapType>();
-	
+
 	Map<String, Concept> conceptsByUuids = new ConcurrentHashMap<String, Concept>();
-	
+
 	public void clearCache() {
 		conceptDatatypes.clear();
 		conceptClasses.clear();
@@ -44,7 +44,7 @@ public class CacheService {
 		conceptMapTypes.clear();
 		conceptsByUuids.clear();
 	}
-	
+
 	public ConceptDatatype getConceptDatatypeByName(String name) {
 		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
 		if (conceptDatatype != null) {
@@ -57,7 +57,7 @@ public class CacheService {
 			return conceptDatatype;
 		}
 	}
-	
+
 	public ConceptClass getConceptClassByName(String name) {
 		ConceptClass conceptClass = conceptClasses.get(name);
 		if (conceptClass != null) {
@@ -70,7 +70,7 @@ public class CacheService {
 			return conceptClass;
 		}
 	}
-	
+
 	public ConceptSource getConceptSourceByName(String name) {
 		ConceptSource conceptSource = conceptSources.get(name);
 		if (conceptSource != null) {

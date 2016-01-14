@@ -12,11 +12,8 @@ package org.openmrs.module.openconceptlab.updater;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.logging.Log;
@@ -101,9 +98,8 @@ public class Importer {
 		}
 
 		boolean retryOnFailure = true;
-		boolean fixSynonymsOnly = true;
+		boolean retryOnDuplicateNames = true;
 		List<String> resolutionLog = new ArrayList<String>();
-		boolean fixed = false;
 		while (true) {
 			try {
 				conceptService.saveConcept(concept);
@@ -111,48 +107,35 @@ public class Importer {
 				return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 			}
 			catch (DuplicateConceptNameException e) {
-				if (fixed) {
-					if (fixSynonymsOnly) {
-						fixSynonymsOnly = false;
-					} else {
-						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
-					}
+				if (!retryOnDuplicateNames) {
+					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
 				}
 
 				Context.clearSession();
 				cacheService.clearCache();
 				update = updateService.getUpdate(update.getUpdateId());
 
-				resolutionLog.add("Fixing '" + e.getMessage() + "' for " + concept.getUuid());
-				try {
-					fixed = changeDuplicateNamesToIndexTerm(oclConcept, e, resolutionLog, fixSynonymsOnly);
-					if (!fixed && fixSynonymsOnly) {
-						fixSynonymsOnly = false;
-						fixed = changeDuplicateNamesToIndexTerm(oclConcept, e, resolutionLog, fixSynonymsOnly);
-					}
+				resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");
 
-					if (!fixed) {
-						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
-					}
-				} catch (DuplicateConceptNameException ex) {
-					if (fixSynonymsOnly) {
-						fixed = false;
-						fixSynonymsOnly = false;
-					} else {
-						resolutionLog.add("Failing to fix duplicate name due to '" + ex.getMessage() + "'");
-						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), ex);
-					}
-				}
+				changeDuplicateNamesToIndexTerms(oclConcept, resolutionLog);
 
 				concept = toConcept(cacheService, oclConcept);
+
+				retryOnDuplicateNames = false;
 			}
 			catch (Exception e) {
-				if (retryOnFailure) {
-					resolutionLog.add("Retrying importing " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");
-					retryOnFailure = false;
-				} else {
+				if (!retryOnFailure) {
 					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
 				}
+
+				Context.clearSession();
+				cacheService.clearCache();
+				update = updateService.getUpdate(update.getUpdateId());
+				concept = toConcept(cacheService, oclConcept);
+
+				resolutionLog.add("Retrying import of concept " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");
+
+				retryOnFailure = false;
 			}
 		}
 	}
@@ -233,46 +216,31 @@ public class Importer {
 		return concept;
 	}
 
-	private boolean changeDuplicateNamesToIndexTerm(OclConcept concept, DuplicateConceptNameException e, List<String> resolutionLog, boolean synonymsOnly) {
-		String message = e.getMessage();
-		Matcher matcher = DUPLICATE_NAME_PATTERN.matcher(message);
-		if (matcher.find()) {
-			boolean changed = false;
-			String name = matcher.group(1);
-			Locale locale = LocaleUtils.toLocale(matcher.group(2));
-
-			List<Concept> localConcepts = updateService.getConceptsByName(name, locale);
-			for (Concept localConcept : localConcepts) {
-				for (ConceptName conceptName : localConcept.getNames()) {
-					if (!synonymsOnly || conceptName.getConceptNameType() == null) {
-						if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-							resolutionLog.add("Changing name '" + conceptName.getName() + "' to index in local " + localConcept.getUuid());
-							conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
-							conceptName.setLocalePreferred(false);
-							changed = true;
-						}
-					}
-				}
-
-				if (changed) {
-					conceptService.saveConcept(localConcept);
-				}
-			}
-
-			for (Name conceptName : concept.getNames()) {
-				if (!synonymsOnly || StringUtils.isBlank(conceptName.getNameType())) {
-					if (conceptName.getName().equals(name) && conceptName.getLocale().equals(locale)) {
-						resolutionLog.add("Changing name '" + conceptName.getName() + "' to index in subscribed " + concept.getUuid());
-						conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
-						conceptName.setLocalePreferred(false);
-						changed = true;
-					}
-				}
-			}
-
-			return changed;
+	private void changeDuplicateNamesToIndexTerms(OclConcept concept, List<String> resolutionLog) {
+		List<Name> conceptNames = updateService.getDuplicateConceptNames(concept);
+		for (Name conceptName : conceptNames) {
+			resolutionLog.add("Changing name '" + conceptName.getName() + "' to index term");
+			conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
+			conceptName.setLocalePreferred(false);
 		}
-		return false;
+
+		//Make sure there is at least one fully specified name
+		boolean hasFullySpecifiedName = false;
+		for (Name name : concept.getNames()) {
+			if (name.getNameType().equals(ConceptNameType.FULLY_SPECIFIED.toString())) {
+				hasFullySpecifiedName = true;
+				break;
+			}
+		}
+
+		if (!hasFullySpecifiedName) {
+			for (Name name : concept.getNames()) {
+				if (!name.getNameType().equals(ConceptNameType.INDEX_TERM.toString())) {
+					name.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+					break;
+				}
+			}
+		}
 	}
 
 	/**
@@ -577,7 +545,10 @@ public class Importer {
 			boolean descriptionFound = false;
 			for (Description oclDescription : oclConcept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
-					descriptionFound = true;
+					if (!StringUtils.isBlank(oclDescription.getDescription())) {
+						//Blank descriptions are invalid and will be removed
+						descriptionFound = true;
+					}
 					break;
 				}
 			}

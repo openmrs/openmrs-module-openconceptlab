@@ -21,6 +21,8 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Conjunction;
+import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -30,21 +32,22 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.module.openconceptlab.client.OclConcept;
 
 public class UpdateServiceImpl implements UpdateService {
-	
+
 	SessionFactory sessionFactory;
-	
+
 	AdministrationService adminService;
-	
+
     public void setSessionFactory(SessionFactory sessionFactory) {
 	    this.sessionFactory = sessionFactory;
     }
-    
+
     public void setAdminService(AdministrationService adminService) {
 	    this.adminService = adminService;
     }
-	
+
 	/**
 	 * @should return all updates ordered descending by ids
 	 */
@@ -54,12 +57,12 @@ public class UpdateServiceImpl implements UpdateService {
 		update.addOrder(Order.desc("updateId"));
 		update.setFirstResult(first);
 		update.setMaxResults(max);
-		
+
 		@SuppressWarnings("unchecked")
 		List<Update> list = update.list();
 		return list;
 	}
-	
+
 	@Override
 	public List<Concept> getConceptsByName(String name, Locale locale) {
 		Criteria criteria = getSession().createCriteria(ConceptName.class);
@@ -70,17 +73,50 @@ public class UpdateServiceImpl implements UpdateService {
 			criteria.add(Restrictions.eq("name", name));
 		}
 		criteria.add(Restrictions.eq("locale", locale));
-		
+
 		@SuppressWarnings("unchecked")
         List<ConceptName> conceptNames = criteria.list();
-		
+
 		Set<Concept> concepts = new LinkedHashSet<Concept>();
 		for (ConceptName conceptName : conceptNames) {
 	        concepts.add(conceptName.getConcept());
         }
 		return new ArrayList<Concept>(concepts);
 	}
-	
+
+	@Override
+	public List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept) {
+		Criteria criteria = getSession().createCriteria(ConceptName.class);
+		Disjunction or = Restrictions.disjunction();
+		for (OclConcept.Name name : concept.getNames()) {
+			Conjunction and = Restrictions.conjunction();
+			and.add(Restrictions.eq("voided", false));
+			if (adminService.isDatabaseStringComparisonCaseSensitive()) {
+				and.add(Restrictions.eq("name", name.getName()).ignoreCase());
+			} else {
+				and.add(Restrictions.eq("name", name.getName()));
+			}
+			and.add(Restrictions.eq("locale", name.getLocale()));
+			or.add(and);
+		}
+		criteria.add(or);
+
+		@SuppressWarnings("unchecked")
+        List<ConceptName> conceptNames = criteria.list();
+
+		List<OclConcept.Name> result = new ArrayList<OclConcept.Name>();
+		for (ConceptName conceptName : conceptNames) {
+			if (!conceptName.getConcept().isRetired() && !conceptName.getConcept().getUuid().equals(concept.getExternalId())) {
+				for (OclConcept.Name name : concept.getNames()) {
+					if (name.getName().equals(conceptName.getName()) && name.getLocale().equals(conceptName.getLocale())) {
+						result.add(name);
+					}
+				}
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * @should return update with id
 	 * @should throw IllegalArgumentException if update does not exist
@@ -93,7 +129,7 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		return update;
 	}
-	
+
 	@Override
 	public Update getLastUpdate() {
 		Criteria update = getSession().createCriteria(Update.class);
@@ -101,7 +137,7 @@ public class UpdateServiceImpl implements UpdateService {
 		update.setMaxResults(1);
 		return (Update) update.uniqueResult();
 	}
-	
+
 	@Override
 	public Update getLastSuccessfulSubscriptionUpdate() {
 		Criteria updateCriteria = getSession().createCriteria(Update.class);
@@ -109,10 +145,10 @@ public class UpdateServiceImpl implements UpdateService {
 		updateCriteria.add(Restrictions.isNotNull("oclDateStarted"));
 		updateCriteria.addOrder(Order.desc("updateId"));
 		updateCriteria.setMaxResults(1);
-		
+
 		return (Update) updateCriteria.uniqueResult();
 	}
-	
+
 	@Override
 	public void ignoreAllErrors(Update update) {
 		Query query = getSession().createQuery("update OclItem i set i.state = :newState where i.update = :update and i.state = :oldState");
@@ -120,20 +156,20 @@ public class UpdateServiceImpl implements UpdateService {
 		query.setParameter("update", update);
 		query.setParameter("oldState", ItemState.ERROR);
 		query.executeUpdate();
-		
+
 		update.setErrorMessage(null);
 		getSession().saveOrUpdate(update);
 	}
-	
+
 	@Override
 	public void failUpdate(Update update) {
 		failUpdate(update, null);
 	}
-	
+
 	@Override
 	public void failUpdate(Update update, String errorMessage) {
 		update = getUpdate(update.getUpdateId());
-		
+
 		if (!StringUtils.isBlank(errorMessage)) {
 			update.setErrorMessage(errorMessage);
 		} else {
@@ -141,7 +177,7 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		getSession().saveOrUpdate(update);
 	}
-	
+
 	/**
 	 * @should throw IllegalStateException if another update is in progress
 	 */
@@ -153,14 +189,14 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		getSession().save(update);
 	}
-	
+
 	@Override
 	public void updateOclDateStarted(Update update, Date oclDateStarted) {
 		update.setOclDateStarted(oclDateStarted);
 		getSession().save(update);
 	}
-	
-	
+
+
 	/**
 	 * @should throw IllegalArgumentException if not scheduled
 	 * @should throw IllegalStateException if trying to stop twice
@@ -173,14 +209,14 @@ public class UpdateServiceImpl implements UpdateService {
 		if (update.getLocalDateStopped() != null) {
 			throw new IllegalStateException("Cannot stop the update twice.");
 		}
-		
+
 		update = getUpdate(update.getUpdateId());
-		
+
 		update.stop();
-		
+
 		getSession().saveOrUpdate(update);
 	}
-	
+
 	@Override
 	public Item getLastSuccessfulItemByUrl(String url) {
 		Criteria criteria = getSession().createCriteria(Item.class);
@@ -190,22 +226,22 @@ public class UpdateServiceImpl implements UpdateService {
 		criteria.setMaxResults(1);
 		return (Item) criteria.uniqueResult();
 	}
-	
+
 	@Override
 	public void saveItem(Item item) {
 		getSession().saveOrUpdate(item);
 	}
-	
+
 	@Override
 	public void saveItems(Iterable<? extends Item> items) {
-		for (Item item : items) {			
-			Update update = getUpdate(item.getUpdate().getUpdateId()); 
+		for (Item item : items) {
+			Update update = getUpdate(item.getUpdate().getUpdateId());
 			item.setUpdate(update); //replace with attached object
-			
+
 			saveItem(item);
         }
     }
-	
+
 	@Override
 	public Subscription getSubscription() {
 		String url = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
@@ -214,33 +250,33 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		Subscription subscription = new Subscription();
 		subscription.setUrl(url);
-		
+
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		subscription.setToken(token);
-		
+
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (!StringUtils.isBlank(days)) {
 			subscription.setDays(Integer.valueOf(days));
 		}
-		
+
 		String time = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
 		if (!StringUtils.isBlank(time)) {
 			String[] formattedTime = time.split(":");
 			if (formattedTime.length != 2) {
 				throw new IllegalStateException("Time in the wrong format. Expected 'HH:mm', given: " + time);
 			}
-			
+
 			subscription.setHours(Integer.valueOf(formattedTime[0]));
 			subscription.setMinutes(Integer.valueOf(formattedTime[1]));
 		}
-		
+
 		return subscription;
 	}
-	
+
 	private Session getSession() {
 		return sessionFactory.getCurrentSession();
 	}
-	
+
 	@Override
 	public void saveSubscription(Subscription subscription) {
 		GlobalProperty url = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
@@ -249,26 +285,26 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		url.setPropertyValue(subscription.getUrl());
 		adminService.saveGlobalProperty(url);
-		
+
 		GlobalProperty token = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_TOKEN);
 		if (token == null) {
 			token = new GlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		}
 		token.setPropertyValue(subscription.getToken());
 		adminService.saveGlobalProperty(token);
-		
+
 		GlobalProperty days = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (days == null) {
 			days = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		}
-		
+
 		if (subscription.getDays() != null) {
 			days.setPropertyValue(subscription.getDays().toString());
 		} else {
 			days.setPropertyValue("");
 		}
 		adminService.saveGlobalProperty(days);
-		
+
 		GlobalProperty time = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_TIME);
 		if (time == null) {
 			time = new GlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
@@ -280,14 +316,14 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		adminService.saveGlobalProperty(time);
 	}
-	
+
 	@Override
 	public void unsubscribe() {
 		saveSubscription(new Subscription());
 		getSession().createQuery("delete from OclItem").executeUpdate();
 		getSession().createQuery("delete from OclUpdate").executeUpdate();
-	}   
-	
+	}
+
 	/**
 	 * @param update the update to be passed
 	 * @param first starting index
@@ -305,10 +341,10 @@ public class UpdateServiceImpl implements UpdateService {
 		items.addOrder(Order.desc("state"));
 		items.setFirstResult(first);
 		items.setMaxResults(max);
-		
+
 		return items.list();
 	}
-	
+
 	/**
 	 * @param update the update to be passed
 	 * @param states set of states passed
@@ -324,7 +360,7 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 		return ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
 	}
-	
+
 	/**
 	 * @param uuid the uuid to search a concept with
 	 * @return true if subscribed else false
@@ -338,17 +374,17 @@ public class UpdateServiceImpl implements UpdateService {
 		if ((Long) (items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
 			isSubscribed = true;
 		}
-		
+
 		return isSubscribed;
 	}
-	
+
 	@Override
 	public ConceptMap getConceptMapByUuid(String uuid) {
 		Criteria criteria = getSession().createCriteria(ConceptMap.class);
 		criteria.add(Restrictions.eq("uuid", uuid));
 		return (ConceptMap) criteria.uniqueResult();
 	}
-	
+
 	@Override
 	public Concept updateConceptWithoutValidation(Concept concept) {
 		getSession().saveOrUpdate(concept);
