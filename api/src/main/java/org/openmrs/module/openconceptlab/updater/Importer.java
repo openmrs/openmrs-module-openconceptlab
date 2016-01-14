@@ -224,7 +224,7 @@ public class Importer {
 		//Make sure there is at least one fully specified name
 		boolean hasFullySpecifiedName = false;
 		for (Name name : concept.getNames()) {
-			if (name.getNameType().equals(ConceptNameType.FULLY_SPECIFIED.toString())) {
+			if (ConceptNameType.FULLY_SPECIFIED.toString().equals(name.getName())) {
 				hasFullySpecifiedName = true;
 				break;
 			}
@@ -232,7 +232,7 @@ public class Importer {
 
 		if (!hasFullySpecifiedName) {
 			for (Name name : concept.getNames()) {
-				if (!name.getNameType().equals(ConceptNameType.INDEX_TERM.toString())) {
+				if (!ConceptNameType.INDEX_TERM.toString().equals(name.getNameType())) {
 					name.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
 					break;
 				}
