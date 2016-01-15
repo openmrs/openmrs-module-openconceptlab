@@ -111,6 +111,11 @@ public interface UpdateService {
     @Transactional
 	ConceptReferenceTerm updateConceptReferenceTermWithoutValidation(ConceptReferenceTerm term);
 
+    /**
+     * @param concept
+     * @return
+     * @should find duplicates
+     */
     @Transactional(readOnly = true)
 	List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept);
 

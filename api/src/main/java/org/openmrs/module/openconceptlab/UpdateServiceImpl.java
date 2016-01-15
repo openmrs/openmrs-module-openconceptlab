@@ -21,8 +21,6 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Conjunction;
-import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -86,34 +84,30 @@ public class UpdateServiceImpl implements UpdateService {
 
 	@Override
 	public List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept) {
-		Criteria criteria = getSession().createCriteria(ConceptName.class);
-		Disjunction or = Restrictions.disjunction();
-		for (OclConcept.Name name : concept.getNames()) {
-			Conjunction and = Restrictions.conjunction();
-			and.add(Restrictions.eq("voided", false));
-			if (adminService.isDatabaseStringComparisonCaseSensitive()) {
-				and.add(Restrictions.eq("name", name.getName()).ignoreCase());
-			} else {
-				and.add(Restrictions.eq("name", name.getName()));
-			}
-			and.add(Restrictions.eq("locale", name.getLocale()));
-			or.add(and);
-		}
-		criteria.add(or);
-
-		@SuppressWarnings("unchecked")
-        List<ConceptName> conceptNames = criteria.list();
-
 		List<OclConcept.Name> result = new ArrayList<OclConcept.Name>();
-		for (ConceptName conceptName : conceptNames) {
-			if (!conceptName.getConcept().isRetired() && !conceptName.getConcept().getUuid().equals(concept.getExternalId())) {
-				for (OclConcept.Name name : concept.getNames()) {
-					if (name.getName().equals(conceptName.getName()) && name.getLocale().equals(conceptName.getLocale())) {
-						result.add(name);
-					}
+
+		boolean dbCaseSensitive = adminService.isDatabaseStringComparisonCaseSensitive();
+		for (OclConcept.Name name : concept.getNames()) {
+			Criteria criteria = getSession().createCriteria(ConceptName.class);
+			criteria.add(Restrictions.eq("voided", false));
+			if (dbCaseSensitive) {
+				criteria.add(Restrictions.eq("name", name.getName()).ignoreCase());
+			} else {
+				criteria.add(Restrictions.eq("name", name.getName()));
+			}
+			criteria.add(Restrictions.eq("locale", name.getLocale()));
+
+			@SuppressWarnings("unchecked")
+	        List<ConceptName> conceptNames = criteria.list();
+
+			for (ConceptName conceptName : conceptNames) {
+				if (!conceptName.getConcept().isRetired() && !conceptName.getConcept().getUuid().equals(concept.getExternalId())) {
+					result.add(name);
+					break;
 				}
 			}
 		}
+
 		return result;
 	}
 

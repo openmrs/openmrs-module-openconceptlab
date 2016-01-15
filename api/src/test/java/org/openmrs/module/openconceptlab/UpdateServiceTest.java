@@ -10,26 +10,39 @@
 package org.openmrs.module.openconceptlab;
 
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.List;
-
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import org.hamcrest.Matcher;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.openmrs.Concept;
+import org.openmrs.ConceptName;
+import org.openmrs.api.ConceptNameType;
+import org.openmrs.api.ConceptService;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclConcept.Name;
+import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.springframework.beans.factory.annotation.Autowired;
+
 public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
-	
+
 	@Autowired
 	UpdateService updateService;
-	
+
+	@Autowired
+	ConceptService conceptService;
+
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
-	
+
 	/**
 	 * @see UpdateServiceImpl#getUpdate(Long)
 	 * @verifies return update with id
@@ -38,12 +51,12 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	public void getUpdate_shouldReturnUpdateWithId() throws Exception {
 		Update newUpdate = new Update();
 		updateService.startUpdate(newUpdate);
-		
+
 		Update update = updateService.getUpdate(newUpdate.getUpdateId());
-		
+
 		assertThat(update, is(newUpdate));
 	}
-	
+
 	/**
 	 * @see UpdateServiceImpl#getUpdate(Long)
 	 * @verifies throw IllegalArgumentException if update does not exist
@@ -52,9 +65,9 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	public void getUpdate_shouldThrowIllegalArgumentExceptionIfUpdateDoesNotExist() throws Exception {
 		exception.expect(IllegalArgumentException.class);
 		updateService.getUpdate(0L);
-		
+
 	}
-	
+
 	/**
 	 * @see UpdateServiceImpl#getUpdatesInOrder()
 	 * @verifies return all updates ordered descending by ids
@@ -64,12 +77,12 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		Update firstUpdate = new Update();
 		updateService.startUpdate(firstUpdate);
 		updateService.stopUpdate(firstUpdate);
-		
+
 		Update secondUpdate = new Update();
 		updateService.startUpdate(secondUpdate);
-		
+
 		List<Update> updatesInOrder = updateService.getUpdatesInOrder(0, 20);
-		
+
 		assertThat(updatesInOrder, contains(secondUpdate, firstUpdate));
 	}
 
@@ -81,7 +94,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     public void scheduleUpdate_shouldThrowIllegalStateExceptionIfAnotherUpdateIsInProgress() throws Exception {
     	Update firstUpdate = new Update();
     	updateService.startUpdate(firstUpdate);
-    	
+
     	Update secondUpdate = new Update();
     	exception.expect(IllegalStateException.class);
     	updateService.startUpdate(secondUpdate);
@@ -107,7 +120,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     	Update update = new Update();
     	updateService.startUpdate(update);
     	updateService.stopUpdate(update);
-    	
+
     	exception.expect(IllegalStateException.class);
     	updateService.stopUpdate(update);
     }
@@ -126,8 +139,30 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		newSubscription.setToken("c84e5a66d8b2e9a9bf1459cd81e6357f1c6a997e");
 
 		updateService.saveSubscription(newSubscription);
-		
+
 		Subscription subscription = updateService.getSubscription();
 		assertThat(subscription, is(newSubscription));
+	}
+
+	@Test
+	public void getDuplicateConceptNames_shoudlFindDuplicates() throws Exception {
+		Concept concept = new Concept();
+		concept.setDatatype(conceptService.getConceptDatatype(1));
+		concept.setConceptClass(conceptService.getConceptClass(1));
+		ConceptName conceptName = new ConceptName();
+		conceptName.setName("Rubella Viêm não");
+		conceptName.setConceptNameType(ConceptNameType.FULLY_SPECIFIED);
+		conceptName.setLocale(new Locale("vi"));
+		concept.addName(conceptName);
+		conceptService.saveConcept(concept);
+
+		OclConcept oclConcept = new OclConcept();
+		Name oclName = new OclConcept.Name();
+		oclName.setName("Rubella Viêm não");
+		oclName.setLocale(new Locale("vi"));
+		oclConcept.setNames(Arrays.asList(oclName));
+
+		List<Name> duplicateOclNames = updateService.getDuplicateConceptNames(oclConcept);
+		assertThat(duplicateOclNames, contains((Matcher<? super OclConcept.Name>) hasProperty("name", is("Rubella Viêm não"))));
 	}
 }

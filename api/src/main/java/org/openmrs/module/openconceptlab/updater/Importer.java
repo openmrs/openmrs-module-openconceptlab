@@ -112,7 +112,7 @@ public class Importer {
 				cacheService.clearCache();
 				update = updateService.getUpdate(update.getUpdateId());
 
-				resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");
+				resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to " + e.getMessage());
 
 				changeDuplicateNamesToIndexTerms(oclConcept, resolutionLog);
 
@@ -216,7 +216,7 @@ public class Importer {
 	private void changeDuplicateNamesToIndexTerms(OclConcept concept, List<String> resolutionLog) {
 		List<Name> conceptNames = updateService.getDuplicateConceptNames(concept);
 		for (Name conceptName : conceptNames) {
-			resolutionLog.add("Changing name '" + conceptName.getName() + "' to index term");
+			resolutionLog.add("Changing name '" + conceptName.getName() + "' in locale " + conceptName.getLocale() + " to index term");
 			conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
 			conceptName.setLocalePreferred(false);
 		}
@@ -224,7 +224,7 @@ public class Importer {
 		//Make sure there is at least one fully specified name
 		boolean hasFullySpecifiedName = false;
 		for (Name name : concept.getNames()) {
-			if (ConceptNameType.FULLY_SPECIFIED.toString().equals(name.getName())) {
+			if (ConceptNameType.FULLY_SPECIFIED.toString().equals(name.getNameType())) {
 				hasFullySpecifiedName = true;
 				break;
 			}
