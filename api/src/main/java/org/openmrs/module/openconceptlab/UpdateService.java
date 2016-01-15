@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
+import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
-import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface UpdateService {
@@ -117,6 +117,6 @@ public interface UpdateService {
      * @should find duplicates
      */
     @Transactional(readOnly = true)
-	List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept);
+	List<ConceptName> getDuplicateConceptNames(Concept concept);
 
 }

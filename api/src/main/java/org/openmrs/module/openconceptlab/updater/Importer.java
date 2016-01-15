@@ -41,7 +41,6 @@ import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
-import org.openmrs.module.openconceptlab.client.OclConcept.Name;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 
@@ -99,28 +98,27 @@ public class Importer {
 		List<String> resolutionLog = new ArrayList<String>();
 		while (true) {
 			try {
-				conceptService.saveConcept(concept);
+				try {
+					conceptService.saveConcept(concept);
 
-				return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
-			}
-			catch (DuplicateConceptNameException e) {
-				if (!retryOnDuplicateNames) {
-					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
+					return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 				}
+				catch (DuplicateConceptNameException e) {
+					if (!retryOnDuplicateNames) {
+						throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
+					}
 
-				Context.clearSession();
-				cacheService.clearCache();
-				update = updateService.getUpdate(update.getUpdateId());
+					Context.clearSession();
+					cacheService.clearCache();
+					update = updateService.getUpdate(update.getUpdateId());
+					concept = toConcept(cacheService, oclConcept);
 
-				resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to " + e.getMessage());
+					resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to " + e.getMessage());
+					changeDuplicateNamesToIndexTerms(concept, resolutionLog);
 
-				changeDuplicateNamesToIndexTerms(oclConcept, resolutionLog);
-
-				concept = toConcept(cacheService, oclConcept);
-
-				retryOnDuplicateNames = false;
-			}
-			catch (Exception e) {
+					retryOnDuplicateNames = false;
+				}
+			} catch (Exception e) {
 				if (!retryOnFailure) {
 					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
 				}
@@ -213,27 +211,27 @@ public class Importer {
 		return concept;
 	}
 
-	private void changeDuplicateNamesToIndexTerms(OclConcept concept, List<String> resolutionLog) {
-		List<Name> conceptNames = updateService.getDuplicateConceptNames(concept);
-		for (Name conceptName : conceptNames) {
+	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {
+		List<ConceptName> conceptNames = updateService.getDuplicateConceptNames(concept);
+		for (ConceptName conceptName : conceptNames) {
 			resolutionLog.add("Changing name '" + conceptName.getName() + "' in locale " + conceptName.getLocale() + " to index term");
-			conceptName.setNameType(ConceptNameType.INDEX_TERM.toString());
+			conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
 			conceptName.setLocalePreferred(false);
 		}
 
 		//Make sure there is at least one fully specified name
 		boolean hasFullySpecifiedName = false;
-		for (Name name : concept.getNames()) {
-			if (ConceptNameType.FULLY_SPECIFIED.toString().equals(name.getNameType())) {
+		for (ConceptName name : concept.getNames()) {
+			if (ConceptNameType.FULLY_SPECIFIED.equals(name.getConceptNameType())) {
 				hasFullySpecifiedName = true;
 				break;
 			}
 		}
 
 		if (!hasFullySpecifiedName) {
-			for (Name name : concept.getNames()) {
-				if (!ConceptNameType.INDEX_TERM.toString().equals(name.getNameType())) {
-					name.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			for (ConceptName name : concept.getNames()) {
+				if (!ConceptNameType.INDEX_TERM.equals(name.getConceptNameType())) {
+					name.setConceptNameType(ConceptNameType.FULLY_SPECIFIED);
 					break;
 				}
 			}

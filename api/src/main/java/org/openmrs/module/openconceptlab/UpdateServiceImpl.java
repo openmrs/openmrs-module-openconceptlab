@@ -10,6 +10,7 @@
 package org.openmrs.module.openconceptlab;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,7 +31,6 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
-import org.openmrs.module.openconceptlab.client.OclConcept;
 
 public class UpdateServiceImpl implements UpdateService {
 
@@ -83,27 +83,45 @@ public class UpdateServiceImpl implements UpdateService {
 	}
 
 	@Override
-	public List<OclConcept.Name> getDuplicateConceptNames(OclConcept concept) {
-		List<OclConcept.Name> result = new ArrayList<OclConcept.Name>();
+	public List<ConceptName> getDuplicateConceptNames(Concept conceptToImport) {
+		List<ConceptName> result = new ArrayList<ConceptName>();
+
+		if (conceptToImport.isRetired()) {
+			return Collections.emptyList();
+		}
 
 		boolean dbCaseSensitive = adminService.isDatabaseStringComparisonCaseSensitive();
-		for (OclConcept.Name name : concept.getNames()) {
-			Criteria criteria = getSession().createCriteria(ConceptName.class);
-			criteria.add(Restrictions.eq("voided", false));
-			if (dbCaseSensitive) {
-				criteria.add(Restrictions.eq("name", name.getName()).ignoreCase());
-			} else {
-				criteria.add(Restrictions.eq("name", name.getName()));
+		for (ConceptName nameToImport : conceptToImport.getNames()) {
+			if (nameToImport.isVoided()) {
+				continue;
 			}
-			criteria.add(Restrictions.eq("locale", name.getLocale()));
 
-			@SuppressWarnings("unchecked")
-	        List<ConceptName> conceptNames = criteria.list();
+			if (nameToImport.isLocalePreferred() || nameToImport.isFullySpecifiedName()
+					|| nameToImport.equals(nameToImport.getConcept().getName(nameToImport.getLocale()))) {
+				Criteria criteria = getSession().createCriteria(ConceptName.class);
+				criteria.add(Restrictions.eq("voided", false));
+				if (dbCaseSensitive) {
+					criteria.add(Restrictions.eq("name", nameToImport.getName()).ignoreCase());
+				} else {
+					criteria.add(Restrictions.eq("name", nameToImport.getName()));
+				}
+				criteria.add(Restrictions.or(Restrictions.eq("locale", nameToImport.getLocale()), Restrictions.eq("locale", new Locale(nameToImport
+			        .getLocale().getLanguage()))));
 
-			for (ConceptName conceptName : conceptNames) {
-				if (!conceptName.getConcept().isRetired() && !conceptName.getConcept().getUuid().equals(concept.getExternalId())) {
-					result.add(name);
-					break;
+				@SuppressWarnings("unchecked")
+		        List<ConceptName> conceptNames = criteria.list();
+
+				for (ConceptName conceptName : conceptNames) {
+					if (conceptName.getConcept().isRetired()) {
+						continue;
+					} else if (conceptName.getConcept().getUuid().equals(conceptToImport.getUuid())) {
+						continue;
+					} else if (conceptName.isLocalePreferred() || conceptName.isFullySpecifiedName()
+							|| conceptName.equals(conceptName.getConcept().getName(nameToImport.getLocale()))) {
+						//if default name for locale
+						result.add(nameToImport);
+						break;
+					}
 				}
 			}
 		}

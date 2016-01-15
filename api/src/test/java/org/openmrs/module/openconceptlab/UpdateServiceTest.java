@@ -15,9 +15,9 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import org.hamcrest.Matcher;
 import org.junit.Rule;
@@ -27,8 +27,6 @@ import org.openmrs.Concept;
 import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
-import org.openmrs.module.openconceptlab.client.OclConcept;
-import org.openmrs.module.openconceptlab.client.OclConcept.Name;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -156,13 +154,14 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		concept.addName(conceptName);
 		conceptService.saveConcept(concept);
 
-		OclConcept oclConcept = new OclConcept();
-		Name oclName = new OclConcept.Name();
-		oclName.setName("Rubella Viêm não");
-		oclName.setLocale(new Locale("vi"));
-		oclConcept.setNames(Arrays.asList(oclName));
+		Concept conceptToImport = new Concept();
+		conceptToImport.setUuid(UUID.randomUUID().toString());
+		ConceptName nameToImport = new ConceptName();
+		nameToImport.setName("Rubella Viêm não");
+		nameToImport.setLocale(new Locale("vi"));
+		conceptToImport.addName(nameToImport);
 
-		List<Name> duplicateOclNames = updateService.getDuplicateConceptNames(oclConcept);
-		assertThat(duplicateOclNames, contains((Matcher<? super OclConcept.Name>) hasProperty("name", is("Rubella Viêm não"))));
+		List<ConceptName> duplicateOclNames = updateService.getDuplicateConceptNames(conceptToImport);
+		assertThat(duplicateOclNames, contains((Matcher<? super ConceptName>) hasProperty("name", is("Rubella Viêm não"))));
 	}
 }
