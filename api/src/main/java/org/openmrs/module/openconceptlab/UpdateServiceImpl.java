@@ -12,6 +12,7 @@ package org.openmrs.module.openconceptlab;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +32,7 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.api.ConceptNameType;
 
 public class UpdateServiceImpl implements UpdateService {
 
@@ -83,7 +85,7 @@ public class UpdateServiceImpl implements UpdateService {
 	}
 
 	@Override
-	public List<ConceptName> getDuplicateConceptNames(Concept conceptToImport) {
+	public List<ConceptName> changeDuplicateConceptNamesToIndexTerms(Concept conceptToImport) {
 		List<ConceptName> result = new ArrayList<ConceptName>();
 
 		if (conceptToImport.isRetired()) {
@@ -91,9 +93,16 @@ public class UpdateServiceImpl implements UpdateService {
 		}
 
 		boolean dbCaseSensitive = adminService.isDatabaseStringComparisonCaseSensitive();
-		for (ConceptName nameToImport : conceptToImport.getNames()) {
+		Iterator<ConceptName> it = conceptToImport.getNames().iterator();
+		while(it.hasNext()) {
+			ConceptName nameToImport = it.next();
+
 			if (nameToImport.isVoided()) {
 				continue;
+			}
+
+			if (ConceptNameType.INDEX_TERM.equals(nameToImport.getConceptNameType())) {
+				continue; //index terms are never considered duplicates
 			}
 
 			if (nameToImport.isLocalePreferred() || nameToImport.isFullySpecifiedName()
@@ -118,8 +127,13 @@ public class UpdateServiceImpl implements UpdateService {
 						continue;
 					} else if (conceptName.isLocalePreferred() || conceptName.isFullySpecifiedName()
 							|| conceptName.equals(conceptName.getConcept().getName(nameToImport.getLocale()))) {
-						//if default name for locale
+						//if it is the default name for locale
+						nameToImport.setConceptNameType(ConceptNameType.INDEX_TERM);
+						nameToImport.setLocalePreferred(false);
 						result.add(nameToImport);
+
+						//start again since any previous name to import can be the default name for locale now
+						it = conceptToImport.getNames().iterator();
 						break;
 					}
 				}

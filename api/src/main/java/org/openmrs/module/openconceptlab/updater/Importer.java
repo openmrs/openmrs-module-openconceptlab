@@ -115,9 +115,12 @@ public class Importer {
 
 					resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to " + e.getMessage());
 					changeDuplicateNamesToIndexTerms(concept, resolutionLog);
+					resolutionLog.add("Done fixing duplicate names for concept " + concept.getUuid());
 
 					retryOnDuplicateNames = false;
 				}
+			} catch (ImportException e) {
+				throw e; //re-throw, failed to resolved duplicates
 			} catch (Exception e) {
 				if (!retryOnFailure) {
 					throw new ImportException("Cannot import concept " + concept.getUuid() + ", tried:\n" + logToString(resolutionLog), e);
@@ -212,11 +215,9 @@ public class Importer {
 	}
 
 	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {
-		List<ConceptName> conceptNames = updateService.getDuplicateConceptNames(concept);
+		List<ConceptName> conceptNames = updateService.changeDuplicateConceptNamesToIndexTerms(concept);
 		for (ConceptName conceptName : conceptNames) {
-			resolutionLog.add("Changing name '" + conceptName.getName() + "' in locale " + conceptName.getLocale() + " to index term");
-			conceptName.setConceptNameType(ConceptNameType.INDEX_TERM);
-			conceptName.setLocalePreferred(false);
+			resolutionLog.add("Changed name '" + conceptName.getName() + "' in locale " + conceptName.getLocale() + " to index term");
 		}
 
 		//Make sure there is at least one fully specified name

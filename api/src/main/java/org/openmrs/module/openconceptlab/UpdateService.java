@@ -117,6 +117,6 @@ public interface UpdateService {
      * @should find duplicates
      */
     @Transactional(readOnly = true)
-	List<ConceptName> getDuplicateConceptNames(Concept concept);
+	List<ConceptName> changeDuplicateConceptNamesToIndexTerms(Concept concept);
 
 }

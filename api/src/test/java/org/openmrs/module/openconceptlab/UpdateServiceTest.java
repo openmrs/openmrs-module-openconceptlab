@@ -161,7 +161,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		nameToImport.setLocale(new Locale("vi"));
 		conceptToImport.addName(nameToImport);
 
-		List<ConceptName> duplicateOclNames = updateService.getDuplicateConceptNames(conceptToImport);
+		List<ConceptName> duplicateOclNames = updateService.changeDuplicateConceptNamesToIndexTerms(conceptToImport);
 		assertThat(duplicateOclNames, contains((Matcher<? super ConceptName>) hasProperty("name", is("Rubella Viêm não"))));
 	}
 }
