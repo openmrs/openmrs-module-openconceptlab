@@ -1,5 +1,7 @@
 ## OpenMRS Open Concept Lab module
 
+[![Build Status](https://travis-ci.org/PawelGutkowski/openmrs-module-openconceptlab.svg?branch=master)](https://travis-ci.org/PawelGutkowski/openmrs-module-openconceptlab)[![Codacy Badge](https://api.codacy.com/project/badge/grade/6b1a6531f75f42ce909b371918ec84ee)](https://www.codacy.com/app/pawel-gutkowski-1993/openmrs-module-openconceptlab)
+
 ### Project page
 
 [OCL Subscription Module (Design Page)](https://wiki.openmrs.org/pages/viewpage.action?pageId=70877277)
