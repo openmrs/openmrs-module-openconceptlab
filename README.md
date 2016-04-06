@@ -8,7 +8,7 @@
 
 [Development board](https://issues.openmrs.org/secure/RapidBoard.jspa?rapidView=93)
 
-### Setup Development Environment for Open Concept Lab Module
+### Setup Development Environment
 
 Please make sure you have the following installed:
 - MySQL 5.6.x
