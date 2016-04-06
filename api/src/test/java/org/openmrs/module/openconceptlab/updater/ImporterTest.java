@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -56,6 +57,8 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Name;
@@ -64,6 +67,7 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+
 
 public class ImporterTest extends BaseModuleContextSensitiveTest {
 
@@ -463,6 +467,47 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
 			hasProperty("name", equalTo("Nazwa")))));
+	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies save concept if versionUrl changed from last update
+	 */
+	@Test
+	public void importConcept_shouldUpdateConceptIfVersionUrlChanged() throws Exception {
+		Update update = updateService.getLastUpdate();
+		OclConcept concept = newOclConcept();
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, concept));
+		
+		OclConcept updateConcept = newOclConcept();
+		updateConcept.setVersionUrl(newOtherOclConcept().getVersionUrl());
+		updateConcept.setDatatype("Document");
+		
+		Item item = importer.importConcept(new CacheService(conceptService), update, updateConcept);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(updateConcept.getDatatype())));
+	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies skip saving concept if versionUrl didn't change from last update
+	 */
+	@Test
+	public void importConcept_shouldSkipUpdatingConceptIfVersionUrlDidntChange() throws Exception {
+		Update update = updateService.getLastUpdate();
+		OclConcept concept = newOclConcept();
+		OclConcept updateConcept = newOclConcept();
+			
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, concept));
+		
+		updateConcept.setDatatype("Document");		
+		Item item = importer.importConcept(new CacheService(conceptService), update, updateConcept);
+		assertThat(item, hasProperty("state", equalTo(ItemState.ALREADY_UP_TO_DATE)));
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(concept.getDatatype())));
 	}
 
 	/**

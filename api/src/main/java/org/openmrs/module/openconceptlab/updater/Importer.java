@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.antlr.runtime.tree.RewriteRuleNodeStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.logging.Log;
@@ -84,8 +85,14 @@ public class Importer {
 	 * @should create concept class if missing
 	 * @should change duplicate synonym to index term
 	 * @should change duplicate fully specified name to index term
+	 * @should skip updating concept if it is already up to date
 	 */
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
+		Item item = updateService.getLastSuccessfulItemByUrl(oclConcept.getUrl());
+		if(item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())){
+			return new Item(update, oclConcept, ItemState.ALREADY_UP_TO_DATE);
+		}
+		
 		Concept concept = toConcept(cacheService, oclConcept);
 
 		boolean added = false;
@@ -251,7 +258,7 @@ public class Importer {
 	 * @should add concept mapping and unretire term
 	 * @should remove concept mapping and retire term
 	 */
-	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
+	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {		
 		final Item item;
 
 		Item fromItem = null;
