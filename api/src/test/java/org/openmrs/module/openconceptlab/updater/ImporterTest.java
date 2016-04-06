@@ -189,6 +189,46 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies update datatype
+	 */
+	@Test
+	public void importConcept_shouldUpdateDatatype() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
+
+		String initialDatatype = oclConcept.getDatatype();
+
+		oclConcept.setDatatype("Numeric");
+		String updatedDatatype = oclConcept.getDatatype();
+
+		assertFalse(initialDatatype.equals(updatedDatatype));
+
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
+		assertImported(oclConcept);
+	}
+
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies update concept class
+	 */
+	@Test
+	public void importConcept_shouldUpdateConceptClass() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
+
+		String initialConceptClass = oclConcept.getConceptClass();
+
+		oclConcept.setConceptClass("Procedure");
+		String updatedConceptClass = oclConcept.getConceptClass();
+
+		assertFalse(initialConceptClass.equals(updatedConceptClass));
+
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
+		assertImported(oclConcept);
+	}
+
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
 	 * @verifies void names from concept
 	 */
 	@Test
@@ -353,6 +393,20 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 		ConceptClass conceptClass = conceptService.getConceptClassByName(concept.getConceptClass());
 		assertThat(conceptClass, notNullValue());
+	}
+
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies fail if concept class missing
+	 */
+	@Test
+	public void importConcept_shouldFailIfConceptClassMissing() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
+
+		oclConcept.setConceptClass(null);
+		exception.expect(NullPointerException.class);
+		importer.importConcept(new CacheService(conceptService), update, oclConcept);
 	}
 
 	/**
