@@ -9,20 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -35,18 +21,18 @@ import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Daemon;
-import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
-import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateProgress;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.*;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Updater implements Runnable {
 
@@ -108,34 +94,42 @@ public class Updater implements Runnable {
 
 					@Override
 					public void run() throws Exception {
-						Subscription subscription = updateService.getSubscription();
-						Update lastUpdate = updateService.getLastSuccessfulSubscriptionUpdate();
-						Date updatedSince = null;
-						if (lastUpdate != null) {
-							updatedSince = lastUpdate.getOclDateStarted();
+
+						OclResponse oclResponse = getOclResponse();
+
+						if (oclResponse.hasNextPage()) {
+							for (InputStream inputStream : oclResponse.getContentStreams()) {
+								updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
+
+								in = new CountingInputStream(oclResponse.getContentStream());
+								totalBytesToProcess = oclResponse.getContentLength();
+
+								processInput();
+
+								in.close();
+							}
 						}
 
-						OclResponse oclResponse;
-
-						if (updatedSince == null) {
-							oclResponse = oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
-						} else {
-							oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(),
-							    updatedSince);
-						}
-
-						updateService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
-
-						in = new CountingInputStream(oclResponse.getContentStream());
-						totalBytesToProcess = oclResponse.getContentLength();
-
-						processInput();
-
-						in.close();
 					}
 				});
 			}
 		}, OpenConceptLabActivator.getDaemonToken());
+	}
+
+	public OclResponse getOclResponse() throws IOException {
+		Subscription subscription = updateService.getSubscription();
+		Update lastUpdate = updateService.getLastSuccessfulSubscriptionUpdate();
+		Date updatedSince = null;
+		if (lastUpdate != null) {
+			updatedSince = lastUpdate.getOclDateStarted();
+		}
+
+		if (updatedSince == null) {
+			return oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
+		} else {
+			return oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(),
+					updatedSince);
+		}
 	}
 
 	/**

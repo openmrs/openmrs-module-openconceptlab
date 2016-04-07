@@ -9,18 +9,22 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import org.openmrs.module.DaemonToken;
+import org.openmrs.module.ModuleFactory;
+
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Map;
-
-import org.openmrs.module.DaemonToken;
-import org.openmrs.module.ModuleFactory;
 
 
 public class TestResources {
 	
 	public static InputStream getSimpleResponseAsStream() {
 		return TestResources.class.getClassLoader().getResourceAsStream("response.zip");
+	}
+
+	public static InputStream getEmptyResponseAsStream() {
+		return TestResources.class.getClassLoader().getResourceAsStream("emptyResponse.zip");
 	}
 	
 	public static InputStream getInitialResponseAsStream() {

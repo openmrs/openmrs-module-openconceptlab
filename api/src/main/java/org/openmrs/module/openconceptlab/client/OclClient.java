@@ -9,26 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.httpclient.Header;
@@ -42,6 +22,16 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.util.OpenmrsUtil;
+
+import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class OclClient {
 	
@@ -58,49 +48,107 @@ public class OclClient {
 	private volatile long bytesDownloaded = 0;
 	
 	private volatile long totalBytesToDownload = 0;
+
+	private HttpClient httpClient;
+
+	private int page = 1;
+	private boolean isPaging;
+	private OclResponse oclResponse;
+
+	private String lastRequestURL;
+	private String lastRequestToken;
+	private Date lastRequestDate;
 	
 	public OclClient() {
 		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
+		httpClient = new HttpClient();
 	}
 	
 	public OclClient(String dataDirectory) {
 		this.dataDirectory = dataDirectory;
+		httpClient = new HttpClient();
 	}
-	
+
+	public OclClient(HttpClient httpClient) {
+		this.dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
+		this.httpClient = httpClient;
+	}
+
 	public OclResponse fetchUpdates(String url, String token, Date updatedSince) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
-		
+
+		GetMethod get = newGetMethod(url, token, updatedSince);
+
+		return fetchUpdates(get);
+	}
+
+	public OclResponse fetchUpdates(GetMethod get) throws IOException {
+		httpClient.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+		httpClient.executeMethod(get);
+
+		if (get.getStatusCode() != 200) {
+			throw new IOException(get.getStatusLine().toString());
+		}
+
+		isPaging = false;
+		OclResponse initResponse = extractResponse(get);
+		InputStream contentStream = initResponse.getContentStream();
+
+		while (true) {
+			int firstByteOfResponse = contentStream.read();
+			if (firstByteOfResponse != -1) {
+				isPaging = true;
+				get.setQueryString(get.getQueryString().replace("&page=" + String.valueOf(page),"&page=" + String.valueOf(++page)));
+				httpClient.executeMethod(get);
+				if (get.getStatusCode() != 200) {
+					throw new IOException(get.getStatusLine().toString());
+				}
+				OclResponse response = extractResponse(get);
+				if (response != null) {
+					contentStream = response.getContentStream();
+				}
+				else {
+					break;
+				}
+			}
+		}
+		isPaging = false;
+		page = 1;
+
+		return oclResponse;
+	}
+
+	private GetMethod newGetMethod(String url, String token, Date updatedSince) {
+
+		lastRequestURL = url;
+		lastRequestToken = token;
+		lastRequestDate = updatedSince;
+
 		GetMethod get = new GetMethod(url);
 		if (!StringUtils.isBlank(token)) {
 			get.addRequestHeader("Authorization", "Token " + token);
 			get.addRequestHeader("Compress", "true");
 		}
-		
+
 		List<NameValuePair> query = new ArrayList<NameValuePair>();
 		query.add(new NameValuePair("includeMappings", "true"));
 		query.add(new NameValuePair("includeConcepts", "true"));
 		query.add(new NameValuePair("includeRetired", "true"));
-		query.add(new NameValuePair("limit", "100000"));
-		
+		query.add(new NameValuePair("limit", "1000"));
+		query.add(new NameValuePair("page", String.valueOf(page)));
+
+
 		if (updatedSince != null) {
 			SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 			query.add(new NameValuePair("updatedSince", dateFormat.format(updatedSince)));
 		}
-		
+
 		get.setQueryString(query.toArray(new NameValuePair[0]));
-		
-		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
-		client.executeMethod(get);
-		
-		if (get.getStatusCode() != 200) {
-			throw new IOException(get.getStatusLine().toString());
-		}
-		
-		return extractResponse(get);
+		return get;
 	}
-	
+
+
 	public OclResponse fetchInitialUpdates(String url, String token) throws IOException, HttpException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
@@ -181,7 +229,14 @@ public class OclClient {
 			while (entry != null) {
 				if (entry.getName().equals("export.json")) {
 					foundEntry = true;
-					return new OclResponse(tarIn, entry.getSize(), date);
+					if (oclResponse == null) {
+						oclResponse =  new OclResponse(tarIn, entry.getSize(), date);
+						return oclResponse;
+					}
+					else {
+						oclResponse.addNextPage(tarIn, entry.getSize());
+						return oclResponse;
+					}
 				}
 				entry = tarIn.getNextTarEntry();
 			}
@@ -204,7 +259,14 @@ public class OclClient {
 			while (entry != null) {
 				if (entry.getName().equals("export.json")) {
 					foundEntry = true;
-					return new OclResponse(zip, entry.getSize(), date);
+					if (oclResponse == null) {
+						oclResponse =  new OclResponse(zip, entry.getSize(), date);
+						return oclResponse;
+					}
+					else {
+						oclResponse.addNextPage(zip, entry.getSize());
+						return oclResponse;
+					}
 				}
 				entry = zip.getNextEntry();
 			}
@@ -216,7 +278,9 @@ public class OclClient {
 				IOUtils.closeQuietly(zip);
 			}
 		}
-		throw new IOException("Unsupported format of response. Expected zip with export.json.");
+
+		return null;
+	//	throw new IOException("Unsupported format of response. Expected zip with export.json.");
 	}
 	
 	File newFile(Date date) {
@@ -230,7 +294,7 @@ public class OclClient {
 		return file;
 	}
 	
-	void download(InputStream in, long length, File destination) throws IOException {
+	void download(InputStream in, long length, File destination) {
 		OutputStream out = null;
 		try {
 			totalBytesToDownload = length;
@@ -249,8 +313,11 @@ public class OclClient {
 			
 			//if total bytes to download could not be determined, set it to the actual value
 			totalBytesToDownload = bytesDownloaded;
-		}
-		finally {
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			//e.printStackTrace();
+		} finally {
 			IOUtils.closeQuietly(in);
 			IOUtils.closeQuietly(out);
 		}
@@ -269,21 +336,70 @@ public class OclClient {
 	}
 	
 	public static class OclResponse {
-		
-		private final InputStream in;
-		
+
+
 		private final Date updatedTo;
-		
-		private final long contentLength;
-		
-		public OclResponse(InputStream in, long contentLength, Date updatedTo) {
-			this.in = in;
+
+		private long contentLength = 0;
+
+		private LinkedList<InputStream> inputStreams = new LinkedList<InputStream>();
+		private ListIterator<InputStream> listIterator = inputStreams.listIterator();
+
+		public OclResponse(InputStream in, long contentLength, Date updatedTo) throws IOException {
+			addNextPage(in, contentLength);
 			this.updatedTo = updatedTo;
-			this.contentLength = contentLength;
 		}
-		
+
+		public void addNextPage(InputStream inputStream, long contentLength) throws IOException {
+
+			if (!isInputStreamEmpty(inputStream)) {
+				// Do I need list for this one to separate?
+				this.contentLength += contentLength;
+			}
+		}
+
+		private boolean isInputStreamEmpty(InputStream in) {
+
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+			// TODO: extract substring!!!
+
+			for (int i = 0; i < 3; i++) {
+				try {
+					baos.write(in.read());
+				} catch (IOException e) {
+					//e.printStackTrace();
+					break;
+				}
+			}
+
+			String string = baos.toString();
+			boolean isEmpty = string.substring(0,2).equals("{}");
+
+			if (isEmpty) {
+				return false;
+			}
+			else {
+				inputStreams.add(in);
+				return true;
+			}
+		}
+
+		public boolean hasNextPage() {
+			return listIterator.hasNext();
+		}
+
 		public InputStream getContentStream() {
-			return in;
+			if (hasNextPage()) {
+				return inputStreams.get(listIterator.nextIndex());
+			}
+			else {
+				return inputStreams.getLast();
+			}
+		}
+
+		public LinkedList<InputStream> getContentStreams() {
+			return inputStreams;
 		}
 		
 		public Date getUpdatedTo() {

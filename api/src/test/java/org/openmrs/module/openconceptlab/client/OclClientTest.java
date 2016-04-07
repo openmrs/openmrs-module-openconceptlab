@@ -9,19 +9,9 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Calendar;
-import java.util.Date;
-
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.FileUtils;
@@ -30,16 +20,35 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.openmrs.module.openconceptlab.MockTest;
-import org.openmrs.module.openconceptlab.TestResources;
-import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.*;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.updater.Updater;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
+
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class OclClientTest extends MockTest {
 	
 	@Mock
 	GetMethod get;
-	
+
+	@Mock
+	HttpClient httpClient;
+
+	@Mock
+	UpdateService updateService;
+
+
+
+	Updater updater;
+
 	OclClient oclClient;
 	
 	File tempDir;
@@ -131,5 +140,31 @@ public class OclClientTest extends MockTest {
 		calendar.set(2015, 5, 22, 12, 12, 29);
 		
 		assertThat(date, is(calendar.getTime()));
+	}
+
+	@Test
+	public void shouldSupportPagingWhenFetchingUpdates() throws Exception {
+		OclClient oclClient = new OclClient(httpClient);
+		String date = "Mon, 13 Oct 2014 11:07:19 GMT";
+		Header header = new Header("Date", date);
+
+		when(httpClient.getHttpConnectionManager()).thenReturn(new SimpleHttpConnectionManager());
+		when(get.getStatusCode()).thenReturn(200);
+		when(get.getResponseHeader("Content-Type")).thenReturn(new Header("Content-Type", "application/zip"));
+		when(get.getResponseHeader("Date")).thenReturn(header);
+		when(get.getResponseBodyAsStream()).thenReturn(
+				TestResources.getSimpleResponseAsStream(),
+				TestResources.getSimpleResponseAsStream(),
+				TestResources.getSimpleResponseAsStream(),
+				TestResources.getEmptyResponseAsStream()
+		);
+		when(get.getQueryString()).thenReturn("testQuery&page=1");
+
+
+		updater = new Updater();
+
+		OclResponse pagedOclResponse = oclClient.fetchUpdates(get);
+
+		// TODO: Fix Updater
 	}
 }
