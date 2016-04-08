@@ -50,7 +50,7 @@ Once you run the command you need to wait for Jetty Started message, open up a b
 
 [http://localhost:8080/openmrs](http://localhost:8080/openmrs)
 
-The server can be stopped from the terminal where it is running with Ctrl + C.
+The server can be stopped from the terminal, in which it is running with the Ctrl and C (Ctrl + C) keys combination.
 
 Every time you make changes in code in the api directory, you need to build and install the module and restart the server.
 
