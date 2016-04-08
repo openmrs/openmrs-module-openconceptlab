@@ -28,7 +28,9 @@ If there are any issues with setting up the server, check out <b>[OpenMRS SDK do
 Fork and clone [Open Concept Lab module project](https://github.com/openmrs/openmrs-module-openconceptlab/):
 ````sh
 $ git clone https://github.com/{yourusername}/openmrs-module-openconceptlab.git
+$ cd openmrs-module-openconceptlab
 ````
+
 Build and install the module on the server:
 ````sh
 $ mvn clean install openmrs-sdk:install -DserverId=refapp
