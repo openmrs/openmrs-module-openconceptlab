@@ -16,7 +16,7 @@ Please make sure you have the following installed:
 - MySQL 5.6.x
 - JDK 1.7
 - Maven
-- OpenMRS SDK
+- OpenMRS SDK, see [installation instructions](https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation)
 
 Next run this command to setup OpenMRS server (just the first time):
 ````sh
