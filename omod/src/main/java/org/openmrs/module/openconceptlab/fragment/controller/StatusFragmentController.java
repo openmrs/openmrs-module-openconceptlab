@@ -11,11 +11,14 @@ package org.openmrs.module.openconceptlab.fragment.controller;
 
 import java.io.IOException;
 
+import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateProgress;
+import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.updater.Updater;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.annotation.SpringBean;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Fragment actions specifically for searching for OpenMRS objects
@@ -23,10 +26,16 @@ import org.openmrs.ui.framework.annotation.SpringBean;
 public class StatusFragmentController {
 
 	public UpdateProgress getUpdateProgress(@SpringBean("openconceptlab.updater") Updater updater, UiUtils ui) {
+		
 		return updater.getUpdateProgress();
 	}
 
-	public void runUpdates(@SpringBean("openconceptlab.updateScheduler") UpdateScheduler updateScheduler) throws IOException {
+	public void runUpdates(@SpringBean("openconceptlab.updateScheduler") UpdateScheduler updateScheduler,
+							@SpringBean("openconceptlab.updateService") UpdateService updateService,
+							@RequestParam(required = false, value = "ignoreErrors") Boolean ignoreErrors) throws IOException {
+		
+		Update update = updateService.getLastUpdate();
+		updateService.ignoreAllErrors(update);
 		updateScheduler.scheduleNow();
 	}
 }

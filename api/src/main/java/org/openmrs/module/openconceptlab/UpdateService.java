@@ -11,6 +11,7 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
 import org.springframework.transaction.annotation.Transactional;
 
+
 public interface UpdateService {
 
 	/**
@@ -34,6 +35,9 @@ public interface UpdateService {
 
     @Transactional(readOnly = true)
 	Update getLastSuccessfulSubscriptionUpdate();
+    
+    @Transactional(readOnly = true)
+    Boolean isLastUpdateSuccessful();
 
     @Transactional
 	void ignoreAllErrors(Update update);
