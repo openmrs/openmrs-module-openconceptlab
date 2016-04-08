@@ -33,12 +33,25 @@ Build and install the module on the server:
 ````sh
 $ mvn clean install openmrs-sdk:install -DserverId=refapp
 ````
+
+You can also configure the server to automatically reload classes and pages from the omod directory:
+````sh
+$ mvn openmrs-sdk:watch -DserverId=refapp
+````
+
 Run the server:
 ````sh
 $ mvn openmrs-sdk:run -DserverId=refapp
 ````
 
-Every time you make changes in code, you need to build and install the module and restart the server.
+Once you run the command you need to wait for Jetty Started message, open up a browser ang go to:
+
+http://localhost:8080/openmrs
+
+The server can be stopped from the terminal where it is running with Ctrl + C.
+
+Every time you make changes in code in the api directory, you need to build and install the module and restart the server.
+
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
 OCL Module is now available from the Advanced System Administration or at '/openmrs/openconceptlab/status.page'
