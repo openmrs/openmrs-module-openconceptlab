@@ -25,8 +25,6 @@ import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 
-import net.sf.saxon.type.ItemType;
-
 public class ImportRunner implements Runnable {
 	
 	private final Log log = LogFactory.getLog(getClass());
@@ -108,7 +106,9 @@ public class ImportRunner implements Runnable {
 							item = new Item(update, oclMapping, ItemState.ERROR);
 							item.setErrorMessage(Updater.getErrorMessage(e));
 						} finally {
-							items.add(item);
+							if(item.getState() != ItemState.ALREADY_UP_TO_DATE) {
+								items.add(item);
+							}
 						}
                     }
 					

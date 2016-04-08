@@ -9,4 +9,3 @@ script :
 - mvn clean package -DskipTests
 - mvn cobertura:cobertura
 - ~/jpm/bin/codacy-coverage-reporter -l Java -r target/site/cobertura/coverage.xml
-

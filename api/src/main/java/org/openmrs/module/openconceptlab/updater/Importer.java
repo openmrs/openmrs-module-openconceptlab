@@ -9,11 +9,14 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 
-import org.antlr.runtime.tree.RewriteRuleNodeStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.logging.Log;
@@ -257,8 +260,14 @@ public class Importer {
 	 * @should add concept mapping and term
 	 * @should add concept mapping and unretire term
 	 * @should remove concept mapping and retire term
+	 * @should update mapping only if it has been updated since last import
 	 */
-	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {		
+	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
+		Item oldMappingItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
+		if(oldMappingItem!= null && !isMappingUpdatedSince(oldMappingItem, oclMapping)){
+			return new Item(update, oclMapping, ItemState.ALREADY_UP_TO_DATE);
+		};
+
 		final Item item;
 
 		Item fromItem = null;
@@ -357,6 +366,36 @@ public class Importer {
 		}
 		return item;
 	}
+	
+	/**
+	 * @param oldItem
+	 * @param newMapping
+	 * @return boolean
+	 * @should should return true if any of updatedOn is null
+	 * @should should return false if both updatedOn are null
+	 * @should should return if mapping's updatedOn is after
+	 */
+	
+	public boolean isMappingUpdatedSince(Item oldItem, OclMapping newMapping) {
+		String oldUpdatedOn = oldItem.getUpdatedOn();
+		String newUpdatedOn = newMapping.getUpdatedOn();
+		if(oldUpdatedOn==null&&newUpdatedOn==null){
+			return false;
+		}
+		else if(oldUpdatedOn!=null&&newUpdatedOn!=null){
+			try {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+				Date oldDate = dateFormat.parse(oldUpdatedOn);
+				Date newDate = dateFormat.parse(newUpdatedOn);
+				return newDate.after(oldDate);
+			} catch (ParseException e) {
+				return true;
+			}
+		}
+		else return true;
+	}
+
 
 	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
 	        ConceptSource toSource) {

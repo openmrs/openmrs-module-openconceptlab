@@ -45,6 +45,9 @@ public class OclMapping {
 	@JsonProperty("to_concept_code")
 	private String toConceptCode;
 	
+	@JsonProperty("updated_on")
+	private String updatedOn;
+	
 	public static abstract class MapType {
 		
 		public static final String Q_AND_A = "Q-AND-A";
@@ -144,6 +147,14 @@ public class OclMapping {
 		this.toConceptUrl = toConceptUrl;
 	}
 	
+	public String getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public void setUpdatedOn(String updatedOn) {
+		this.updatedOn = updatedOn;
+	}
+
 	@Override
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();

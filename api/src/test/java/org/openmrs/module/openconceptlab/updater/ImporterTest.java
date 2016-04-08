@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -55,10 +54,10 @@ import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.Update;
+import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Name;
@@ -715,6 +714,77 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
 		ConceptMapType mapType = conceptService.getConceptMapTypeByName("SAME_AS");
 		assertThat(concept.getConceptMappings(), contains(hasMapping(source, "1001", mapType)));
+	}
+	
+	@Test
+	public void importMapping_shouldUpdateMappingOnylIfItHasBeenUpdatedSinceLastImport() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, oclConcept));
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToSourceName("SNOMED CT");
+		oclMapping.setToConceptCode("1001");
+		oclMapping.setUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/303");
+
+		updateService.saveItem(importer.importMapping(new CacheService(conceptService), update, oclMapping));
+		
+		oclMapping.setUpdatedOn("2008-02-18T09:10:16Z");
+		
+		Item item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
+		updateService.saveItem(item);
+		
+		item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
+		assertThat(item, hasProperty("state", equalTo(ItemState.ALREADY_UP_TO_DATE)));
+	}
+	
+	@Test
+	public void isMappingUpdatedSince_shouldReturnIfMappingUpdateOnIsAfter() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setUpdatedOn("2008-02-18T09:10:16Z");
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		oclMapping.setUpdatedOn("2010-02-18T09:10:16Z");
+		assertTrue(importer.isMappingUpdatedSince(item, oclMapping));
+		
+		oclMapping.setUpdatedOn("1997-02-18T09:10:16Z");
+		assertFalse(importer.isMappingUpdatedSince(item, oclMapping));
+	}
+	
+	@Test
+	public void isMappingUpdatedSince_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		oclMapping.setUpdatedOn("2010-02-18T09:10:16Z");
+		
+		assertTrue(importer.isMappingUpdatedSince(item, oclMapping));
+	}
+	@Test
+	public void isMappingUpdatedSince_shouldReturnFalseIfBothUpdatedOnAreNull() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		assertFalse(importer.isMappingUpdatedSince(item, oclMapping));
 	}
 
 	public OclConcept newOclConcept() {
