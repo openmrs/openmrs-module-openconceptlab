@@ -23,12 +23,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -83,6 +85,8 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 
+	SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+	
 	Update update;
 
 	@Before
@@ -503,7 +507,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		updateConcept.setDatatype("Document");		
 		Item item = importer.importConcept(new CacheService(conceptService), update, updateConcept);
-		assertThat(item, hasProperty("state", equalTo(ItemState.ALREADY_UP_TO_DATE)));
+		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
 		
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(concept.getDatatype())));
@@ -732,36 +736,33 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 
 		updateService.saveItem(importer.importMapping(new CacheService(conceptService), update, oclMapping));
 		
-		oclMapping.setUpdatedOn("2008-02-18T09:10:16Z");
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
 		
 		Item item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
 		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
 		updateService.saveItem(item);
 		
 		item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
-		assertThat(item, hasProperty("state", equalTo(ItemState.ALREADY_UP_TO_DATE)));
+		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
 	}
 	
 	@Test
-	public void isMappingUpdatedSince_shouldReturnIfMappingUpdateOnIsAfter() throws Exception{
+	public void isMappingUpToDate_shouldReturnIfMappingUpdateOnIsAfter() throws Exception{
 		Update update = updateService.getLastUpdate();
 
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType("SAME-AS");
-		oclMapping.setUpdatedOn("2008-02-18T09:10:16Z");
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
 		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
 		
-		oclMapping.setUpdatedOn("2010-02-18T09:10:16Z");
-		assertTrue(importer.isMappingUpdatedSince(item, oclMapping));
-		
-		oclMapping.setUpdatedOn("1997-02-18T09:10:16Z");
-		assertFalse(importer.isMappingUpdatedSince(item, oclMapping));
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
+		assertTrue(importer.isMappingUpToDate(item, oclMapping));
 	}
 	
 	@Test
-	public void isMappingUpdatedSince_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception{
+	public void isMappingUpToDate_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception{
 		Update update = updateService.getLastUpdate();
 
 		OclMapping oclMapping = new OclMapping();
@@ -770,12 +771,12 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
 		
-		oclMapping.setUpdatedOn("2010-02-18T09:10:16Z");
+		oclMapping.setUpdatedOn(dateFormat.parse("2010-02-18T09:10:16Z"));
 		
-		assertTrue(importer.isMappingUpdatedSince(item, oclMapping));
+		assertFalse(importer.isMappingUpToDate(item, oclMapping));
 	}
 	@Test
-	public void isMappingUpdatedSince_shouldReturnFalseIfBothUpdatedOnAreNull() throws Exception{
+	public void isMappingUpToDate_shouldReturnTrueIfBothUpdatedOnAreNull() throws Exception{
 		Update update = updateService.getLastUpdate();
 
 		OclMapping oclMapping = new OclMapping();
@@ -784,7 +785,7 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
 		
-		assertFalse(importer.isMappingUpdatedSince(item, oclMapping));
+		assertTrue(importer.isMappingUpToDate(item, oclMapping));
 	}
 
 	public OclConcept newOclConcept() {

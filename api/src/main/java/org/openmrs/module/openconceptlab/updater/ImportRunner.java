@@ -81,9 +81,7 @@ public class ImportRunner implements Runnable {
 							item = new Item(update, oclConcept, ItemState.ERROR);
 							item.setErrorMessage(Updater.getErrorMessage(e));
 						} finally {
-							if(item.getState() != ItemState.ALREADY_UP_TO_DATE) {
-								items.add(item);
-							}
+							items.add(item);
 						}
 	                }
 					updateService.saveItems(items);
@@ -106,9 +104,7 @@ public class ImportRunner implements Runnable {
 							item = new Item(update, oclMapping, ItemState.ERROR);
 							item.setErrorMessage(Updater.getErrorMessage(e));
 						} finally {
-							if(item.getState() != ItemState.ALREADY_UP_TO_DATE) {
-								items.add(item);
-							}
+							items.add(item);
 						}
                     }
 					

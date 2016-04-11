@@ -11,6 +11,7 @@ package org.openmrs.module.openconceptlab;
 
 import java.security.MessageDigest;
 import java.util.Comparator;
+import java.util.Date;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -73,7 +74,7 @@ public class Item {
 	
 	@Basic
 	@Column(name = "updated_on")
-	private String updatedOn;
+	private Date updatedOn;
 	
 	protected Item() {
 		//for persistence only
@@ -166,7 +167,7 @@ public class Item {
 		this.errorMessage = errorMessage;
 	}
 	
-	public String getUpdatedOn() {
+	public Date getUpdatedOn() {
 		return updatedOn;
 	}
 

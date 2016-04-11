@@ -134,12 +134,14 @@
 
     <changeSet author="pawelgutkowski" id="openconceptlab-v1-11">
     	<preConditions onFail="MARK_RAN">
-    		<not><indexExists indexName="openconceptlab_item_updated_on"/></not>
+    		<not>
+    			<columnExists tableName="openconceptlab_item" columnName="openconceptlab_item_updated_on"/>
+			</not>
     	</preConditions>
     	<comment>Create openconceptlab_item_update_on</comment>
-    	<createIndex tableName="openconceptlab_item" indexName="openconceptlab_updated_on">
-    		<column name="updated_on" />
-    	</createIndex>
+    	<addColumn tableName="openconceptlab_item">
+    		<column name="openconceptlab_updated_on" type="datetime"/>
+    	</addColumn>
     </changeSet>
     
 </databaseChangeLog>

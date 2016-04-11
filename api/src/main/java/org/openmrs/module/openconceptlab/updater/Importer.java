@@ -93,7 +93,7 @@ public class Importer {
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
 		Item item = updateService.getLastSuccessfulItemByUrl(oclConcept.getUrl());
 		if(item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())){
-			return new Item(update, oclConcept, ItemState.ALREADY_UP_TO_DATE);
+			return new Item(update, oclConcept, ItemState.UP_TO_DATE);
 		}
 		
 		Concept concept = toConcept(cacheService, oclConcept);
@@ -264,8 +264,8 @@ public class Importer {
 	 */
 	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
 		Item oldMappingItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
-		if(oldMappingItem!= null && !isMappingUpdatedSince(oldMappingItem, oclMapping)){
-			return new Item(update, oclMapping, ItemState.ALREADY_UP_TO_DATE);
+		if(oldMappingItem!= null && isMappingUpToDate(oldMappingItem, oclMapping)){
+			return new Item(update, oclMapping, ItemState.UP_TO_DATE);
 		};
 
 		final Item item;
@@ -376,24 +376,19 @@ public class Importer {
 	 * @should should return if mapping's updatedOn is after
 	 */
 	
-	public boolean isMappingUpdatedSince(Item oldItem, OclMapping newMapping) {
-		String oldUpdatedOn = oldItem.getUpdatedOn();
-		String newUpdatedOn = newMapping.getUpdatedOn();
+	public boolean isMappingUpToDate(Item oldItem, OclMapping newMapping) {
+		Date oldUpdatedOn = oldItem.getUpdatedOn();
+		Date newUpdatedOn = newMapping.getUpdatedOn();
+		//mapping never was updated
 		if(oldUpdatedOn==null&&newUpdatedOn==null){
-			return false;
+			return true;
 		}
+		//mapping was updated at least once
 		else if(oldUpdatedOn!=null&&newUpdatedOn!=null){
-			try {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
-				dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-				Date oldDate = dateFormat.parse(oldUpdatedOn);
-				Date newDate = dateFormat.parse(newUpdatedOn);
-				return newDate.after(oldDate);
-			} catch (ParseException e) {
-				return true;
-			}
+				return newUpdatedOn.equals(oldUpdatedOn);
 		}
-		else return true;
+		//this is first update - old version updatedOn is null
+		else return false;
 	}
 
 
