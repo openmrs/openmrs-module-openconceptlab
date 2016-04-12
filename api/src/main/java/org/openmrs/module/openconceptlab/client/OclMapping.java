@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
+import java.util.Date;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -44,6 +46,9 @@ public class OclMapping {
 	
 	@JsonProperty("to_concept_code")
 	private String toConceptCode;
+	
+	@JsonProperty("updated_on")
+	private Date updatedOn;
 	
 	public static abstract class MapType {
 		
@@ -143,7 +148,15 @@ public class OclMapping {
 	public void setToConceptUrl(String toConceptUrl) {
 		this.toConceptUrl = toConceptUrl;
 	}
-	
+
+	public Date getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public void setUpdatedOn(Date updatedOn) {
+		this.updatedOn = updatedOn;
+	}
+
 	@Override
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();

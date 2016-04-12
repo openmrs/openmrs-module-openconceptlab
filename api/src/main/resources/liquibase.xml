@@ -131,5 +131,17 @@
     		<column name="state" />
     	</createIndex>
     </changeSet>
+
+    <changeSet author="pawelgutkowski" id="openconceptlab-v1-11">
+    	<preConditions onFail="MARK_RAN">
+    		<not>
+    			<columnExists tableName="openconceptlab_item" columnName="openconceptlab_item_updated_on"/>
+			</not>
+    	</preConditions>
+    	<comment>Create openconceptlab_item_update_on</comment>
+    	<addColumn tableName="openconceptlab_item">
+    		<column name="openconceptlab_updated_on" type="datetime"/>
+    	</addColumn>
+    </changeSet>
     
 </databaseChangeLog>

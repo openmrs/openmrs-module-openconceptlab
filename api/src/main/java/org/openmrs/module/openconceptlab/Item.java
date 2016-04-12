@@ -11,6 +11,7 @@ package org.openmrs.module.openconceptlab;
 
 import java.security.MessageDigest;
 import java.util.Comparator;
+import java.util.Date;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
@@ -71,6 +72,10 @@ public class Item {
 	@Column(name = "error_message")
 	private String errorMessage;
 	
+	@Basic
+	@Column(name = "updated_on")
+	private Date updatedOn;
+	
 	protected Item() {
 		//for persistence only
 	}
@@ -98,6 +103,7 @@ public class Item {
 		this.uuid = oclMapping.getExternalId();
 		this.state = state;
 		this.errorMessage = errorMessage;
+		this.updatedOn = oclMapping.getUpdatedOn();
 	}
 	
 	public static final byte[] hashUrl(String url) {
@@ -161,6 +167,10 @@ public class Item {
 		this.errorMessage = errorMessage;
 	}
 	
+	public Date getUpdatedOn() {
+		return updatedOn;
+	}
+
 	public static class OrderByState implements Comparator<Item> {
 		
 		@Override

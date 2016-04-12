@@ -12,6 +12,7 @@ package org.openmrs.module.openconceptlab.updater;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -262,6 +263,7 @@ public class Updater implements Runnable {
 
 	private void processInput() throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.getDeserializationConfig().setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"));
 		JsonParser parser = objectMapper.getJsonFactory().createJsonParser(in);
 
 		JsonToken token = parser.nextToken();

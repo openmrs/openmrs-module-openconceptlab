@@ -23,12 +23,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -54,6 +56,8 @@ import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Update;
 import org.openmrs.module.openconceptlab.UpdateService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -64,6 +68,7 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+
 
 public class ImporterTest extends BaseModuleContextSensitiveTest {
 
@@ -80,6 +85,8 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 
+	SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+	
 	Update update;
 
 	@Before
@@ -464,6 +471,47 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
 			hasProperty("name", equalTo("Nazwa")))));
 	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies save concept if versionUrl changed from last update
+	 */
+	@Test
+	public void importConcept_shouldUpdateConceptIfVersionUrlChanged() throws Exception {
+		Update update = updateService.getLastUpdate();
+		OclConcept concept = newOclConcept();
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, concept));
+		
+		OclConcept updateConcept = newOclConcept();
+		updateConcept.setVersionUrl(newOtherOclConcept().getVersionUrl());
+		updateConcept.setDatatype("Document");
+		
+		Item item = importer.importConcept(new CacheService(conceptService), update, updateConcept);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(updateConcept.getDatatype())));
+	}
+	
+	/**
+	 * @see Importer#importConcept(OclConcept,ImportQueue)
+	 * @verifies skip saving concept if versionUrl didn't change from last update
+	 */
+	@Test
+	public void importConcept_shouldSkipUpdatingConceptIfVersionUrlDidntChange() throws Exception {
+		Update update = updateService.getLastUpdate();
+		OclConcept concept = newOclConcept();
+		OclConcept updateConcept = newOclConcept();
+			
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, concept));
+		
+		updateConcept.setDatatype("Document");		
+		Item item = importer.importConcept(new CacheService(conceptService), update, updateConcept);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
+		
+		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
+		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(concept.getDatatype())));
+	}
 
 	/**
 	 * @see Importer#importConcept(OclConcept,ImportQueue)
@@ -670,6 +718,74 @@ public class ImporterTest extends BaseModuleContextSensitiveTest {
 		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
 		ConceptMapType mapType = conceptService.getConceptMapTypeByName("SAME_AS");
 		assertThat(concept.getConceptMappings(), contains(hasMapping(source, "1001", mapType)));
+	}
+	
+	@Test
+	public void importMapping_shouldUpdateMappingOnylIfItHasBeenUpdatedSinceLastImport() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		updateService.saveItem(importer.importConcept(new CacheService(conceptService), update, oclConcept));
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToSourceName("SNOMED CT");
+		oclMapping.setToConceptCode("1001");
+		oclMapping.setUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/303");
+
+		updateService.saveItem(importer.importMapping(new CacheService(conceptService), update, oclMapping));
+		
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
+		
+		Item item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
+		updateService.saveItem(item);
+		
+		item = importer.importMapping(new CacheService(conceptService), update, oclMapping);
+		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
+	}
+	
+	@Test
+	public void isMappingUpToDate_shouldReturnIfMappingUpdateOnIsAfter() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
+		assertTrue(importer.isMappingUpToDate(item, oclMapping));
+	}
+	
+	@Test
+	public void isMappingUpToDate_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		oclMapping.setUpdatedOn(dateFormat.parse("2010-02-18T09:10:16Z"));
+		
+		assertFalse(importer.isMappingUpToDate(item, oclMapping));
+	}
+	@Test
+	public void isMappingUpToDate_shouldReturnTrueIfBothUpdatedOnAreNull() throws Exception{
+		Update update = updateService.getLastUpdate();
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		
+		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
+		assertTrue(importer.isMappingUpToDate(item, oclMapping));
 	}
 
 	public OclConcept newOclConcept() {

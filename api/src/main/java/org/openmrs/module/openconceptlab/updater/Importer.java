@@ -9,9 +9,13 @@
  */
 package org.openmrs.module.openconceptlab.updater;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -84,8 +88,14 @@ public class Importer {
 	 * @should create concept class if missing
 	 * @should change duplicate synonym to index term
 	 * @should change duplicate fully specified name to index term
+	 * @should skip updating concept if it is already up to date
 	 */
 	public Item importConcept(CacheService cacheService, Update update, OclConcept oclConcept) throws ImportException {
+		Item item = updateService.getLastSuccessfulItemByUrl(oclConcept.getUrl());
+		if(item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())){
+			return new Item(update, oclConcept, ItemState.UP_TO_DATE);
+		}
+		
 		Concept concept = toConcept(cacheService, oclConcept);
 
 		boolean added = false;
@@ -250,8 +260,14 @@ public class Importer {
 	 * @should add concept mapping and term
 	 * @should add concept mapping and unretire term
 	 * @should remove concept mapping and retire term
+	 * @should update mapping only if it has been updated since last import
 	 */
 	public Item importMapping(CacheService cacheService, Update update, OclMapping oclMapping) {
+		Item oldMappingItem = updateService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
+		if(oldMappingItem!= null && isMappingUpToDate(oldMappingItem, oclMapping)){
+			return new Item(update, oclMapping, ItemState.UP_TO_DATE);
+		};
+
 		final Item item;
 
 		Item fromItem = null;
@@ -350,6 +366,31 @@ public class Importer {
 		}
 		return item;
 	}
+	
+	/**
+	 * @param oldItem
+	 * @param newMapping
+	 * @return boolean
+	 * @should should return true if any of updatedOn is null
+	 * @should should return false if both updatedOn are null
+	 * @should should return if mapping's updatedOn is after
+	 */
+	
+	public boolean isMappingUpToDate(Item oldItem, OclMapping newMapping) {
+		Date oldUpdatedOn = oldItem.getUpdatedOn();
+		Date newUpdatedOn = newMapping.getUpdatedOn();
+		//mapping never was updated
+		if(oldUpdatedOn==null&&newUpdatedOn==null){
+			return true;
+		}
+		//mapping was updated at least once
+		else if(oldUpdatedOn!=null&&newUpdatedOn!=null){
+				return newUpdatedOn.equals(oldUpdatedOn);
+		}
+		//this is first update - old version updatedOn is null
+		else return false;
+	}
+
 
 	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
 	        ConceptSource toSource) {

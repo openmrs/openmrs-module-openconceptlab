@@ -84,7 +84,6 @@ public class ImportRunner implements Runnable {
 							items.add(item);
 						}
 	                }
-					
 					updateService.saveItems(items);
 				}
 				
