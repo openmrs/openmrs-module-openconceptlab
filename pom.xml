@@ -53,7 +53,7 @@
 	</modules>
 
 	<properties>
-		<openMRSVersion>1.9.11-SNAPSHOT</openMRSVersion>
+		<openMRSVersion>1.9.11</openMRSVersion>
 
 		<!-- Module dependencies -->
 		<appframeworkVersion>2.2.1</appframeworkVersion>
