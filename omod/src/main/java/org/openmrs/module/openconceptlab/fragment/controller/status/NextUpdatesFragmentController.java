@@ -37,6 +37,7 @@ public class NextUpdatesFragmentController {
 			model.addAttribute("lastUpdateId", lastUpdate.getUpdateId());
 			errorsItems = service.getUpdateItemsCount(lastUpdate, states);
 		}
+		Boolean isLastUpdateSuccessful = service.isLastUpdateSuccessful();
 		
 		Date lastUpdateDate;
 		Subscription subscription = service.getSubscription();
@@ -66,6 +67,7 @@ public class NextUpdatesFragmentController {
 		model.addAttribute("nextUpdateTime", appendZeros(hours.toString()) + ":" + appendZeros(minutes.toString()));
 		model.addAttribute("errorItemSize", errorsItems);
 		model.addAttribute("manual", manual);
+		model.addAttribute("isLastUpdateSuccessful", isLastUpdateSuccessful);
 		
 	}
 	

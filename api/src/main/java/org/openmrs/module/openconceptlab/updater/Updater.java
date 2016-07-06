@@ -117,7 +117,7 @@ public class Updater implements Runnable {
 						}
 
 						OclResponse oclResponse;
-
+						
 						if (updatedSince == null) {
 							oclResponse = oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
 						} else {

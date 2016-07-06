@@ -176,6 +176,11 @@ public class UpdateServiceImpl implements UpdateService {
 	}
 
 	@Override
+	public Boolean isLastUpdateSuccessful(){
+		return getLastSuccessfulSubscriptionUpdate().equals(getLastUpdate());
+	}
+	
+	@Override
 	public void ignoreAllErrors(Update update) {
 		Query query = getSession().createQuery("update OclItem i set i.state = :newState where i.update = :update and i.state = :oldState");
 		query.setParameter("newState", ItemState.IGNORED_ERROR);
