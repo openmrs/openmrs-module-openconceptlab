@@ -45,6 +45,10 @@ public class Import {
 	@Basic
 	@Column(name = "ocl_date_started")
 	private Date oclDateStarted;
+
+	@Basic
+	@Column(name = "release_version")
+	private String releaseVersion;
 	
 	@Basic
 	@Column(name = "error_message")
@@ -80,6 +84,14 @@ public class Import {
 	
 	public void setOclDateStarted(Date oclDateStarted) {
 		this.oclDateStarted = oclDateStarted;
+	}
+
+	public String getReleaseVersion() {
+		return releaseVersion;
+	}
+
+	public void setReleaseVersion(String releaseVersion) {
+		this.releaseVersion = releaseVersion;
 	}
 	
     public String getErrorMessage() {

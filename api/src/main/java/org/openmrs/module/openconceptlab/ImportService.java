@@ -59,6 +59,8 @@ public interface ImportService {
     @Transactional
 	void updateOclDateStarted(Import update, Date oclDateStarted);
 
+	void updateReleaseVersion(Import anImport, String version);
+
 	/**
 	 * @should throw IllegalArgumentException if not scheduled
 	 * @should throw IllegalStateException if trying to stop twice

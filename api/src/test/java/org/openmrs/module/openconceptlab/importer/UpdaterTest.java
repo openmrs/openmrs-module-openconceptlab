@@ -60,6 +60,9 @@ public class UpdaterTest extends BaseContextMockTest {
 	@Mock
 	Saver importer;
 
+    @Mock
+    Subscription subscription;
+
 	@InjectMocks
 	Importer updater;
 
@@ -81,7 +84,7 @@ public class UpdaterTest extends BaseContextMockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(updateService.getLastImport()).thenReturn(null);
-		when(oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+		when(oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
 
 		updater.run();
 
@@ -90,7 +93,36 @@ public class UpdaterTest extends BaseContextMockTest {
 
 	/**
 	 * @see Importer#run()
-	 * @verifies start next anImport with updated since
+	 * @verifies start further RELEASE update
+	 */
+	@Test
+	public void runUpdate_shouldStartUpdateIfNewRelease() throws Exception {
+
+        final String release1name = "1.0";
+        final String release2name = "1.1";
+
+        subscription.setUrl("http://some.com/url");
+		when(updateService.getSubscription()).thenReturn(subscription);
+		when(subscription.isSubscribedToSnapshot()).thenReturn(false);
+
+		Import lastImport = new Import();
+		Date updatedSince = new Date();
+		lastImport.setOclDateStarted(updatedSince);
+		lastImport.setReleaseVersion(release1name);
+
+		when(updateService.getLastSuccessfulSubscriptionImport()).thenReturn(lastImport);
+
+        OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, new Date());
+
+        when(oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken())).thenReturn(release2name);
+        when(oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion())).thenReturn(oclResponse);
+
+        updater.run();
+    }
+
+	/**
+	 * @see Importer#run()
+	 * @verifies start further SNAPSHOT import with updated since
 	 */
 	@Test
 	public void runUpdate_shouldStartNextUpdateWithUpdatedSince() throws Exception {
@@ -105,7 +137,7 @@ public class UpdaterTest extends BaseContextMockTest {
 
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
-		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
 		        .thenReturn(oclResponse);
 
 		updater.run();
@@ -132,7 +164,7 @@ public class UpdaterTest extends BaseContextMockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
 
-		when(oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
 		        .thenReturn(oclResponse);
 
 		doAnswer(new Answer<Item>() {

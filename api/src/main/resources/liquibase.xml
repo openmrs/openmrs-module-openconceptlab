@@ -206,4 +206,16 @@
 		<addForeignKeyConstraint constraintName="openconceptlab_item_import" baseTableName="openconceptlab_item" baseColumnNames="import_id" referencedTableName="openconceptlab_import" referencedColumnNames="import_id"/>
 	</changeSet>
 
+    <changeSet author="tomaszmarzeion" id="openconceptlab-v1-12">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="openconceptlab_import" columnName="release_version"/>
+            </not>
+        </preConditions>
+        <comment>Create release_version - See OCLM-38 for details</comment>
+        <addColumn tableName="openconceptlab_import">
+            <column name="release_version" type="varchar(512)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

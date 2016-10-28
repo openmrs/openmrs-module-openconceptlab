@@ -184,7 +184,15 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Boolean isLastImportSuccessful(){
-		return getLastSuccessfulSubscriptionImport().equals(getLastImport());
+
+		Import lastSuccessfulSubscriptionImport = getLastSuccessfulSubscriptionImport();
+		if (lastSuccessfulSubscriptionImport != null) {
+			Import lastUpdate = getLastImport();
+			return lastSuccessfulSubscriptionImport.equals(lastUpdate);
+		}
+		else {
+			return false;
+		}
 	}
 	
 	@Override
@@ -232,6 +240,12 @@ public class ImportServiceImpl implements ImportService {
 	public void updateOclDateStarted(Import update, Date oclDateStarted) {
 		update.setOclDateStarted(oclDateStarted);
 		getSession().save(update);
+	}
+
+	@Override
+	public void updateReleaseVersion(Import anImport, String version) {
+		anImport.setReleaseVersion(version);
+		getSession().save(anImport);
 	}
 
 
