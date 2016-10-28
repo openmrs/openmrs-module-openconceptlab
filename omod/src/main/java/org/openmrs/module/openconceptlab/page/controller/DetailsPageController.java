@@ -9,7 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.page.controller;
 
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,7 +28,7 @@ public class DetailsPageController {
 	
 	public void post(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId,
 	        @RequestParam(value = "debug", required = false) Boolean debug,
-	        @SpringBean("openconceptlab.updateService") UpdateService updateService) {
+	        @SpringBean("openconceptlab.updateService") ImportService updateService) {
 		
 				
 		model.addAttribute("updateId", updateId);

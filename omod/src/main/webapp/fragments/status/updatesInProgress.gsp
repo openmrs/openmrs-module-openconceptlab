@@ -5,7 +5,7 @@
 		progressbar.progressbar();
 		
 		var updateProgressbar = function() {
-			jq.getJSON('${ui.actionLink("openconceptlab", "status", "getUpdateProgress")}', function(result) {
+			jq.getJSON('${ui.actionLink("openconceptlab", "status", "getImportProgress")}', function(result) {
 				jq('#completed').html(result.progress);
 				jq('#time').html(result.timeText);
 				var progressbar = jq( "#progressbar" );

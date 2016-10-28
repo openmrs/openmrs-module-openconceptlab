@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateProgress;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportProgress;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.FragmentParam;
 import org.openmrs.ui.framework.annotation.SpringBean;
@@ -31,11 +31,11 @@ import org.openmrs.ui.framework.fragment.FragmentModel;
  */
 public class DetailsFragmentController {
 	
-	public void controller(FragmentModel model, @SpringBean("openconceptlab.updateService") UpdateService service,
+	public void controller(FragmentModel model, @SpringBean("openconceptlab.updateService") ImportService service,
 	        @FragmentParam(value = "updateId", required = false) Long updateId,
 	        @FragmentParam(value = "debug", required = false) Boolean debug) {
 		//fetch  update
-		Update fetchedUpdate = service.getUpdate(updateId);
+		Import fetchedUpdate = service.getImport(updateId);
 		Date upgradeStartDate;
 		List<Details> detailsList = new ArrayList<Details>();
 		Date upgradeStopDate;
@@ -46,27 +46,27 @@ public class DetailsFragmentController {
 			//get the start date
 			upgradeStartDate = fetchedUpdate.getLocalDateStarted();
 			upgradeStopDate = fetchedUpdate.getLocalDateStopped();
-			Integer itemsUpdated = service.getUpdateItemsCount(fetchedUpdate, new HashSet<ItemState>());
+			Integer itemsUpdated = service.getImportItemsCount(fetchedUpdate, new HashSet<ItemState>());
 			
 			Set<ItemState> inError = new HashSet<ItemState>();
 			inError.add(ItemState.ERROR);
-			Integer errorsItems = service.getUpdateItemsCount(fetchedUpdate, inError);
+			Integer errorsItems = service.getImportItemsCount(fetchedUpdate, inError);
 			
 			String baseUrl = service.getSubscription().getUrl();
 			baseUrl = baseUrl.substring(0, baseUrl.indexOf("/"));
 			
-			List<Item> itemsUpdatedLimited = service.getUpdateItems(fetchedUpdate, 0, 1000, inError);
+			List<Item> itemsUpdatedLimited = service.getImportItems(fetchedUpdate, 0, 1000, inError);
 			for (Item item : itemsUpdatedLimited) {
 				detailsList.add(new Details(item));
 			}
 			
 			//calculate the time it take for the upgrade
 			timeTakenForUpgrade = Utils.dateDifference(upgradeStartDate, upgradeStopDate, TimeUnit.SECONDS);
-			duration = UpdateProgress.convertSecondsToText(timeTakenForUpgrade);
+			duration = ImportProgress.convertSecondsToText(timeTakenForUpgrade);
 			
 			Set<ItemState> ignoredError = new HashSet<ItemState>();
 			ignoredError.add(ItemState.IGNORED_ERROR);
-			Integer ignoredErrorsCount = service.getUpdateItemsCount(fetchedUpdate, ignoredError);
+			Integer ignoredErrorsCount = service.getImportItemsCount(fetchedUpdate, ignoredError);
 			
 			model.addAttribute("debug", debug);
 			model.addAttribute("updateId", updateId);
@@ -94,7 +94,7 @@ public class DetailsFragmentController {
 		private String versionUrl;
 		
 		public Details(Item item) {
-			this.updateId = item.getUpdate().getUpdateId();
+			this.updateId = item.getAnImport().getImportId();
 			this.type = item.getType().toString();
 			if (ItemState.ERROR.equals(item.getState())) {
 				this.status = "<pre style=\"font-size: 70%\">" + item.getErrorMessage() + "</pre>";

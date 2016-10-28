@@ -11,8 +11,8 @@ package org.openmrs.module.openconceptlab.page.controller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.UpdateService;
-import org.openmrs.module.openconceptlab.updater.Updater;
+import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 
@@ -21,7 +21,7 @@ import org.openmrs.ui.framework.page.PageModel;
  */
 public class StatusPageController {
 	public void controller(PageModel model,
-						   @SpringBean Updater updater, @SpringBean UpdateService service){
+                           @SpringBean Importer updater, @SpringBean ImportService service){
 
 		boolean checkIfUpdatesIsRunning = false;
 		boolean checkIfSubscribed = true;

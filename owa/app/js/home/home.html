@@ -1,0 +1,61 @@
+<div ng-show="!vm.subscription">
+    <div>
+        <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a>
+    </div><br>
+    <div>
+        <p>{{"nosubscriptionmessage.info" | translate}}</p>
+    </div>
+</div>
+<div ng-show="vm.subscription">
+    <div>
+        <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"editsubscription.button" | translate}}</a><br><br>
+    </div>
+    <div ng-show="!vm.runningImport">
+        <fieldset>
+            <legend>{{"nextimports.text" | translate}}</legend><br>
+            <div>
+                <button ng-click="vm.startImport()">{{"importnow.button" | translate}}</button>
+                &nbsp;{{"avoidUpdatesInfo.text" | translate}}
+            </div><br>
+        </fieldset>
+    </div>
+    <div ng-show="vm.runningImport">
+        <fieldset>
+            <legend>{{"importinprogress.text" | translate}}</legend><br>
+            <div>
+               <p>{{"importprogresstime.text" | translate}} {{vm.runningImport.importTime}}</p>
+                <p>{{"completed.text" | translate}} {{vm.runningImport.importProgress}} %</p>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="{{vm.runningImport.importProgress}}"
+                         aria-valuemin="0" aria-valuemax="100" style="width:{{vm.runningImport.importProgress}}%">
+                    </div>
+                </div>
+            </div><br>
+        </fieldset>
+    </div>
+    <br>
+    {{vm.previousImports}}
+    <div>
+        <fieldset>
+            <legend>{{"previousimports.text" | translate}}</legend>
+            <div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>{{"date.text" | translate}}</th>
+                        <th>{{"duration.text" | translate}}</th>
+                        <th>{{"status.text" | translate}}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="import in vm.previousImports">
+                        <td>{{import.localDateStared}}</td>
+                        <td>{{import.importTime}}</td>
+                        <td>{{import.errorMessage}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>

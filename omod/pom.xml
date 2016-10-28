@@ -29,7 +29,18 @@
 			<artifactId>${project.parent.artifactId}-api</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>${project.parent.groupId}</groupId>
+			<artifactId>${project.parent.artifactId}-owa</artifactId>
+			<version>${project.parent.version}</version>
+			<type>zip</type>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod</artifactId>
+		</dependency>
 				
 		<!-- End OpenMRS modules -->
 		<dependency>
@@ -220,6 +231,25 @@
 							<excludeTransitive>true</excludeTransitive>
 							<includes>**/*</includes>
 							<outputDirectory>${project.build.directory}/classes</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>include-owa</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${project.parent.groupId}</groupId>
+									<artifactId>${project.parent.artifactId}-owa</artifactId>
+									<version>${project.parent.version}</version>
+									<type>zip</type>
+									<destFileName>openconceptlab.owa</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/classes/web/module/owas</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>

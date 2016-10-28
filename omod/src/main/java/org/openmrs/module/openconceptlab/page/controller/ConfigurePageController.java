@@ -10,7 +10,7 @@
 package org.openmrs.module.openconceptlab.page.controller;
 
 import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.ui.framework.annotation.BindParams;
 import org.openmrs.ui.framework.annotation.SpringBean;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 public class ConfigurePageController {
 	
-	public void get(@SpringBean UpdateService updateService, PageModel model) {
+	public void get(@SpringBean ImportService updateService, PageModel model) {
 		Subscription subscription = updateService.getSubscription();
 		if (subscription == null) {
 			subscription = newBlankSubscription();

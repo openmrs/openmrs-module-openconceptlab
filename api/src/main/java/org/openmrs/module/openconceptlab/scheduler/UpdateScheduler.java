@@ -13,12 +13,12 @@ import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
 
 import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.UpdateService;
-import org.openmrs.module.openconceptlab.updater.Updater;
+import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.importer.Importer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
- * It is used to run {@link Updater#run()} either as a scheduled task or on request.
+ * It is used to run {@link Importer#run()} either as a scheduled task or on request.
  */
 public class UpdateScheduler {
 	
@@ -26,27 +26,27 @@ public class UpdateScheduler {
 	
 	ThreadPoolTaskScheduler scheduler;
 	
-	ScheduledFuture<Updater> scheduledUpdate;
+	ScheduledFuture<Importer> scheduledUpdate;
 	
-	Updater updater;
+	Importer importer;
 	
-	UpdateService updateService;
+	ImportService importService;
 	
     public void setScheduler(ThreadPoolTaskScheduler scheduler) {
 	    this.scheduler = scheduler;
     }
     
-    public void setUpdater(Updater updater) {
-	    this.updater = updater;
+    public void setImporter(Importer importer) {
+	    this.importer = importer;
     }
     
-    public void setUpdateService(UpdateService updateService) {
-	    this.updateService = updateService;
+    public void setImportService(ImportService importService) {
+	    this.importService = importService;
     }
 	
 	@SuppressWarnings("unchecked")
 	public synchronized void schedule(Subscription subscription) {
-		updateService.saveSubscription(subscription);
+		importService.saveSubscription(subscription);
 		
 		if (scheduledUpdate != null) {
 			scheduledUpdate.cancel(false);
@@ -59,13 +59,13 @@ public class UpdateScheduler {
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
 			
-			scheduledUpdate = scheduler.scheduleAtFixedRate(updater, calendar.getTime(), subscription.getDays()
+			scheduledUpdate = scheduler.scheduleAtFixedRate(importer, calendar.getTime(), subscription.getDays()
 			        * DAY_PERIOD);
 		}
 	}
 	
 	public synchronized void unschedule() {
-		updateService.unsubscribe();
+		importService.unsubscribe();
 		
 		if (scheduledUpdate != null) {
 			scheduledUpdate.cancel(false);
@@ -74,24 +74,24 @@ public class UpdateScheduler {
 	}
 	
 	public void scheduleUpdate() {
-		Subscription subscription = updateService.getSubscription();
+		Subscription subscription = importService.getSubscription();
 		if (subscription != null) {
 			schedule(subscription);
 		}
 	}
 	
 	public void scheduleNow() {
-		if (updater.isRunning()) {
+		if (importer.isRunning()) {
 			throw new IllegalStateException("Cannot start the update, if there is another update in progress.");
 		}
 				
-		scheduler.submit(updater);
+		scheduler.submit(importer);
 		
 		//delay at most 10 seconds until the update starts
 		try {
 			for (int i = 0; i < 100; i++) {
 				Thread.sleep(100);
-				if (updater.isRunning()) {
+				if (importer.isRunning()) {
 					break;
 				}
 			}

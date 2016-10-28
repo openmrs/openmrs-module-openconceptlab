@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "name": "openconceptlab",
+  "description": "UI for OpenMRS OpenConceptLab module",
+  "launch_path": "index.html",
+  "icons": {
+    "48": "/img/omrs-button.png"
+  },
+  "developer": {
+    "name": "AdamGrzybkowski",
+    "url": "https://github.com/openmrs/openmrs-module-openconceptlab"
+  },
+  "default_locale": "en",
+    "activities": {
+      "openmrs": {
+        "href": "*"
+      }
+    }
+}

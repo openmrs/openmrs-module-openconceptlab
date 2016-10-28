@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 
 	@Autowired
-	UpdateService updateService;
+	ImportService updateService;
 
 	@Autowired
 	ConceptService conceptService;
@@ -42,89 +42,89 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 	public ExpectedException exception = ExpectedException.none();
 
 	/**
-	 * @see UpdateServiceImpl#getUpdate(Long)
+	 * @see ImportServiceImpl#getImport(Long)
 	 * @verifies return update with id
 	 */
 	@Test
 	public void getUpdate_shouldReturnUpdateWithId() throws Exception {
-		Update newUpdate = new Update();
-		updateService.startUpdate(newUpdate);
+		Import newUpdate = new Import();
+		updateService.startImport(newUpdate);
 
-		Update update = updateService.getUpdate(newUpdate.getUpdateId());
+		Import update = updateService.getImport(newUpdate.getImportId());
 
 		assertThat(update, is(newUpdate));
 	}
 
 	/**
-	 * @see UpdateServiceImpl#getUpdate(Long)
+	 * @see ImportServiceImpl#getImport(Long)
 	 * @verifies throw IllegalArgumentException if update does not exist
 	 */
 	@Test
 	public void getUpdate_shouldThrowIllegalArgumentExceptionIfUpdateDoesNotExist() throws Exception {
 		exception.expect(IllegalArgumentException.class);
-		updateService.getUpdate(0L);
+		updateService.getImport(0L);
 
 	}
 
 	/**
-	 * @see UpdateServiceImpl#getUpdatesInOrder()
+	 * @see ImportServiceImpl#getUpdatesInOrder()
 	 * @verifies return all updates ordered descending by ids
 	 */
 	@Test
 	public void getUpdatesInOrder_shouldReturnAllUpdatesOrderedDescendingByIds() throws Exception {
-		Update firstUpdate = new Update();
-		updateService.startUpdate(firstUpdate);
-		updateService.stopUpdate(firstUpdate);
+		Import firstUpdate = new Import();
+		updateService.startImport(firstUpdate);
+		updateService.stopImport(firstUpdate);
 
-		Update secondUpdate = new Update();
-		updateService.startUpdate(secondUpdate);
+		Import secondUpdate = new Import();
+		updateService.startImport(secondUpdate);
 
-		List<Update> updatesInOrder = updateService.getUpdatesInOrder(0, 20);
+		List<Import> updatesInOrder = updateService.getImportsInOrder(0, 20);
 
 		assertThat(updatesInOrder, contains(secondUpdate, firstUpdate));
 	}
 
 	/**
-     * @see UpdateServiceImpl#startUpdate(Update)
+     * @see ImportServiceImpl#startImport(Import)
      * @verifies throw IllegalStateException if another update is in progress
      */
     @Test
     public void scheduleUpdate_shouldThrowIllegalStateExceptionIfAnotherUpdateIsInProgress() throws Exception {
-    	Update firstUpdate = new Update();
-    	updateService.startUpdate(firstUpdate);
+    	Import firstUpdate = new Import();
+    	updateService.startImport(firstUpdate);
 
-    	Update secondUpdate = new Update();
+    	Import secondUpdate = new Import();
     	exception.expect(IllegalStateException.class);
-    	updateService.startUpdate(secondUpdate);
+    	updateService.startImport(secondUpdate);
     }
 
 	/**
-     * @see UpdateServiceImpl#stopUpdate(Update)
+     * @see ImportServiceImpl#stopImport(Import)
      * @verifies throw IllegalArgumentException if not scheduled
      */
     @Test
     public void stopUpdate_shouldThrowIllegalArgumentExceptionIfNotScheduled() throws Exception {
-    	Update update = new Update();
+    	Import update = new Import();
     	exception.expect(IllegalArgumentException.class);
-    	updateService.stopUpdate(update);
+    	updateService.stopImport(update);
     }
 
 	/**
-     * @see UpdateServiceImpl#stopUpdate(Update)
+     * @see ImportServiceImpl#stopImport(Import)
      * @verifies throw IllegalStateException if trying to stop twice
      */
     @Test
     public void stopUpdate_shouldThrowIllegalStateExceptionIfTryingToStopTwice() throws Exception {
-    	Update update = new Update();
-    	updateService.startUpdate(update);
-    	updateService.stopUpdate(update);
+    	Import update = new Import();
+    	updateService.startImport(update);
+    	updateService.stopImport(update);
 
     	exception.expect(IllegalStateException.class);
-    	updateService.stopUpdate(update);
+    	updateService.stopImport(update);
     }
 
 	/**
-	 * @see UpdateServiceImpl#saveSubscription(Subscription)
+	 * @see ImportServiceImpl#saveSubscription(Subscription)
 	 * @Verifies saves the subscription
 	 */
 	@Test
