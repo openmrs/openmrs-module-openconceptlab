@@ -1,11 +1,13 @@
 sudo : required
-language: java
-install : 
-- curl -sL http://bit.ly/jpm4j >jpm4j.jar
-- sudo java -jar jpm4j.jar -u init
-- sudo sh ~/jpm/bin/jpm install com.codacy:codacy-coverage-reporter:assembly
+language : java
+before_install :
+- curl -sL https://github.com/jpm4j/jpm4j.installers/raw/master/dist/biz.aQute.jpm.run.jar >t.jar
+- sudo java -jar t.jar init
+- rm t.jar
+install :
+- sudo jpm install com.codacy:codacy-coverage-reporter:assembly
 - mvn install
-script : 
+script :
 - mvn clean package -DskipTests
 - mvn cobertura:cobertura
-- ~/jpm/bin/codacy-coverage-reporter -l Java -r target/site/cobertura/coverage.xml
+- codacy-coverage-reporter -l Java -r target/site/cobertura/coverage.xml
