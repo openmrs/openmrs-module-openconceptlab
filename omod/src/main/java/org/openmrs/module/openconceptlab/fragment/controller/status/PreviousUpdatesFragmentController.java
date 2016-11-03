@@ -11,8 +11,8 @@ package org.openmrs.module.openconceptlab.fragment.controller.status;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.Update;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
@@ -28,13 +28,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class PreviousUpdatesFragmentController {
 			public void controller(FragmentModel model,
-								   @SpringBean UpdateService service
+								   @SpringBean ImportService service
 			){
-				List<Update> allUpdates = service.getUpdatesInOrder(0, 20);
+				List<Import> allUpdates = service.getImportsInOrder(0, 20);
 				List<UpdateSummary> summaryList = new ArrayList<UpdateSummary>();
 				int duration = 0;
 
-				for(Update update: allUpdates) {
+				for(Import update: allUpdates) {
 					if(update != null) {
 						if (!update.isStopped()) {
 							continue;
@@ -42,8 +42,8 @@ public class PreviousUpdatesFragmentController {
 						Set<ItemState> states = new HashSet<ItemState>();
 						states.add(ItemState.ERROR);
 
-						Integer errors = service.getUpdateItemsCount(update, states);
-						Integer totalItems =  service.getUpdateItemsCount(update, new HashSet<ItemState>());
+						Integer errors = service.getImportItemsCount(update, states);
+						Integer totalItems =  service.getImportItemsCount(update, new HashSet<ItemState>());
 						//loop through each item object to count error
 						duration = Utils.dateDifference(update.getLocalDateStarted(), update.getLocalDateStopped(), TimeUnit.MINUTES).intValue();String status;
 
@@ -55,7 +55,7 @@ public class PreviousUpdatesFragmentController {
 						else {
 							status = totalItems + " items updated";
 						}
-						summaryList.add(new UpdateSummary(update.getUpdateId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, totalItems,status));
+						summaryList.add(new UpdateSummary(update.getImportId(), Utils.formatDateAuto(update.getLocalDateStarted()), duration, totalItems,status));
 					}
 				}
 				model.addAttribute("summaryList", summaryList);

@@ -15,25 +15,35 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Subscription {
-	
+
+	private String uuid;
+
 	private String url;
-	
+
 	private String token;
-	
+
 	private Integer days = 0;
-	
+
 	private Integer hours = 0;
-	
+
 	private Integer minutes = 0;
-	
+
 	public Subscription() {
-		
+
 	}
-	
+
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
+
 	public String getUrl() {
 		return url;
 	}
-	
+
 	public void setUrl(String url) {
 		this.url = url;
 	}

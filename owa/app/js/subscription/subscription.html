@@ -1,0 +1,29 @@
+<div>
+    <form name="saveSubscription">
+        <fieldset>
+            <legend>{{"configuresubscription.title" | translate}}</legend>
+            <div>
+                <br>
+                <label name="subscription-url">{{"subscriptionurl.label" | translate}}</label><br>
+                <input id="subscription-url" ng-model="vm.subscription.url" style="width: 60%" required/>
+                </p>
+                <p>
+                    <label name="subscription-token">{{"tokenurl.label" | translate}}</label><br>
+                    <input id="subscription-token" ng-model="vm.subscription.token" style="width: 60%" required/>
+                </p>
+            </div>
+            <br>
+            <div>
+                <button ng-click="vm.subscribe()" ng-disabled="saveSubscription.$invalid">{{"subscribe.button" | translate}}</button>
+                <button ng-click="vm.cancel()">{{"cancelchanges.button" | translate}}</button>
+            </div>
+        </fieldset>
+    </form>
+</div>
+<div ng-show="vm.subscription.uuid">
+    <fieldset>
+        <legend>{{"unsubscribe.text" | translate}}</legend><br>
+        <button ng-click="vm.unSubscribe()">{{"unsubscribe.button" | translate}}</button>
+        <p>{{"unsubscribeinfo.text" | translate}}</p>
+    </fieldset>
+</div>

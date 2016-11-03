@@ -11,7 +11,7 @@
 	<description>
 		${project.parent.description}
 	</description>
-	<updateURL>https://modules.openmrs.org/modules/download/${project.parent.artifactId}/update.rdf</updateURL>
+	<updateURL>https://modules.openmrs.org/modules/download/${project.parent.artifactId}/anImport.rdf</updateURL>
 	<require_version>1.9.9</require_version>
 	<!-- / Module Properties -->
 	<require_modules>
@@ -22,6 +22,9 @@
 		<require_module version="${uicommonsVersion}">org.openmrs.module.uicommons</require_module>
 	</require_modules>
 
+	<aware_of_modules>
+		<aware_of_module>org.openmrs.module.owa</aware_of_module>
+	</aware_of_modules>
 	
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.OpenConceptLabActivator</activator>

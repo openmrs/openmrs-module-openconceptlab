@@ -41,8 +41,8 @@ public class Item {
 	private Long itemId;
 	
 	@ManyToOne
-	@JoinColumn(name = "update_id")
-	private Update update;
+	@JoinColumn(name = "import_id")
+	private Import anImport;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name = "type")
@@ -76,12 +76,12 @@ public class Item {
 	@Column(name = "updated_on")
 	private Date updatedOn;
 	
-	protected Item() {
+	public Item() {
 		//for persistence only
 	}
 	
-	public Item(Update update, OclConcept concept, ItemState state) {
-		this.update = update;
+	public Item(Import anImport, OclConcept concept, ItemState state) {
+		this.anImport = anImport;
 		this.url = concept.getUrl();
 		this.hashedUrl = hashUrl(url);
 		this.versionUrl = concept.getVersionUrl();
@@ -90,12 +90,12 @@ public class Item {
 		this.state = state;
 	}
 	
-	public Item(Update update, OclMapping oclMapping, ItemState state) {
-		this(update, oclMapping, state, null);
+	public Item(Import anImport, OclMapping oclMapping, ItemState state) {
+		this(anImport, oclMapping, state, null);
 	}
 	
-	public Item(Update update, OclMapping oclMapping, ItemState state, String errorMessage) {
-		this.update = update;
+	public Item(Import anImport, OclMapping oclMapping, ItemState state, String errorMessage) {
+		this.anImport = anImport;
 		this.url = oclMapping.getUrl();
 		this.hashedUrl = hashUrl(url);
 		this.versionUrl = oclMapping.getUrl();
@@ -123,12 +123,12 @@ public class Item {
 		return itemId;
 	}
 	
-	public Update getUpdate() {
-		return update;
+	public Import getAnImport() {
+		return anImport;
 	}
 	
-	public void setUpdate(Update update) {
-		this.update = update;
+	public void setAnImport(Import anImport) {
+		this.anImport = anImport;
 	}
 	
 	public ItemType getType() {

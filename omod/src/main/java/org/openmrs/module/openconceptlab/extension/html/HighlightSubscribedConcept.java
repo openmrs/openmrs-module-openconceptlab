@@ -12,7 +12,7 @@ package org.openmrs.module.openconceptlab.extension.html;
 import org.openmrs.Concept;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.Extension;
-import org.openmrs.module.openconceptlab.UpdateService;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -26,10 +26,10 @@ import javax.servlet.http.HttpServletRequest;
 @Component
 public class HighlightSubscribedConcept extends Extension {
 
-	volatile static UpdateService service;
+	volatile static ImportService service;
 
 	@Autowired
-	public void setService(UpdateService service) {
+	public void setService(ImportService service) {
 		HighlightSubscribedConcept.service = service;
 	}
 

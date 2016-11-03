@@ -24,13 +24,13 @@
 	
 	<task:scheduler id="openconceptlab.scheduler" pool-size="1"/>
 	
-	<bean id="openconceptlab.updateService"
+	<bean id="openconceptlab.importService"
 		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
 		<property name="transactionManager">
 			<ref bean="transactionManager" />
 		</property>
 		<property name="target">
-			<bean class="org.openmrs.module.openconceptlab.UpdateServiceImpl">
+			<bean class="org.openmrs.module.openconceptlab.ImportServiceImpl">
 				<property name="sessionFactory" ref="sessionFactory" />
 				<property name="adminService" ref="adminService" />
 			</bean>
@@ -45,29 +45,29 @@
 	
 	<bean id="openconceptlab.oclClient" class="org.openmrs.module.openconceptlab.client.OclClient" />
 	
-	<bean id="openconceptlab.importer" class="org.openmrs.module.openconceptlab.updater.Importer">
+	<bean id="openconceptlab.saver" class="org.openmrs.module.openconceptlab.importer.Saver">
 		<property name="conceptService" ref="conceptService" />
-		<property name="updateService" ref="openconceptlab.updateService" />
+		<property name="importService" ref="openconceptlab.importService" />
 	</bean>
 	
-	<bean id="openconceptlab.updater" class="org.openmrs.module.openconceptlab.updater.Updater">
-		<property name="updateService" ref="openconceptlab.updateService" />
+	<bean id="openconceptlab.importer" class="org.openmrs.module.openconceptlab.importer.Importer">
+		<property name="importService" ref="openconceptlab.importService" />
 		<property name="conceptService" ref="conceptService" />
 		<property name="oclClient" ref="openconceptlab.oclClient" />
-		<property name="importer" ref="openconceptlab.importer" />
+		<property name="persister" ref="openconceptlab.saver" />
 	</bean>
 	
 	<bean id="openconceptlab.updateScheduler" class="org.openmrs.module.openconceptlab.scheduler.UpdateScheduler">
 		<property name="scheduler" ref="openconceptlab.scheduler"/>
-		<property name="updater" ref="openconceptlab.updater" />
-		<property name="updateService" ref="openconceptlab.updateService" />
+		<property name="importer" ref="openconceptlab.importer" />
+		<property name="importService" ref="openconceptlab.importService" />
 	</bean>
 	
 	<bean parent="serviceContext">
 		<property name="moduleService">
 			<list>
-				<value>org.openmrs.module.openconceptlab.UpdateService</value>
-				<ref bean="openconceptlab.updateService"/>
+				<value>org.openmrs.module.openconceptlab.ImportService</value>
+				<ref bean="openconceptlab.importService"/>
 			</list>
 		</property>
 	</bean>
