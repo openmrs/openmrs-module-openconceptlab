@@ -10,4 +10,4 @@ install :
 script :
 - mvn clean package -DskipTests
 - mvn cobertura:cobertura
-- codacy-coverage-reporter -l Java --projectToken $CODACY_PROJECT_TOKEN -r target/site/cobertura/coverage.xml
+- codacy-coverage-reporter -l Java -r target/site/cobertura/coverage.xml
