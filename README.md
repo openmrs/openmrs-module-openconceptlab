@@ -33,8 +33,7 @@ $ cd openmrs-module-openconceptlab
 
 Deploy OWA module on the server:
 ````sh
-$ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3 -DgroupId=org.openmrs
-.module
+$ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3 -DgroupId=org.openmrs.module
 ````
 
 Build and install the module on the server:
