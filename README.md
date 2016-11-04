@@ -20,7 +20,7 @@ Please make sure you have the following installed:
 
 Next run this command to setup OpenMRS server (just the first time):
 ````sh
-$ mvn openmrs-sdk:setup -DserverId=refapp -Dversion=2.4
+$ mvn openmrs-sdk:setup -DserverId=refapp -Ddistro=referenceapplication:2.4
 # Note: Pick default values for everything except MySQL username and password
 ````
 If there are any issues with setting up the server, check out <b>[OpenMRS SDK documentation](https://wiki.openmrs.org/display/docs/OpenMRS+SDK)</b>
