@@ -6,6 +6,7 @@
   "instalupdatesmanually.radio":"Install updates manually",
   "instalupdatesautomatically.radio":"Install updates automatically",
   "subscribe.button":"Save changes",
+  "subscription.options.checkbox":"Subscribe to SNAPSHOT versions (not recommended)",
   "cancelchanges.button":"Cancel Changes",
   "nosubscriptionmessage.info":"You are not subscribed to Open Concept Lab. Please go to the configuration page to setup the subscription",
   "installupdatesperiod.text":"Install updates every",

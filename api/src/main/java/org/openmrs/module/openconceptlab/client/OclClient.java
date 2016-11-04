@@ -9,6 +9,18 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.util.OpenmrsUtil;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,20 +40,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.util.OpenmrsUtil;
 
 public class OclClient {
 	
@@ -67,7 +65,7 @@ public class OclClient {
 		this.dataDirectory = dataDirectory;
 	}
 	
-	public OclResponse fetchUpdates(String url, String token, Date updatedSince) throws IOException {
+	public OclResponse fetchSnapshotUpdates(String url, String token, Date updatedSince) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
 		
@@ -101,15 +99,15 @@ public class OclClient {
 		return extractResponse(get);
 	}
 	
-	public OclResponse fetchInitialUpdates(String url, String token) throws IOException, HttpException {
+	public OclResponse fetchLastReleaseVersion(String url, String token) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
 		
 		if (url.endsWith("/")) {
 			url = url.substring(0, url.length() - 1);
 		}
-		
-		String latestVersion = fetchLatestVersion(url, token);
+
+		String latestVersion = fetchLatestOclReleaseVersion(url, token);
 		
 		String exportUrl = fetchExportUrl(url, token, latestVersion);
 		
@@ -125,7 +123,17 @@ public class OclClient {
 		
 		return extractResponse(exportUrlGet);
     }
-	
+
+	public OclResponse fetchLastReleaseVersion(String url, String token, String lastReleaseVersion) throws IOException {
+		String latestOclReleaseVersion = fetchLatestOclReleaseVersion(url, token);
+		if (!lastReleaseVersion.equals(latestOclReleaseVersion)) {
+			return fetchLastReleaseVersion(url, token);
+		}
+		else {
+			return null;
+		}
+	}
+
 	/**
 	 * @should extract date and json
 	 */
@@ -314,8 +322,7 @@ public class OclClient {
 	    return exportUrl;
     }
 
-	private String fetchLatestVersion(String url, String token) throws IOException, HttpException, JsonParseException,
-            JsonMappingException {
+	public String fetchLatestOclReleaseVersion(String url, String token) throws IOException {
 	    String latestVersionUrl = url + "/latest";
 		
 		GetMethod latestVersionGet = new GetMethod(latestVersionUrl);

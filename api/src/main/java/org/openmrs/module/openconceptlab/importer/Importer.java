@@ -71,16 +71,17 @@ public class Importer implements Runnable {
 
 	private volatile long totalBytesToProcess;
 
+	private interface Task {
+		void run() throws Exception;
+	}
 
     public void setImportService(ImportService importService) {
 	    this.importService = importService;
     }
 
-
     public void setConceptService(ConceptService conceptService) {
 	    this.conceptService = conceptService;
     }
-
 
     public void setOclClient(OclClient oclClient) {
 	    this.oclClient = oclClient;
@@ -102,45 +103,59 @@ public class Importer implements Runnable {
 	@Override
 	public void run() {
 		Daemon.runInDaemonThreadAndWait(new Runnable() {
-
 			@Override
 			public void run() {
-				runAndHandleErrors(new Task() {
-
-					@Override
-					public void run() throws Exception {
-						Subscription subscription = importService.getSubscription();
-						Import lastUpdate = importService.getLastSuccessfulSubscriptionImport();
-						Date updatedSince = null;
-						if (lastUpdate != null) {
-							updatedSince = lastUpdate.getOclDateStarted();
-						}
-
-						OclResponse oclResponse;
-						
-						if (updatedSince == null) {
-							oclResponse = oclClient.fetchInitialUpdates(subscription.getUrl(), subscription.getToken());
-						} else {
-							oclResponse = oclClient.fetchUpdates(subscription.getUrl(), subscription.getToken(),
-							    updatedSince);
-						}
-
-						importService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
-
-						in = new CountingInputStream(oclResponse.getContentStream());
-						totalBytesToProcess = oclResponse.getContentLength();
-
-						processInput();
-
-						in.close();
-					}
-				});
+				runTask();
 			}
 		}, OpenConceptLabActivator.getDaemonToken());
 	}
 
-	/**
-	 * It can be used to run anImport from the given input e.g. from a resource bundled with a module.
+    public void runTask() {
+        runAndHandleErrors(new Task() {
+
+            @Override
+            public void run() throws Exception {
+                Subscription subscription = importService.getSubscription();
+                Import lastImport = importService.getLastSuccessfulSubscriptionImport();
+                Date updatedSince = null;
+                if (lastImport != null) {
+                    updatedSince = lastImport.getOclDateStarted();
+                }
+
+                OclResponse oclResponse;
+
+                if (updatedSince == null) {
+                    oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken());
+					importService.updateReleaseVersion(update,
+                            oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
+                } else {
+                    if (subscription.isSubscribedToSnapshot()) {
+                        oclResponse = oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(),
+                                updatedSince);
+                    }
+                    else {
+                        oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion());
+						importService.updateReleaseVersion(update,
+                                oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
+                    }
+                }
+
+				if (oclResponse != null) {
+					importService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
+
+					in = new CountingInputStream(oclResponse.getContentStream());
+					totalBytesToProcess = oclResponse.getContentLength();
+
+					processInput();
+
+					in.close();
+				}
+            }
+        });
+    }
+
+    /**
+	 * It can be used to run update from the given input e.g. from a resource bundled with a module.
 	 * <p>
 	 * It does not require any subscription to be setup.
 	 *
@@ -158,11 +173,6 @@ public class Importer implements Runnable {
 				in.close();
 			}
 		});
-	}
-
-	private interface Task {
-
-		public void run() throws Exception;
 	}
 
 	private void runAndHandleErrors(Task task) {

@@ -34,8 +34,10 @@ public class StatusFragmentController {
 							@SpringBean("openconceptlab.updateService") ImportService updateService,
 							@RequestParam(required = false, value = "ignoreErrors") Boolean ignoreErrors) throws IOException {
 		
-		Import update = updateService.getLastImport();
-		updateService.ignoreAllErrors(update);
+		Import anImport = updateService.getLastImport();
+		if (anImport != null) {
+			updateService.ignoreAllErrors(anImport);
+		}
 		updateScheduler.scheduleNow();
 	}
 }

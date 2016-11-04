@@ -28,6 +28,8 @@ public class Subscription {
 
 	private Integer minutes = 0;
 
+	private boolean subscribedToSnapshot = true;
+
 	public Subscription() {
 
 	}
@@ -82,6 +84,14 @@ public class Subscription {
 	
 	public boolean isManual() {
 		return (days == null && hours == null && minutes == null) || (days == 0 && hours == 0 && minutes == 0);
+	}
+
+	public boolean isSubscribedToSnapshot() {
+		return subscribedToSnapshot;
+	}
+
+	public void setSubscribedToSnapshot(boolean isFetchingSnapshotUpdates) {
+		this.subscribedToSnapshot = isFetchingSnapshotUpdates;
 	}
 	
 	public boolean isSubscribed() {

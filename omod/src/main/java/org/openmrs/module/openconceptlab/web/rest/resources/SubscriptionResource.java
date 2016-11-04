@@ -22,7 +22,6 @@ import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOp
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.UUID;
 
 @Resource(name = RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/subscription", supportedClass = Subscription.class, supportedOpenmrsVersions = { "1.8.*",
@@ -56,6 +55,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         DelegatingResourceDescription delegatingResourceDescription = new DelegatingResourceDescription();
         delegatingResourceDescription.addRequiredProperty("url");
         delegatingResourceDescription.addRequiredProperty("token");
+        delegatingResourceDescription.addProperty("subscribedToSnapshot");
         return delegatingResourceDescription;
     }
 
@@ -71,6 +71,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
             description.addProperty("uuid");
             description.addProperty("url");
             description.addProperty("token");
+            description.addProperty("subscribedToSnapshot");
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
             return description;
