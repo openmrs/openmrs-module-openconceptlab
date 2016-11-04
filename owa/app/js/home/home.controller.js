@@ -5,11 +5,12 @@ class HomeController {
     $rootScope.links["Open Concept Lab"] = "/";
 
     var vm = this;
-
+    vm.textLength = 30;
     vm.updater = null;
 
     vm.startImport = startImport;
     vm.getRunningImport = getRunningImport;
+    vm.setTextLength = setTextLength;
 
     activate();
     
@@ -50,6 +51,9 @@ class HomeController {
       openmrsNotification.error(exception.data.error.message);
     }
 
+    function setTextLength(length) {
+      vm.textLength = length;
+    }
   }
 }
 
