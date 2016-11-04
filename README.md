@@ -20,20 +20,20 @@ Please make sure you have the following installed:
 
 Next run this command to setup OpenMRS server (just the first time):
 ````sh
-$ mvn openmrs-sdk:setup -DserverId=refapp -Dversion=2.3
+$ mvn openmrs-sdk:setup -DserverId=refapp -Dversion=2.4
 # Note: Pick default values for everything except MySQL username and password
 ````
 If there are any issues with setting up the server, check out <b>[OpenMRS SDK documentation](https://wiki.openmrs.org/display/docs/OpenMRS+SDK)</b>
 
 Fork and clone [Open Concept Lab module project](https://github.com/openmrs/openmrs-module-openconceptlab/):
 ````sh
-$ git clone https://github.com/{yourusername}/openmrs-module-openconceptlab.git
+$ mvn openmrs-sdk:clone -DartifactId=openconceptlab
 $ cd openmrs-module-openconceptlab
 ````
 
 Build and install the module on the server:
 ````sh
-$ mvn clean install openmrs-sdk:install -DserverId=refapp
+$ mvn clean install openmrs-sdk:deploy -DserverId=refapp
 ````
 
 You can also configure the server to automatically reload classes and pages from the omod directory:
