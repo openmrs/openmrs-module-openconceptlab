@@ -34,7 +34,6 @@
         </fieldset>
     </div>
     <br>
-    {{vm.previousImports}}
     <div>
         <fieldset>
             <legend>{{"previousimports.text" | translate}}</legend>
@@ -48,10 +47,13 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat="import in vm.previousImports">
-                        <td>{{import.localDateStared}}</td>
+                    <tr ng-repeat="import in vm.previousImports.results">
+                        <td>{{import.localDateStarted | date:'medium'}}</td>
                         <td>{{import.importTime}}</td>
-                        <td>{{import.errorMessage}}</td>
+                        <td>{{import.errorMessage | limitTo: vm.textLength}}
+                            <span ng-if="import.errorMessage.length > vm.textLength" ng-click="vm.setTextLength(import.errorMessage.length)">...show more</span>
+                            <span ng-if="import.errorMessage.length <= vm.textLength" ng-click="vm.setTextLength(30)">&hellip;show less</span>
+                        </td>
                     </tr>
                     </tbody>
                 </table>

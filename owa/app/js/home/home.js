@@ -10,7 +10,7 @@ let homeModule = angular.module('home', [ uiRouter, 'openmrs-contrib-uicommons']
 
         $stateProvider.state('home', {
             url: '/',
-            template: "<home subscription='$resolve.subscription' runningImport='$resolve.getRunningImport' previousImports='$resolve.getImports'></home>",
+            template: "<home subscription='$resolve.subscription' running-import='$resolve.getRunningImport' previous-imports='$resolve.getImports'></home>",
             resolve: {
                 subscription: subscription,
                 getRunningImport: getRunningImport,

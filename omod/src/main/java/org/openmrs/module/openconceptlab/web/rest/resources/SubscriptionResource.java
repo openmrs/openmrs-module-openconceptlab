@@ -56,15 +56,12 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         DelegatingResourceDescription delegatingResourceDescription = new DelegatingResourceDescription();
         delegatingResourceDescription.addRequiredProperty("url");
         delegatingResourceDescription.addRequiredProperty("token");
-        delegatingResourceDescription.addProperty("days");
-        delegatingResourceDescription.addProperty("hours");
-        delegatingResourceDescription.addProperty("minutes");
         return delegatingResourceDescription;
     }
 
     @Override
     public void purge(Subscription delegate, RequestContext context) throws ResponseException {
-        getImportService().unsubscribe();
+        throw new ResourceDoesNotSupportOperationException();
     }
 
     @Override
@@ -74,10 +71,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
             description.addProperty("uuid");
             description.addProperty("url");
             description.addProperty("token");
-            description.addProperty("days");
-            description.addProperty("hours");
-            description.addProperty("minutes");
-            description.addProperty("nextUpdate");
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
             return description;
@@ -108,31 +101,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @PropertyGetter("uuid")
     public static String getUuid(Subscription instance){
         return UUID.nameUUIDFromBytes(instance.getToken().getBytes()).toString();
-    }
-
-    @PropertyGetter("nextUpdate")
-    public static String getNextUpdate(Subscription instance){
-        ImportService service = getImportService();
-        if (instance != null) {
-            if(instance.isManual()){
-                return "manuall";
-            } else {
-                Date lastDate = service.getLastImport().getLocalDateStarted();
-                Integer days = instance.getDays();
-                Integer hours = instance.getHours();
-                Integer minutes = instance.getMinutes();
-                return Utils.formatedDate(Utils.dateAddDays(lastDate, days)) + " " + appendZeros(hours.toString()) + ":" + appendZeros(minutes.toString());
-            }
-        }
-        return null;
-    }
-
-    private static String appendZeros(String k) {
-        String results = k;
-        if (k.length() < 2) {
-            results = "0" + k;
-        }
-        return results;
     }
 
     private UpdateScheduler getUpdateScheduler() {
