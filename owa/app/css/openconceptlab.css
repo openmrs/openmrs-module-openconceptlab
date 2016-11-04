@@ -90,7 +90,7 @@ header .logo img {
     line-height: 20px;
     color: #fff;
     text-align: center;
-    background-color: #337ab7;
+    background-color: #00463f;
     -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
     box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
     -webkit-transition: width .6s ease;
@@ -106,4 +106,27 @@ table {
 table td {
     word-wrap: break-word;         /* All browsers since IE 5.5+ */
     overflow-wrap: break-word;     /* Renamed property in CSS3 draft spec */
+}
+
+.loader {
+    margin: auto;
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #00463f; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.formatFields {
+    color: #4d84b7;
+}
+
+.formatFieldsErrors{
+    color: #aa0100;
 }

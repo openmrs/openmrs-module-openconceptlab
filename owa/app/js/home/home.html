@@ -10,12 +10,15 @@
     <div>
         <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"editsubscription.button" | translate}}</a><br><br>
     </div>
-    <div ng-show="!vm.runningImport">
+    <div ng-show="!vm.runningImport" >
         <fieldset>
             <legend>{{"nextimports.text" | translate}}</legend><br>
-            <div>
-                <button ng-click="vm.startImport()">{{"importnow.button" | translate}}</button>
-                &nbsp;{{"avoidUpdatesInfo.text" | translate}}
+            <div style="text-align: center">
+                <div ng-hide="vm.showLoading">
+                    <button ng-click="vm.startImport()">{{"importnow.button" | translate}}</button>
+                    &nbsp;{{"avoidUpdatesInfo.text" | translate}}
+                </div>
+                <div class="loader" ng-show="vm.showLoading"></div>
             </div><br>
         </fieldset>
     </div>
@@ -48,11 +51,11 @@
                     </thead>
                     <tbody>
                     <tr ng-repeat="import in vm.previousImports.results">
-                        <td>{{import.localDateStarted | date:'medium'}}</td>
+                        <td><a href="#/import/{{import.uuid}}">{{import.localDateStarted | date:'medium'}}</a></td>
                         <td>{{import.importTime}}</td>
-                        <td>{{import.errorMessage | limitTo: vm.textLength}}
-                            <span ng-if="import.errorMessage.length > vm.textLength" ng-click="vm.setTextLength(import.errorMessage.length)">...show more</span>
-                            <span ng-if="import.errorMessage.length <= vm.textLength" ng-click="vm.setTextLength(30)">&hellip;show less</span>
+                        <td>{{import.status | limitTo: vm.textLength}}
+                            <span ng-if="import.status.length > vm.textLength" ng-click="vm.setTextLength(import.status.length)">...show more</span>
+                            <span ng-if="import.status.length == vm.textLength" ng-click="vm.setTextLength(30)">&hellip;show less</span>
                         </td>
                     </tr>
                     </tbody>

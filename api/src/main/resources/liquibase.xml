@@ -218,4 +218,16 @@
         </addColumn>
     </changeSet>
 
+	<changeSet author="adamgrzybkowski" id="openconceptlab-v1-04.11.2016-14.27">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<columnExists tableName="openconceptlab_item" columnName="updated_on"/>
+			</not>
+		</preConditions>
+		<comment>Create openconceptlab_item_update_on</comment>
+		<addColumn tableName="openconceptlab_item">
+			<column name="updated_on" type="datetime"/>
+		</addColumn>
+	</changeSet>
+
 </databaseChangeLog>

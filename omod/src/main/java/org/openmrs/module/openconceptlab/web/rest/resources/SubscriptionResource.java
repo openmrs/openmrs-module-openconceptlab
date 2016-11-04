@@ -1,9 +1,8 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
 import org.openmrs.api.context.Context;
-import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.ImportService;
-import org.openmrs.module.openconceptlab.Utils;
+import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
 import org.openmrs.module.webservices.rest.web.RequestContext;
@@ -34,7 +33,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     }
 
     @Override
-    protected void delete(Subscription delegate, String reason, RequestContext context) throws ResponseException {
+    protected void delete(Subscription subscription, String reason, RequestContext context) throws ResponseException {
         getImportService().unsubscribe();
     }
 
@@ -44,9 +43,12 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     }
 
     @Override
-    public Subscription save(Subscription delegate) {
-        UpdateScheduler updateScheduler = getUpdateScheduler();
-        updateScheduler.schedule(delegate);
+    public Subscription save(Subscription subscription) {
+        if (!"url".equals(subscription.getUrl())) {
+            subscription.setUuid(getUuid(subscription));
+            UpdateScheduler updateScheduler = getUpdateScheduler();
+            updateScheduler.schedule(subscription);
+        }
         return getImportService().getSubscription();
     }
 
@@ -56,6 +58,14 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         delegatingResourceDescription.addRequiredProperty("url");
         delegatingResourceDescription.addRequiredProperty("token");
         delegatingResourceDescription.addProperty("subscribedToSnapshot");
+        return delegatingResourceDescription;
+    }
+
+    @Override
+    public DelegatingResourceDescription getUpdatableProperties() throws ResourceDoesNotSupportOperationException {
+        DelegatingResourceDescription delegatingResourceDescription = new DelegatingResourceDescription();
+        delegatingResourceDescription.addProperty("url");
+        delegatingResourceDescription.addProperty("token");
         return delegatingResourceDescription;
     }
 
@@ -101,7 +111,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
 
     @PropertyGetter("uuid")
     public static String getUuid(Subscription instance){
-        return UUID.nameUUIDFromBytes(instance.getToken().getBytes()).toString();
+        return UUID.nameUUIDFromBytes(instance.getUrl().getBytes()).toString();
     }
 
     private UpdateScheduler getUpdateScheduler() {

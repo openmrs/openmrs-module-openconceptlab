@@ -81,7 +81,7 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
 
     @Override
     public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
-        if (rep instanceof FullRepresentation) {
+        if (rep instanceof DefaultRepresentation) {
             DelegatingResourceDescription description = new DelegatingResourceDescription();
             description.addProperty("uuid");
             description.addProperty("type");
@@ -89,7 +89,7 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
             return description;
-        } else if (rep instanceof DefaultRepresentation) {
+        } else if (rep instanceof FullRepresentation) {
             DelegatingResourceDescription description = new DelegatingResourceDescription();
             description.addProperty("uuid");
             description.addProperty("type");
