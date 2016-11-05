@@ -240,7 +240,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     }
 
     @Test
-    public void update_shouldUpdateLatestDownloadedRelease() throws Exception {
+    public void update_shouldUpdateReleaseVersion() throws Exception {
         Import anImport = new Import();
         anImport.setOclDateStarted(new Date());
         final String version = "v1.2";
