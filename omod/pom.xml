@@ -40,6 +40,22 @@
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>webservices.rest-omod</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>metadatadeploy-api</artifactId>
+			<scope>test</scope>
+			<classifier>tests</classifier>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod-common</artifactId>
+			<version>${webservices.restVersion}</version>
+			<scope>test</scope>
+			<classifier>tests</classifier>
 		</dependency>
 				
 		<!-- End OpenMRS modules -->
