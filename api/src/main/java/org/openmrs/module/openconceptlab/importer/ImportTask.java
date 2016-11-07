@@ -59,58 +59,61 @@ public class ImportTask implements Runnable {
 	@Override
 	public void run() {
 		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			
 			@Override
 			public void run() {
-				anImport = updateService.getImport(anImport.getImportId());
-				
-				if (oclConcepts != null) {
-					List<Item> items = new ArrayList<Item>();
-					
-					for (OclConcept oclConcept : oclConcepts) {
-						Item item = null;
-						try {
-							item = importer.saveConcept(cacheService, anImport, oclConcept);
-							log.info("Imported concept " + oclConcept);
-						}
-						catch (Throwable e) {
-							log.error("Failed to import concept " + oclConcept, e);
-							Context.clearSession();
-							cacheService.clearCache();
-
-							item = new Item(anImport, oclConcept, ItemState.ERROR);
-							item.setErrorMessage(Importer.getErrorMessage(e));
-						} finally {
-							items.add(item);
-						}
-	                }
-					updateService.saveItems(items);
-				}
-				
-				if (oclMappings != null) {
-					List<Item> items = new ArrayList<Item>();
-					
-					for (OclMapping oclMapping : oclMappings) {
-						Item item = null;
-						try {
-							item = importer.saveMapping(cacheService, anImport, oclMapping);
-							log.info("Imported mapping " + oclMapping);
-						}
-						catch (Throwable e) {
-							log.error("Failed to import mapping " + oclMapping, e);
-							Context.clearSession();
-							cacheService.clearCache();
-														
-							item = new Item(anImport, oclMapping, ItemState.ERROR);
-							item.setErrorMessage(Importer.getErrorMessage(e));
-						} finally {
-							items.add(item);
-						}
-                    }
-					
-					updateService.saveItems(items);
-				}
+				//TODO: Call it directly instead of in Daemon.runInDaemonThreadAndWait()
+				runTask();
 			}
 		}, OpenConceptLabActivator.getDaemonToken());
+	}
+
+	public void runTask() {
+		anImport = updateService.getImport(anImport.getImportId());
+		if (oclConcepts != null) {
+			List<Item> items = new ArrayList<Item>();
+
+			for (OclConcept oclConcept : oclConcepts) {
+				Item item = null;
+				try {
+					item = importer.saveConcept(cacheService, anImport, oclConcept);
+					log.info("Imported concept " + oclConcept);
+				}
+				catch (Throwable e) {
+					log.error("Failed to import concept " + oclConcept, e);
+					Context.clearSession();
+					cacheService.clearCache();
+
+					item = new Item(anImport, oclConcept, ItemState.ERROR);
+					item.setErrorMessage(Importer.getErrorMessage(e));
+				} finally {
+					items.add(item);
+				}
+			}
+			updateService.saveItems(items);
+		}
+
+		if (oclMappings != null) {
+			List<Item> items = new ArrayList<Item>();
+
+			for (OclMapping oclMapping : oclMappings) {
+				Item item = null;
+				try {
+					item = importer.saveMapping(cacheService, anImport, oclMapping);
+					log.info("Imported mapping " + oclMapping);
+				}
+				catch (Throwable e) {
+					log.error("Failed to import mapping " + oclMapping, e);
+					Context.clearSession();
+					cacheService.clearCache();
+
+					item = new Item(anImport, oclMapping, ItemState.ERROR);
+					item.setErrorMessage(Importer.getErrorMessage(e));
+				} finally {
+					items.add(item);
+				}
+			}
+
+			updateService.saveItems(items);
+		}
 	}
 }
