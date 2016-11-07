@@ -17,7 +17,6 @@
 	<require_modules>
 		<require_module version="${appframeworkVersion}">org.openmrs.module.appframework</require_module>
 		<require_module version="${uiframeworkVersion}">org.openmrs.module.uiframework</require_module>
-		<require_module version="${metadatadeployVersion}">org.openmrs.module.metadatadeploy</require_module>
 		<require_module version="${appuiVersion}">org.openmrs.module.appui</require_module>
 		<require_module version="${uicommonsVersion}">org.openmrs.module.uicommons</require_module>
 	</require_modules>
@@ -28,7 +27,6 @@
 	
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.OpenConceptLabActivator</activator>
-	
 	
 	<!-- Adds link to admin page -->
 	<extension>
@@ -41,7 +39,25 @@
 		<point>org.openmrs.dictionary.conceptHeader</point>
 		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.HighlightSubscribedConcept</class>
 	</extension>
-	
+
+	<globalProperty>
+		<property>openconceptlab.subscriptionUrl</property>
+		<description>The OCL subscription URL</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.scheduledDays</property>
+		<description>Interval in days when the process is repeated</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.scheduledTime</property>
+		<description>The the time when the process should be carried on</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.token</property>
+		<description>The OCL API Token</description>
+	</globalProperty>
+
+
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
 				

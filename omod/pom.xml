@@ -13,17 +13,6 @@
 	<description>OMOD project for OpenConceptLab</description>
 
 	<dependencies>
-
-		<!-- 
-		Add other dependencies from parent's pom: 
-		<dependency> 
-			<groupId>org.other.library</groupId> 
-			<artifactId>library-name</artifactId> 
-		</dependency> 
-		-->
-		
-		<!-- Begin OpenMRS modules -->
-		
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>${project.parent.artifactId}-api</artifactId>
@@ -37,28 +26,20 @@
 			<type>zip</type>
 		</dependency>
 
+
+		<!-- Begin OpenMRS modules -->
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
-			<artifactId>webservices.rest-omod</artifactId>
+			<artifactId>webservices.rest-omod-1.9</artifactId>
 			<scope>provided</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
-			<artifactId>metadatadeploy-api</artifactId>
-			<scope>test</scope>
-			<classifier>tests</classifier>
-		</dependency>
-
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>webservices.rest-omod-common</artifactId>
-			<version>${webservices.restVersion}</version>
-			<scope>test</scope>
 			<classifier>tests</classifier>
+			<scope>test</scope>
 		</dependency>
-				
-		<!-- End OpenMRS modules -->
+
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>appframework-api</artifactId>
@@ -79,6 +60,7 @@
 			<artifactId>appui-omod</artifactId>
 			<type>jar</type>
 		</dependency>
+		<!-- End OpenMRS modules -->
 
 		<!-- Begin OpenMRS core -->
 
