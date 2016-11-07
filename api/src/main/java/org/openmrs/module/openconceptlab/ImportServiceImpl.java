@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,6 +36,8 @@ import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 
 public class ImportServiceImpl implements ImportService {
+
+  public static final String POSTED_VIA_REST = "posted_via_rest";
 
 	SessionFactory sessionFactory;
 
@@ -233,6 +236,13 @@ public class ImportServiceImpl implements ImportService {
 		if (lastImport != null && !lastImport.isStopped()) {
 			throw new IllegalStateException("Cannot start the import, if there is another import in progress.");
 		}
+		String subscriptionUrl = getSubscription().getUrl();
+    File file = new File (subscriptionUrl);
+    if (file.isFile()) {
+      anImport.setSubscriptionUrl(subscriptionUrl);
+    } else {
+      anImport.setSubscriptionUrl(POSTED_VIA_REST);
+    }
 		getSession().save(anImport);
 	}
 
