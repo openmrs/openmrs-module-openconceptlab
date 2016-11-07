@@ -22,7 +22,7 @@
 			   closeOnEscape: true
             });
 		jq("#update").click(function(){
-			if(!${isLastUpdateSuccessful}){
+			if(!${isLastImportSuccessful}){
 				jq( "#dialog" ).dialog("open");
 			}else{
 				jq.post('${ui.actionLink("openconceptlab", "status", "runUpdates")}', function(){

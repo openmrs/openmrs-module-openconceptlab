@@ -485,7 +485,7 @@ public class Importer implements Runnable {
 			}
 		} else {
 			updateProgress.setProgress(100);
-			updateProgress.setTime(oclImport.getLocalDateStopped().getTime() - oclImport.getLocalDateStarted().getTime());
+			updateProgress.setTime((oclImport.getLocalDateStopped().getTime() - oclImport.getLocalDateStarted().getTime()) / 1000);
 		}
 		return updateProgress;
 

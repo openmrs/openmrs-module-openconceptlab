@@ -31,7 +31,7 @@ import org.openmrs.ui.framework.fragment.FragmentModel;
  */
 public class DetailsFragmentController {
 	
-	public void controller(FragmentModel model, @SpringBean("openconceptlab.updateService") ImportService service,
+	public void controller(FragmentModel model, @SpringBean("openconceptlab.importService") ImportService service,
 	        @FragmentParam(value = "updateId", required = false) Long updateId,
 	        @FragmentParam(value = "debug", required = false) Boolean debug) {
 		//fetch  update

@@ -9,7 +9,7 @@ class SubscriptionController {
     vm.cancel = cancel;
     vm.subscribe = subscribe;
     vm.unSubscribe = unSubscribe;
-    
+
     function activate() {
       if(!angular.isDefined(vm.subscription)){
         vm.subscription = {
@@ -36,7 +36,11 @@ class SubscriptionController {
     }
 
     function subscribe() {
-      openmrsRest.create("openconceptlab/subscription", vm.subscription).then(handleSubscribeSuccess, handleSubscribeException);
+      if (angular.isUndefined(vm.subscription.uuid) || vm.subscription.uuid === "") {
+        openmrsRest.create("openconceptlab/subscription", vm.subscription).then(handleSubscribeSuccess, handleSubscribeException);
+      } else {
+        openmrsRest.update("openconceptlab/subscription", vm.subscription).then(handleSubscribeSuccess, handleSubscribeException);
+      }
     }
 
     function handleSubscribeSuccess(success) {

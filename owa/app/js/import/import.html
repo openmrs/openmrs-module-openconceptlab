@@ -1,0 +1,31 @@
+<div>
+    <p>
+        The update started on<span class="formatFields"> <b>{{vm.anImport.localDateStarted | date:'yyyy-MM-dd'}}</b>
+    </span>at<span class="formatFields"><b> {{vm.anImport.localDateStarted | date:'HH:mm:ss '}}</b></span>.
+        It completed in <span class="formatFields"><b>{{vm.anImport.importTime}}</b></span>
+    </p>
+    <p>
+        There were <span class="formatFields">{{ vm.anImport.allItemsCount - vm.anImport.errorItemsCount}}</span> objects updated and
+        <span class="formatFieldsErrors">{{vm.anImport.errorItemsCount}} in error
+			<span ng-if="vm.anImport.ignoredErrorsCount > 0">(ignored {{vm.anImport.ignoredErrorsCount}} errors)</span>
+        </span>
+    </p>
+</div>
+<div>
+    <table id="mainTbDetails" ng-if="vm.anImport.errorItemsCount > 0">
+        <thead>
+        <tr>
+            <th>Errors (listing limited to first 50 errors)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="item in vm.items">
+            <td class="small" ng-if="item.state === 'ERROR'">{{ item.type }}
+                ({{item.uuid }})
+                <a href="{{item.versionUrl }}">View in OCL</a>\n
+                {{ item.status}}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

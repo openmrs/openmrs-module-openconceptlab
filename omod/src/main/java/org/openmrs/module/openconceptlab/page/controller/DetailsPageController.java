@@ -28,7 +28,7 @@ public class DetailsPageController {
 	
 	public void post(PageModel model, @RequestParam(value = "updateId", required = false) Long updateId,
 	        @RequestParam(value = "debug", required = false) Boolean debug,
-	        @SpringBean("openconceptlab.updateService") ImportService updateService) {
+	        @SpringBean("openconceptlab.importService") ImportService importService) {
 		
 				
 		model.addAttribute("updateId", updateId);

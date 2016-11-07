@@ -310,6 +310,9 @@ public class ImportServiceImpl implements ImportService {
 		Subscription subscription = new Subscription();
 		subscription.setUrl(url);
 
+		String uuid = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_UUID);
+		subscription.setUuid(uuid);
+
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		subscription.setToken(token);
 

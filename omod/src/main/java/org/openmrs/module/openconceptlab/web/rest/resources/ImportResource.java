@@ -1,10 +1,11 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
-import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
@@ -22,6 +23,9 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceD
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Resource(name = RestConstants.VERSION_1  + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import", supportedClass = Import.class, supportedOpenmrsVersions = { "1.8.*",
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*" })
@@ -79,6 +83,10 @@ public class ImportResource extends DelegatingCrudResource<Import> {
             description.addProperty("errorMessage");
             description.addProperty("importProgress");
             description.addProperty("importTime");
+            description.addProperty("allItemsCount");
+            description.addProperty("errorItemsCount");
+            description.addProperty("ignoredErrorsCount");
+            description.addProperty("status");
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
             return description;
@@ -119,11 +127,46 @@ public class ImportResource extends DelegatingCrudResource<Import> {
         return importProgress.getTimeText();
     }
 
+    @PropertyGetter("allItemsCount")
+    public static Integer getAllItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, new HashSet<ItemState>());
+    }
+
+    @PropertyGetter("errorItemsCount")
+    public static Integer getErrorItemsCount(Import instance){
+        Set<ItemState> inError = new HashSet<ItemState>();
+        inError.add(ItemState.ERROR);
+        return getImportService().getImportItemsCount(instance, inError);
+    }
+
+    @PropertyGetter("ignoredErrorsCount")
+    public static Integer getIgnoredErrorsCount(Import instance){
+        Set<ItemState> ignoredError = new HashSet<ItemState>();
+        ignoredError.add(ItemState.IGNORED_ERROR);
+        return getImportService().getImportItemsCount(instance, ignoredError);
+    }
+
+    @PropertyGetter("status")
+    public static String getStatus(Import instance){
+        Set<ItemState> states = new HashSet<ItemState>();
+        states.add(ItemState.ERROR);
+        Integer errors = getImportService().getImportItemsCount(instance, states);
+        Integer totalItems =  getImportService().getImportItemsCount(instance, new HashSet<ItemState>());
+        String errorMessage = instance.getErrorMessage();
+        if(StringUtils.isNotBlank(errorMessage)){
+            return errorMessage;
+        } else if(errors > 0){
+            return String.valueOf(errors)+ " errors";
+        } else {
+            return String.valueOf(totalItems) + " items updated";
+        }
+    }
+
     private UpdateScheduler getUpdateScheduler() {
         return Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
     }
 
-    private ImportService getImportService() {
+    private static ImportService getImportService() {
         return Context.getService(ImportService.class);
     }
 }
