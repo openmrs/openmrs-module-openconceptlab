@@ -25,15 +25,15 @@ $ mvn openmrs-sdk:setup -DserverId=refapp -Ddistro=referenceapplication:2.4
 ````
 If there are any issues with setting up the server, check out <b>[OpenMRS SDK documentation](https://wiki.openmrs.org/display/docs/OpenMRS+SDK)</b>
 
+Deploy OWA module on the server:
+````sh
+$ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3
+````
+
 Fork and clone [Open Concept Lab module project](https://github.com/openmrs/openmrs-module-openconceptlab/):
 ````sh
 $ mvn openmrs-sdk:clone -DartifactId=openconceptlab
 $ cd openmrs-module-openconceptlab
-````
-
-Deploy OWA module on the server:
-````sh
-$ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3 -DgroupId=org.openmrs.module
 ````
 
 Build and install the module on the server:
