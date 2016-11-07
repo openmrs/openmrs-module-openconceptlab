@@ -21,6 +21,7 @@ import org.openmrs.module.webservices.rest.web.resource.api.PageableResult;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingCrudResource;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
+import org.openmrs.module.webservices.rest.web.response.GenericRestException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
@@ -48,13 +49,16 @@ public class ImportResource extends DelegatingCrudResource<Import> {
 
     @Override
     public Import save(Import delegate) {
-        Import anImport = getImportService().getLastImport();
-        if (anImport != null) {
-            getImportService().ignoreAllErrors(anImport);
+        if (delegate != null) {
+            Import anImport = getImportService().getLastImport();
+            if (anImport != null) {
+                getImportService().ignoreAllErrors(anImport);
+            }
+            UpdateScheduler updateScheduler = getUpdateScheduler();
+            updateScheduler.scheduleNow();
+            return getImportService().getLastImport();
         }
-        UpdateScheduler updateScheduler = getUpdateScheduler();
-        updateScheduler.scheduleNow();
-        return getImportService().getLastImport();
+        throw new GenericRestException("Import cannot be null");
     }
 
     @Override

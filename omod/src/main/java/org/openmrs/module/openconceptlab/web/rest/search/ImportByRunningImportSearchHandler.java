@@ -20,13 +20,17 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @Component
-public class ImportByRunningUpdateSearchHandler implements SearchHandler {
+public class ImportByRunningImportSearchHandler implements SearchHandler {
 
     @Autowired
     ImportService importService;
 
     @Autowired
     Importer importer;
+
+    public void setImporter(Importer importer) {
+        this.importer = importer;
+    }
 
     private static final String RUNNING_IMPORT = "runningImport";
 

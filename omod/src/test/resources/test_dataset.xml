@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<dataset>
+    <openconceptlab_import import_id="1" uuid="dd553355-1691-11df-97a5-7038c432aabf" local_date_started="2005-09-22 00:00:00.0" local_date_stopped="2005-09-22 11:00:00.0" />
+    <openconceptlab_import import_id="2" uuid="rd334355-1633-44df-97a5-7038c432ggrr" local_date_started="2005-09-22 00:00:00.0"/>
+
+    <openconceptlab_item item_id="1" import_id="1" type="CONCEPT" uuid="ws353355-1691-11df-97a5-7038c432aabf" url="www.url.com" state="1"/>
+    <openconceptlab_item item_id="2" import_id="1" type="CONCEPT" uuid="we455355-1691-11df-97a5-7038c432aabf" url="www.url2.com" state="4"/>
+</dataset>
