@@ -9,7 +9,6 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
