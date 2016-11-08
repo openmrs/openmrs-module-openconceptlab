@@ -110,19 +110,23 @@ public class OclClient {
 		String latestVersion = fetchLatestOclReleaseVersion(url, token);
 		
 		String exportUrl = fetchExportUrl(url, token, latestVersion);
-		
-		GetMethod exportUrlGet = new GetMethod(exportUrl);
-		
-		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
-		client.executeMethod(exportUrlGet);
-		
+
+		GetMethod exportUrlGet = executeResponse(exportUrl);
+
 		if (exportUrlGet.getStatusCode() != 200) {
 			throw new IOException(exportUrlGet.getStatusLine().toString());
 		}
 		
 		return extractResponse(exportUrlGet);
     }
+
+	public GetMethod executeResponse(String exportUrl) throws IOException {
+		GetMethod get = new GetMethod(exportUrl);
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+		client.executeMethod(get);
+		return get;
+	}
 
 	public OclResponse fetchLastReleaseVersion(String url, String token, String lastReleaseVersion) throws IOException {
 		String latestOclReleaseVersion = fetchLatestOclReleaseVersion(url, token);
@@ -149,6 +153,7 @@ public class OclClient {
 		}
 		
 		File file = newFile(date);
+
 		download(get.getResponseBodyAsStream(), get.getResponseContentLength(), file);
 		
 		InputStream response = new FileInputStream(file);
@@ -162,7 +167,7 @@ public class OclClient {
 		}
 	}
 
-	Date parseDateFromPath(String path) throws IOException {
+	public Date parseDateFromPath(String path) throws IOException {
 	    Pattern pattern = Pattern.compile("[0-9]*.tgz");
 	    Matcher matcher = pattern.matcher(path);
 	    if (matcher.find()) {
@@ -303,7 +308,7 @@ public class OclClient {
 		}
 	}
 
-	private String fetchExportUrl(String url, String token, String latestVersion) throws IOException, HttpException {
+	public String fetchExportUrl(String url, String token, String latestVersion) throws IOException, HttpException {
 	    String latestVersionExportUrl = url + "/" + latestVersion + "/export";
 		
 		GetMethod latestVersionExportUrlGet = new GetMethod(latestVersionExportUrl);

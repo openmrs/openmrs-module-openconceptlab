@@ -9,6 +9,32 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.hibernate.JDBCException;
+import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Daemon;
+import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportProgress;
+import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
+import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -24,38 +50,13 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.api.ConceptService;
-import org.openmrs.api.context.Daemon;
-import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
-import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.Import;
-import org.openmrs.module.openconceptlab.ImportProgress;
-import org.openmrs.module.openconceptlab.ImportService;
-import org.openmrs.module.openconceptlab.client.OclClient;
-import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
-import org.openmrs.module.openconceptlab.client.OclConcept;
-import org.openmrs.module.openconceptlab.client.OclMapping;
-import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
-
 public class Importer implements Runnable {
 
 	private Log log = LogFactory.getLog(getClass());
 
 	public final static int BATCH_SIZE = 128;
 
-	public final static int THREAD_POOL_SIZE = 16;
+	public final static int THREAD_POOL_SIZE = 1;
 
 	private ImportService importService;
 
@@ -63,7 +64,7 @@ public class Importer implements Runnable {
 
 	private OclClient oclClient;
 
-	private Saver persister;
+	private Saver saver;
 
 	private volatile Import update;
 
@@ -87,8 +88,8 @@ public class Importer implements Runnable {
 	    this.oclClient = oclClient;
     }
 
-    public void setPersister(Saver persister) {
-	    this.persister = persister;
+    public void setSaver(Saver saver) {
+	    this.saver = saver;
     }
 
 	/**
@@ -183,10 +184,15 @@ public class Importer implements Runnable {
 
 		try {
 			task.run();
-
-			Integer errors = importService.getImportItemsCount(update, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
-			if (errors > 0) {
-				importService.failImport(update);
+			Integer errors = 0;
+			try {
+				errors = importService.getImportItemsCount(update, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
+				if (errors > 0) {
+					importService.failImport(update);
+				}
+			}
+			catch (JDBCException e) {
+				log.error("Failed to getImportItemsCount()");
 			}
 		}
 		catch (Throwable e) {
@@ -312,7 +318,7 @@ public class Importer implements Runnable {
 			oclConcepts.add(oclConcept);
 
 			if (oclConcepts.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService,
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
 				        update);
 				importTask.setOclConcepts(oclConcepts);
 
@@ -323,7 +329,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclConcepts.size() != 0) {
-			ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService, update);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, update);
 			importTask.setOclConcepts(oclConcepts);
 
 			runner.execute(importTask);
@@ -355,7 +361,7 @@ public class Importer implements Runnable {
 			oclMappings.add(oclMapping);
 
 			if (oclMappings.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService,
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
 				        update);
 				importTask.setOclMappings(oclMappings);
 
@@ -366,7 +372,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclMappings.size() != 0) {
-			ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService, update);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, update);
 			importTask.setOclMappings(oclMappings);
 
 			runner.execute(importTask);
@@ -383,7 +389,7 @@ public class Importer implements Runnable {
 
 	private ThreadPoolExecutor newRunner() {
 		return new ThreadPoolExecutor(0, THREAD_POOL_SIZE, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
-		        THREAD_POOL_SIZE / 2), new RejectedExecutionHandler() {
+		        THREAD_POOL_SIZE), new RejectedExecutionHandler() {
 
 					@Override
 					public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
