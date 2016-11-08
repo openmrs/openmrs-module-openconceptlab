@@ -7,15 +7,12 @@ import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.web.rest.RestTestConstants;
 import org.openmrs.module.webservices.rest.web.resource.impl.BaseDelegatingResourceTest;
 
-import java.util.UUID;
-
 public class ImportResourceTest extends BaseDelegatingResourceTest<ImportResource, Import> {
 
     @Before
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
     }
-    private static final String IMPORT_UUID = UUID.randomUUID().toString();
 
     @Override
     public Import newObject() {

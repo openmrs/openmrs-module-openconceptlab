@@ -3,7 +3,6 @@ package org.openmrs.module.openconceptlab.web.rest.search;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;

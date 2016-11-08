@@ -1,10 +1,8 @@
 package org.openmrs.module.openconceptlab.web.rest;
 
-import java.util.UUID;
-
 public class RestTestConstants {
 
-    public static final String SUBSCRIPTION_UUID = UUID.nameUUIDFromBytes(RestTestConstants.SUBSCRIPTION_URL.getBytes()).toString();
+    public static final String SUBSCRIPTION_UUID = "61a5fdc0-f44d-3498-b427-11ad5d62877b";
 
     public static final String SUBSCRIPTION_TOKEN = "bd022mad6d3df24f5c42ewewa94b53a23edf6eee7r";
 

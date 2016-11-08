@@ -51,7 +51,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @Override
     public Subscription save(Subscription subscription) {
         if (!"url".equals(subscription.getUrl())) {
-            subscription.setUuid(getUuid(subscription));
             UpdateScheduler updateScheduler = getUpdateScheduler();
             updateScheduler.schedule(subscription);
         }
@@ -114,11 +113,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @Override
     protected PageableResult doGetAll(RequestContext context) throws ResponseException {
         return new NeedsPaging<Subscription>(Collections.singletonList(getImportService().getSubscription()), context);
-    }
-
-    @PropertyGetter("uuid")
-    public static String getUuid(Subscription instance){
-        return UUID.nameUUIDFromBytes(instance.getUrl().getBytes()).toString();
     }
 
     private UpdateScheduler getUpdateScheduler() {

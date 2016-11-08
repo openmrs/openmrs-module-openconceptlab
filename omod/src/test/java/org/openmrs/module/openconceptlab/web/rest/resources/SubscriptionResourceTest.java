@@ -10,7 +10,6 @@ public class SubscriptionResourceTest extends BaseDelegatingResourceTest<Subscri
     @Override
     public Subscription newObject() {
         Subscription subscription = new Subscription();
-        subscription.setUuid(getUuidProperty());
         subscription.setToken(RestTestConstants.SUBSCRIPTION_TOKEN);
         subscription.setUrl(RestTestConstants.SUBSCRIPTION_URL);
         subscription.setSubscribedToSnapshot(false);
