@@ -51,8 +51,9 @@ public class Import {
 	private String releaseVersion;
 	
 	@Basic
-	@Column(name = "error_message")
+	@Column(name = "error_message", length = 1024)
 	private String errorMessage;
+
 	@Basic
 	@Column(name = "subscription_url")
 	private String subscriptionUrl;

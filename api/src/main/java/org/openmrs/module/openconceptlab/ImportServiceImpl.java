@@ -37,8 +37,6 @@ import org.openmrs.api.ConceptNameType;
 
 public class ImportServiceImpl implements ImportService {
 
-  public static final String POSTED_VIA_REST = "posted_via_rest";
-
 	SessionFactory sessionFactory;
 
 	AdministrationService adminService;
@@ -236,13 +234,6 @@ public class ImportServiceImpl implements ImportService {
 		if (lastImport != null && !lastImport.isStopped()) {
 			throw new IllegalStateException("Cannot start the import, if there is another import in progress.");
 		}
-		String subscriptionUrl = getSubscription().getUrl();
-    File file = new File (subscriptionUrl);
-    if (file.isFile()) {
-      anImport.setSubscriptionUrl(subscriptionUrl);
-    } else {
-      anImport.setSubscriptionUrl(POSTED_VIA_REST);
-    }
 		getSession().save(anImport);
 	}
 
@@ -433,7 +424,6 @@ public class ImportServiceImpl implements ImportService {
     public Integer getImportItemsCount(Import anImport, Set<ItemState> states) {
 		Criteria items = getSession().createCriteria(Item.class);
 		items.add(Restrictions.eq("anImport", anImport));
-		items.addOrder(Order.desc("state"));
 		if (!(states.isEmpty())) {
 			items.add(Restrictions.in("state", states));
 		}
@@ -475,4 +465,10 @@ public class ImportServiceImpl implements ImportService {
 		getSession().saveOrUpdate(term);
 		return term;
     }
+
+	@Override
+	public void updateSubscriptionUrl(Import anImport, String url) {
+		anImport.setSubscriptionUrl(url);
+		getSession().saveOrUpdate(anImport);
+	}
 }

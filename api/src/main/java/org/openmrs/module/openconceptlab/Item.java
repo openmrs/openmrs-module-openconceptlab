@@ -69,7 +69,7 @@ public class Item {
 	private ItemState state;
 	
 	@Basic
-	@Column(name = "error_message")
+	@Column(name = "error_message", length = 1024)
 	private String errorMessage;
 	
 	@Basic

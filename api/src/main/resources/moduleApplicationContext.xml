@@ -54,7 +54,7 @@
 		<property name="importService" ref="openconceptlab.importService" />
 		<property name="conceptService" ref="conceptService" />
 		<property name="oclClient" ref="openconceptlab.oclClient" />
-		<property name="persister" ref="openconceptlab.saver" />
+		<property name="saver" ref="openconceptlab.saver" />
 	</bean>
 	
 	<bean id="openconceptlab.updateScheduler" class="org.openmrs.module.openconceptlab.scheduler.UpdateScheduler">

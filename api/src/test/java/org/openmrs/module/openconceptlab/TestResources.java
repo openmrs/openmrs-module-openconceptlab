@@ -9,18 +9,31 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Map;
 
 import org.openmrs.module.DaemonToken;
 import org.openmrs.module.ModuleFactory;
+import org.openmrs.module.openconceptlab.client.OclClient;
 
 
 public class TestResources {
 	
 	public static InputStream getSimpleResponseAsStream() {
 		return TestResources.class.getClassLoader().getResourceAsStream("response.zip");
+	}
+
+	public static InputStream getSimpleResponseAsJsonStream() {
+		InputStream inputStream = getSimpleResponseAsStream();
+		OclClient oclClient = new OclClient();
+		try {
+			OclClient.OclResponse oclResponse = oclClient.unzipResponse(inputStream, null);
+			return oclResponse.getContentStream();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static InputStream getInitialResponseAsStream() {

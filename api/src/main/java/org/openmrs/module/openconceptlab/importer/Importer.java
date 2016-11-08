@@ -57,15 +57,17 @@ public class Importer implements Runnable {
 
 	public final static int THREAD_POOL_SIZE = 16;
 
+	public final static String IMPORTED_VIA_API = "file:///imported/via/api";
+
 	private ImportService importService;
 
 	private ConceptService conceptService;
 
 	private OclClient oclClient;
 
-	private Saver persister;
+	private Saver saver;
 
-	private volatile Import update;
+	private volatile Import anImport;
 
 	private CountingInputStream in = null;
 
@@ -87,8 +89,8 @@ public class Importer implements Runnable {
 	    this.oclClient = oclClient;
     }
 
-    public void setPersister(Saver persister) {
-	    this.persister = persister;
+    public void setSaver(Saver persister) {
+	    this.saver = persister;
     }
 
 	/**
@@ -126,7 +128,7 @@ public class Importer implements Runnable {
 
                 if (updatedSince == null) {
                     oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken());
-					importService.updateReleaseVersion(update,
+					importService.updateReleaseVersion(anImport,
                             oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
                 } else {
                     if (subscription.isSubscribedToSnapshot()) {
@@ -135,14 +137,14 @@ public class Importer implements Runnable {
                     }
                     else {
                         oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion());
-						importService.updateReleaseVersion(update,
+						importService.updateReleaseVersion(anImport,
                                 oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
                     }
                 }
 
 				if (oclResponse != null) {
-					importService.updateOclDateStarted(update, oclResponse.getUpdatedTo());
-
+					importService.updateOclDateStarted(anImport, oclResponse.getUpdatedTo());
+					importService.updateSubscriptionUrl(anImport, subscription.getUrl());
 					in = new CountingInputStream(oclResponse.getContentStream());
 					totalBytesToProcess = oclResponse.getContentLength();
 
@@ -155,50 +157,57 @@ public class Importer implements Runnable {
     }
 
     /**
-	 * It can be used to run update from the given input e.g. from a resource bundled with a module.
+	 * It can be used to run anImport from the given input e.g. from a resource bundled with a module.
 	 * <p>
 	 * It does not require any subscription to be setup.
 	 *
 	 * @param inputStream to JSON in OCL format
 	 */
 	public void run(final InputStream inputStream) {
-		runAndHandleErrors(new Task() {
-
+		Daemon.runInDaemonThreadAndWait(new Runnable() {
 			@Override
-			public void run() throws IOException {
-				in = new CountingInputStream(inputStream);
+			public void run() {
+				runAndHandleErrors(new Task() {
 
-				processInput();
+					@Override
+					public void run() throws IOException {
+						in = new CountingInputStream(inputStream);
 
-				in.close();
+						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
+
+						processInput();
+
+						in.close();
+					}
+				});
 			}
-		});
+		}, OpenConceptLabActivator.getDaemonToken());
 	}
 
 	private void runAndHandleErrors(Task task) {
 		Import newUpdate = new Import();
 		importService.startImport(newUpdate);
-		update = newUpdate;
+		anImport = newUpdate;
 		totalBytesToProcess = -1; //unknown
 
 		try {
 			task.run();
 
-			Integer errors = importService.getImportItemsCount(update, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
+			Integer errors = importService.getImportItemsCount(anImport, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
 			if (errors > 0) {
-				importService.failImport(update);
+				importService.failImport(anImport);
 			}
 		}
 		catch (Throwable e) {
-			importService.failImport(update, getErrorMessage(e));
+			importService.failImport(anImport, getErrorMessage(e));
 			throw new ImportException(e);
 		}
 		finally {
 			IOUtils.closeQuietly(in);
 
 			try {
-				if (update != null && update.getImportId() != null) {
-					importService.stopImport(update);
+				if (anImport != null && anImport.getImportId() != null) {
+					importService.stopImport(anImport);
 				}
 			}
 			catch (Exception e) {
@@ -207,7 +216,7 @@ public class Importer implements Runnable {
 
 			in = null;
 			totalBytesToProcess = 0;
-			update = null;
+			anImport = null;
 		}
 	}
 
@@ -263,12 +272,12 @@ public class Importer implements Runnable {
 			return false;
 		}
 
-		if (update == null && !lastUpdate.isStopped()) {
+		if (anImport == null && !lastUpdate.isStopped()) {
 			lastUpdate.setErrorMessage("Process terminated before completion");
 			importService.stopImport(lastUpdate);
 		}
 
-		return update != null;
+		return anImport != null;
 	}
 
 	private void processInput() throws IOException {
@@ -288,17 +297,20 @@ public class Importer implements Runnable {
 			return;
 		}
 
-		String baseUrl = importService.getSubscription().getUrl();
-		if (baseUrl != null) {
-			try {
-				URI uri = new URI(baseUrl);
-				baseUrl = uri.getScheme() + "://" + uri.getHost();
-				if (uri.getPort() != -1) {
-					baseUrl += ":" + uri.getPort();
+		String baseUrl = "";
+		if(importService.getSubscription() != null) {
+			baseUrl = importService.getSubscription().getUrl();
+			if (baseUrl != null) {
+				try {
+					URI uri = new URI(baseUrl);
+					baseUrl = uri.getScheme() + "://" + uri.getHost();
+					if (uri.getPort() != -1) {
+						baseUrl += ":" + uri.getPort();
+					}
 				}
-			}
-			catch (Exception e) {
-				throw new IllegalStateException(baseUrl + " is not valid", e);
+				catch (Exception e) {
+					throw new IllegalStateException(baseUrl + " is not valid", e);
+				}
 			}
 		}
 
@@ -312,8 +324,8 @@ public class Importer implements Runnable {
 			oclConcepts.add(oclConcept);
 
 			if (oclConcepts.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService,
-				        update);
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
+						anImport);
 				importTask.setOclConcepts(oclConcepts);
 
 				oclConcepts = new ArrayList<OclConcept>();
@@ -323,7 +335,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclConcepts.size() != 0) {
-			ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService, update);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
 			importTask.setOclConcepts(oclConcepts);
 
 			runner.execute(importTask);
@@ -355,8 +367,8 @@ public class Importer implements Runnable {
 			oclMappings.add(oclMapping);
 
 			if (oclMappings.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService,
-				        update);
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
+						anImport);
 				importTask.setOclMappings(oclMappings);
 
 				oclMappings = new ArrayList<OclMapping>();
@@ -366,7 +378,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclMappings.size() != 0) {
-			ImportTask importTask = new ImportTask(persister, new CacheService(conceptService), importService, update);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
 			importTask.setOclMappings(oclMappings);
 
 			runner.execute(importTask);
