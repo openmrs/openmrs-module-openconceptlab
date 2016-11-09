@@ -9,11 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.logging.Log;
@@ -35,15 +30,21 @@ import org.openmrs.api.ConceptService;
 import org.openmrs.api.DuplicateConceptNameException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 public class Saver {
 
@@ -87,10 +88,10 @@ public class Saver {
 	 * @should change duplicate fully specified name to index term
 	 * @should skip updating concept if it is already up to date
 	 */
-	public Item saveConcept(CacheService cacheService, Import update, OclConcept oclConcept) throws ImportException {
+	public Item saveConcept(CacheService cacheService, Import anImport, OclConcept oclConcept) throws ImportException {
 		Item item = importService.getLastSuccessfulItemByUrl(oclConcept.getUrl());
 		if(item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())){
-			return new Item(update, oclConcept, ItemState.UP_TO_DATE);
+			return new Item(anImport, oclConcept, ItemState.UP_TO_DATE);
 		}
 		
 		Concept concept = toConcept(cacheService, oclConcept);
@@ -106,9 +107,14 @@ public class Saver {
 		while (true) {
 			try {
 				try {
-					conceptService.saveConcept(concept);
+					ValidationType validationType = importService.getSubscription().getValidationType();
+					if (ValidationType.FULL.equals(validationType)) {
+						conceptService.saveConcept(concept);
+					} else if(ValidationType.NONE.equals(validationType)){
+						importService.updateConceptWithoutValidation(concept);
+					}
 
-					return new Item(update, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
+					return new Item(anImport, oclConcept, added ? ItemState.ADDED : ItemState.UPDATED);
 				}
 				catch (DuplicateConceptNameException e) {
 					if (!retryOnDuplicateNames) {
@@ -117,7 +123,7 @@ public class Saver {
 
 					Context.clearSession();
 					cacheService.clearCache();
-					update = importService.getImport(update.getImportId());
+					anImport = importService.getImport(anImport.getImportId());
 					concept = toConcept(cacheService, oclConcept);
 
 					resolutionLog.add("Fixing duplicate names for concept " + concept.getUuid() + " after failure due to " + e.getMessage());
@@ -135,7 +141,7 @@ public class Saver {
 
 				Context.clearSession();
 				cacheService.clearCache();
-				update = importService.getImport(update.getImportId());
+				anImport = importService.getImport(anImport.getImportId());
 				concept = toConcept(cacheService, oclConcept);
 
 				resolutionLog.add("Retrying import of concept " + concept.getUuid() + " after failure due to '" + e.getMessage() + "'");

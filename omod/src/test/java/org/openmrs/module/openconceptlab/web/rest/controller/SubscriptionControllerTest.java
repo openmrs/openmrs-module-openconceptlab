@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.web.rest.RestTestConstants;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.test.Util;
@@ -22,6 +23,8 @@ public class SubscriptionControllerTest extends MainResourceControllerTest{
         SimpleObject subscription = new SimpleObject();
         subscription.add("url", RestTestConstants.SUBSCRIPTION_URL);
         subscription.add("token", RestTestConstants.SUBSCRIPTION_TOKEN);
+        subscription.add("subscribedToSnapshot", "false");
+        subscription.add("validationType", ValidationType.FULL);
 
         String json = new ObjectMapper().writeValueAsString(subscription);
 

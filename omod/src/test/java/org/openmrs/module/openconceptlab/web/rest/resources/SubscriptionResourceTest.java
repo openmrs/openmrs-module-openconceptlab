@@ -2,6 +2,7 @@ package org.openmrs.module.openconceptlab.web.rest.resources;
 
 
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.web.rest.RestTestConstants;
 import org.openmrs.module.webservices.rest.web.resource.impl.BaseDelegatingResourceTest;
 
@@ -13,6 +14,7 @@ public class SubscriptionResourceTest extends BaseDelegatingResourceTest<Subscri
         subscription.setToken(RestTestConstants.SUBSCRIPTION_TOKEN);
         subscription.setUrl(RestTestConstants.SUBSCRIPTION_URL);
         subscription.setSubscribedToSnapshot(false);
+        subscription.setValidationType(ValidationType.FULL);
         return subscription;
     }
 
@@ -38,6 +40,7 @@ public class SubscriptionResourceTest extends BaseDelegatingResourceTest<Subscri
         assertPropEquals("url", getObject().getUrl());
         assertPropEquals("token", getObject().getToken());
         assertPropPresent("subscribedToSnapshot");
+        assertPropEquals("validationType", ValidationType.FULL);
         assertPropPresent("links");
         assertPropPresent("resourceVersion");
     }

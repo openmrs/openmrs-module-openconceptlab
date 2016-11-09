@@ -28,10 +28,18 @@ public class Subscription {
 
 	private Integer minutes = 0;
 
-	private boolean subscribedToSnapshot = true;
+	private boolean subscribedToSnapshot;
 
-	public Subscription() {
+	private ValidationType validationType = ValidationType.FULL;
 
+	public Subscription() {}
+
+	public ValidationType getValidationType() {
+		return validationType;
+	}
+
+	public void setValidationType(ValidationType validationType) {
+		this.validationType = validationType;
 	}
 
 	public String getUuid() {
