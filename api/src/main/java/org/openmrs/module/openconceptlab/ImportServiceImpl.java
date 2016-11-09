@@ -321,6 +321,9 @@ public class ImportServiceImpl implements ImportService {
 			subscription.setDays(Integer.valueOf(days));
 		}
 
+		String subscribedToSnapshot = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIBED_TO_SNAPSHOT);
+		subscription.setSubscribedToSnapshot(Boolean.valueOf(subscribedToSnapshot));
+
 		String time = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_TIME);
 		if (!StringUtils.isBlank(time)) {
 			String[] formattedTime = time.split(":");
@@ -384,6 +387,14 @@ public class ImportServiceImpl implements ImportService {
 			time.setPropertyValue("");
 		}
 		adminService.saveGlobalProperty(time);
+
+		GlobalProperty subscribedToSnapshot = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SUBSCRIBED_TO_SNAPSHOT);
+		if (subscribedToSnapshot == null) {
+			subscribedToSnapshot = new GlobalProperty(OpenConceptLabConstants.GP_SUBSCRIBED_TO_SNAPSHOT);
+		}
+		subscribedToSnapshot.setPropertyValue(String.valueOf(subscription.isSubscribedToSnapshot()));
+		adminService.saveGlobalProperty(subscribedToSnapshot);
+
 	}
 
 	@Override
