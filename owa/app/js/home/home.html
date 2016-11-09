@@ -1,4 +1,4 @@
-<div ng-show="!vm.subscription">
+<div ng-show="!vm.subscription" xmlns:top="http://www.w3.org/1999/xhtml" xmlns:top="http://www.w3.org/1999/xhtml">
     <div>
         <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a>
     </div><br>
@@ -69,4 +69,29 @@
             </div>
         </fieldset>
     </div>
+
+    <fieldset ng-disabled="vm.isImporting() || vm.isUploading" style="margin-top: 15px">
+        <legend>Upload source using file</legend>
+        <form name="fileUpload">
+            <div style="overflow: hidden; margin-bottom: 5px; margin-top: 5px">
+                <div style="width: 70%; float: left">
+                    <input type="file"
+                           style="border: none"
+                           ngf-select
+                           ng-model="zipFile"
+                           name="file"
+                           accept="{{vm.allowedFormat}}"
+                           required>
+                </div>
+                <div style="position: relative">
+
+                    <button style="float: right"
+                            ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
+                            ng-click="vm.uploadZip(zipFile)">Submit</button>
+
+                    <div class="loader" id="loader-small" ng-show="vm.isUploading"></div>
+                </div>
+            </div>
+        </form>
+    </fieldset>
 </div>

@@ -6,6 +6,7 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
@@ -18,19 +19,25 @@ import org.openmrs.module.webservices.rest.web.representation.FullRepresentation
 import org.openmrs.module.webservices.rest.web.representation.RefRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.api.PageableResult;
+import org.openmrs.module.webservices.rest.web.resource.api.Uploadable;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingCrudResource;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.GenericRestException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipFile;
 
 @Resource(name = RestConstants.VERSION_1  + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import", supportedClass = Import.class, supportedOpenmrsVersions = { "1.8.*",
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*" })
-public class ImportResource extends DelegatingCrudResource<Import> {
+public class ImportResource extends DelegatingCrudResource<Import> implements Uploadable {
 
     @Override
     public Import getByUniqueId(String uniqueId) {
@@ -172,5 +179,26 @@ public class ImportResource extends DelegatingCrudResource<Import> {
 
     private static ImportService getImportService() {
         return Context.getService(ImportService.class);
+    }
+
+    @Override
+    public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
+
+        File file = new File(multipartFile.getOriginalFilename());
+        multipartFile.transferTo(file);
+        ZipFile zipFile = new ZipFile(file);
+        InputStream inputStream = Utils.extractExportInputStreamFromZip(zipFile);
+        file.delete();
+
+        ImportService importService = getImportService();
+        Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
+        importer.setInputStream(inputStream);
+
+
+        UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
+        updateScheduler.scheduleNow();
+
+        return importService.getLastImport();
+
     }
 }

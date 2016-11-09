@@ -29,6 +29,7 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.*;
 
 import static org.hamcrest.Matchers.contains;
@@ -311,7 +312,9 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		importer.setSaver(saver);
 
 		TestResources.setupDaemonToken();
-		importer.run(TestResources.getSimpleResponseAsJsonStream());
+		InputStream in = TestResources.getSimpleResponseAsJsonStream();
+		importer.setInputStream(in);
+		importer.run(in);
 
 		Import lastImport = importService.getLastImport();
 

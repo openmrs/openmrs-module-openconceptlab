@@ -2,8 +2,9 @@ import angular from 'angular';
 import uiRouter from 'angular-ui-router';
 import homeComponent from './home.component.js';
 import uicommons from 'openmrs-contrib-uicommons';
+import ngFileUpload from 'ng-file-upload';
 
-let homeModule = angular.module('home', [ uiRouter, 'openmrs-contrib-uicommons'])
+let homeModule = angular.module('home', [ uiRouter, 'openmrs-contrib-uicommons', 'ngFileUpload'])
     .config(($stateProvider, $urlRouterProvider) => {
         "ngInject";
         $urlRouterProvider.otherwise('/');

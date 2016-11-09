@@ -11,11 +11,14 @@ package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.time.DateUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipFile;
 
 /**
  * Contains most of the utility methods for Open Concept lab
@@ -102,4 +105,21 @@ public class Utils {
 
 		return dateFormatter.format(date) + " " + timeFormatter.format(date);
 	}
+
+	public static InputStream extractExportInputStreamFromZip(ZipFile zipfile) throws IOException {
+
+		//todo overload method with filename? is export.json ok?
+		final String fileToBeExtracted="export.json";
+
+		InputStream in;
+		try {
+			in = zipfile.getInputStream(zipfile.getEntry(fileToBeExtracted));
+		}
+		catch (IOException e) {
+			throw new IOException("Failed to load " + fileToBeExtracted + " from " + zipfile.getName(), e);
+		}
+
+		return in;
+	}
+
 }
