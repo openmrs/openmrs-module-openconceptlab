@@ -145,6 +145,7 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 		newSubscription.setHours(3);
 		newSubscription.setMinutes(30);
 		newSubscription.setToken("c84e5a66d8b2e9a9bf1459cd81e6357f1c6a997e");
+		newSubscription.setSubscribedToSnapshot(false);
 
 		importService.saveSubscription(newSubscription);
 
