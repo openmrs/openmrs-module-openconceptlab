@@ -434,7 +434,6 @@ public class ImportServiceImpl implements ImportService {
     public Integer getImportItemsCount(Import anImport, Set<ItemState> states) {
 		Criteria items = getSession().createCriteria(Item.class);
 		items.add(Restrictions.eq("anImport", anImport));
-		items.addOrder(Order.desc("state"));
 		if (!(states.isEmpty())) {
 			items.add(Restrictions.in("state", states));
 		}
@@ -476,4 +475,10 @@ public class ImportServiceImpl implements ImportService {
 		getSession().saveOrUpdate(term);
 		return term;
     }
+
+	@Override
+	public void updateSubscriptionUrl(Import anImport, String url) {
+		anImport.setSubscriptionUrl(url);
+		getSession().saveOrUpdate(anImport);
+	}
 }

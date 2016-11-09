@@ -51,8 +51,12 @@ public class Import {
 	private String releaseVersion;
 	
 	@Basic
-	@Column(name = "error_message")
+	@Column(name = "error_message", length = 1024)
 	private String errorMessage;
+
+	@Basic
+	@Column(name = "subscription_url")
+	private String subscriptionUrl;
 
 	public String getUuid() {
 		return uuid;
@@ -105,7 +109,15 @@ public class Import {
 	public boolean isStopped() {
 		return localDateStopped != null;
 	}
-	
+
+	public String getSubscriptionUrl() {
+		return subscriptionUrl;
+	}
+
+	public void setSubscriptionUrl(String subscriptionUrl) {
+		this.subscriptionUrl = subscriptionUrl;
+	}
+
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder().append(importId).build();

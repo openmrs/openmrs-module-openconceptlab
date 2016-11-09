@@ -130,4 +130,6 @@ public interface ImportService {
     @Transactional(readOnly = true)
 	List<ConceptName> changeDuplicateConceptNamesToIndexTerms(Concept concept);
 
+	@Transactional
+	void updateSubscriptionUrl(Import anImport, String url);
 }

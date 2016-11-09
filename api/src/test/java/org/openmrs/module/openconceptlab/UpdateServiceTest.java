@@ -10,6 +10,8 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Level;
+import org.apache.log4j.spi.RootLogger;
 import org.hamcrest.Matcher;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -22,14 +24,12 @@ import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.importer.Importer;
+import org.openmrs.module.openconceptlab.importer.Saver;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
@@ -48,8 +48,18 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
     @Autowired
     private ConceptService conceptService;
 
+	@Autowired
+	private Saver saver;
+
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
+
+	@Override
+	public Properties getRuntimeProperties() {
+		Properties runtimeProperties = super.getRuntimeProperties();
+		runtimeProperties.setProperty("hibernate.connection.url", "jdbc:h2:mem:openmrs;DB_CLOSE_DELAY=30;MVCC=true");
+		return runtimeProperties;
+	}
 
 	/**
 	 * @see ImportServiceImpl#getImport(Long)
@@ -270,6 +280,24 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 
 		List<ConceptName> duplicateOclNames = importService.changeDuplicateConceptNamesToIndexTerms(conceptToImport);
 		assertThat(duplicateOclNames, contains((Matcher<? super ConceptName>) hasProperty("name", is("Rubella Viêm não"))));
+	}
+
+	@Test
+	public void run_shouldSetSubscriptionUrl() {
+		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
+		RootLogger.getRootLogger().setLevel(Level.OFF);
+		Importer importer = new Importer();
+		importer.setImportService(importService);
+		importer.setConceptService(conceptService);
+		importer.setSaver(saver);
+
+		TestResources.setupDaemonToken();
+		importer.run(TestResources.getSimpleResponseAsJsonStream());
+
+		Import lastImport = importService.getLastImport();
+
+		assertThat(lastImport.getSubscriptionUrl(), is("file:///imported/via/api"));
+		RootLogger.getRootLogger().setLevel(rootLoggerLevel);
 	}
 
 

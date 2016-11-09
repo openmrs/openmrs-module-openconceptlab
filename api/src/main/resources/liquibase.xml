@@ -230,4 +230,16 @@
 		</addColumn>
 	</changeSet>
 
+	<changeSet author="lkukielka" id="openconceptlab-v1-08.11.2016">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<columnExists tableName="openconceptlab_import" columnName="subscription_url"/>
+			</not>
+		</preConditions>
+		<comment>Add subscription_url column- See OCLM-43 for details</comment>
+		<addColumn tableName="openconceptlab_import">
+			<column name="subscription_url" type="text"/>
+		</addColumn>
+	</changeSet>
+
 </databaseChangeLog>
