@@ -17,6 +17,7 @@ import org.openmrs.module.webservices.rest.web.resource.api.PageableResult;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingCrudResource;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
+import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
@@ -29,7 +30,12 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
 
     @Override
     public Subscription getByUniqueId(String uniqueId) {
-        return getImportService().getSubscription();
+        Subscription subscription = getImportService().getSubscription();
+        if(subscription.getUuid().equals(uniqueId)){
+            return subscription;
+        } else {
+            throw new ObjectNotFoundException();
+        }
     }
 
     @Override
@@ -45,7 +51,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @Override
     public Subscription save(Subscription subscription) {
         if (!"url".equals(subscription.getUrl())) {
-            subscription.setUuid(getUuid(subscription));
             UpdateScheduler updateScheduler = getUpdateScheduler();
             updateScheduler.schedule(subscription);
         }
@@ -66,6 +71,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         DelegatingResourceDescription delegatingResourceDescription = new DelegatingResourceDescription();
         delegatingResourceDescription.addProperty("url");
         delegatingResourceDescription.addProperty("token");
+        delegatingResourceDescription.addProperty("subscribedToSnapshot");
         return delegatingResourceDescription;
     }
 
@@ -107,11 +113,6 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @Override
     protected PageableResult doGetAll(RequestContext context) throws ResponseException {
         return new NeedsPaging<Subscription>(Collections.singletonList(getImportService().getSubscription()), context);
-    }
-
-    @PropertyGetter("uuid")
-    public static String getUuid(Subscription instance){
-        return UUID.nameUUIDFromBytes(instance.getUrl().getBytes()).toString();
     }
 
     private UpdateScheduler getUpdateScheduler() {

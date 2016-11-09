@@ -16,7 +16,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Subscription {
 
-	private String uuid;
+	private String uuid = "61a5fdc0-f44d-3498-b427-11ad5d62877b";
 
 	private String url;
 
