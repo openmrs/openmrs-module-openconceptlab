@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -355,7 +357,7 @@ public class ImportServiceImpl implements ImportService {
 		if (url == null) {
 			url = new GlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL);
 		}
-		url.setPropertyValue(subscription.getUrl());
+		url.setPropertyValue(prependApiIfAbsent(subscription.getUrl()));
 		adminService.saveGlobalProperty(url);
 
 		GlobalProperty token = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_TOKEN);
@@ -395,6 +397,23 @@ public class ImportServiceImpl implements ImportService {
 		subscribedToSnapshot.setPropertyValue(String.valueOf(subscription.isSubscribedToSnapshot()));
 		adminService.saveGlobalProperty(subscribedToSnapshot);
 
+	}
+
+	private String prependApiIfAbsent(String stringUrl) {
+		if (StringUtils.isNotBlank(stringUrl)) {
+			try {
+				URL url = new URL(stringUrl);
+				String host = url.getHost();
+				if (!host.startsWith("api.")) {
+					return url.toString().replace(host, "api." + host);
+				}
+				return url.toString();
+			} catch (MalformedURLException e) {
+				throw new IllegalStateException("Wrong url address");
+			}
+		} else {
+			return stringUrl;
+		}
 	}
 
 	@Override

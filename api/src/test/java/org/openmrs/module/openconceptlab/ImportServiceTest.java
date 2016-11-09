@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
+public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
 	@Autowired
 	private ImportService importService;
@@ -145,12 +145,31 @@ public class UpdateServiceTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see ImportServiceImpl#saveSubscription(Subscription)
+	 * @Verifies prepend api. to the url's host and saves the subscription
+	 */
+	@Test
+	public void saveSubscription_shouldPrependApiAndSaveSubscription() throws Exception {
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://openconceptlab.com/");
+		newSubscription.setDays(5);
+		newSubscription.setHours(3);
+		newSubscription.setMinutes(30);
+		newSubscription.setToken("c84e5a66d8b2e9a9bf1459cd81e6357f1c6a997e");
+
+		importService.saveSubscription(newSubscription);
+
+		Subscription subscription = importService.getSubscription();
+		assertThat(subscription.getUrl(), is("http://api.openconceptlab.com/"));
+	}
+
+	/**
+	 * @see ImportServiceImpl#saveSubscription(Subscription)
 	 * @Verifies saves the subscription
 	 */
 	@Test
 	public void saveSubscription_shouldSaveSubscription() throws Exception {
 		Subscription newSubscription = new Subscription();
-		newSubscription.setUrl("http://openconceptlab.com/");
+		newSubscription.setUrl("http://api.openconceptlab.com/");
 		newSubscription.setDays(5);
 		newSubscription.setHours(3);
 		newSubscription.setMinutes(30);
