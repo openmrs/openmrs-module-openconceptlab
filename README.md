@@ -30,6 +30,11 @@ Deploy OWA module on the server:
 $ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3
 ````
 
+You also need to deploy webservices.rest module:
+````sh
+$ mvn openmrs-sdk:deploy -DartifactId=webservices.rest -Dversion=2.17-SNAPSHOT -DserverId=refapp
+````
+
 Fork and clone [Open Concept Lab module project](https://github.com/openmrs/openmrs-module-openconceptlab/):
 ````sh
 $ mvn openmrs-sdk:clone -DartifactId=openconceptlab
