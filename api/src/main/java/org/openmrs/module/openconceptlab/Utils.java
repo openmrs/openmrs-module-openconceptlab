@@ -108,7 +108,6 @@ public class Utils {
 
 	public static InputStream extractExportInputStreamFromZip(ZipFile zipfile) throws IOException {
 
-		//todo overload method with filename? is export.json ok?
 		final String fileToBeExtracted="export.json";
 
 		InputStream in;

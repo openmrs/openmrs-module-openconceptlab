@@ -184,7 +184,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
     /*
-     * TODO:
      * These ignored tests are working fine,
      * but it takes too much time to finish them
      * since tests are downloading data from real OCL.
@@ -313,7 +312,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
 		TestResources.setupDaemonToken();
 		InputStream in = TestResources.getSimpleResponseAsJsonStream();
-		importer.setInputStream(in);
 		importer.run(in);
 
 		Import lastImport = importService.getLastImport();

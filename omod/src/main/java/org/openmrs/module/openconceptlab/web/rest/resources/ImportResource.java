@@ -6,7 +6,6 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipFile;
@@ -184,16 +182,14 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     @Override
     public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
 
-        File file = new File(multipartFile.getOriginalFilename());
+        File file = File.createTempFile("ocl", ".zip");
         multipartFile.transferTo(file);
         ZipFile zipFile = new ZipFile(file);
-        InputStream inputStream = Utils.extractExportInputStreamFromZip(zipFile);
-        file.delete();
 
         ImportService importService = getImportService();
         Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
-        importer.setInputStream(inputStream);
 
+        importer.setImportFile(zipFile);
 
         UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
         updateScheduler.scheduleNow();

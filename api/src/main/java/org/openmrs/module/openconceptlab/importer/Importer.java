@@ -35,6 +35,7 @@ import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -75,6 +76,8 @@ public class Importer implements Runnable {
 
 	private volatile long totalBytesToProcess;
 
+	private ZipFile importFile;
+
 	private interface Task {
 		void run() throws Exception;
 	}
@@ -95,6 +98,10 @@ public class Importer implements Runnable {
 	    this.saver = persister;
     }
 
+	public void setImportFile(ZipFile importFile) {
+		this.importFile = importFile;
+	}
+
 	/**
 	 * Runs an import for a configured subscription.
 	 * <p>
@@ -107,16 +114,16 @@ public class Importer implements Runnable {
 	 */
 	@Override
 	public void run() {
-		if (in == null) {
+		if (importFile != null) {
+			run(importFile);
+		}
+		else {
 			Daemon.runInDaemonThreadAndWait(new Runnable() {
 				@Override
 				public void run() {
 					runTask();
 				}
 			}, OpenConceptLabActivator.getDaemonToken());
-		}
-		else {
-			run(in);
 		}
 	}
 
@@ -176,20 +183,14 @@ public class Importer implements Runnable {
 			@Override
 			public void run() {
 				runAndHandleErrors(new Task() {
-
 					@Override
 					public void run() throws IOException {
-						if (in != null) {
-							if (!in.equals(inputStream)) {
-								setInputStream(inputStream);
-							}
-							importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
-							//TODO Is this date OK?
-							Date date = new Date();
-							importService.updateOclDateStarted(anImport, date);
-							processInput();
-							in.close();
-						}
+						in = new CountingInputStream(inputStream);
+						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
+						Date date = new Date();
+						importService.updateOclDateStarted(anImport, date);
+						processInput();
+						in.close();
 					}
 				});
 			}
@@ -208,14 +209,11 @@ public class Importer implements Runnable {
 					@Override
 					public void run() throws IOException {
 						InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
-						if (in != null) {
-							if (!in.equals(zipInputStream)) {
-								setInputStream(zipInputStream);
-							}
-							importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
-							processInput();
-							in.close();
-						}
+						in = new CountingInputStream(zipInputStream);
+						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
+						processInput();
+						in.close();
+						new File(zipPackage.getName()).delete();
 					}
 				});
 			}
@@ -242,6 +240,10 @@ public class Importer implements Runnable {
 		}
 		finally {
 			IOUtils.closeQuietly(in);
+
+			if (importFile != null && new File(importFile.getName()).exists()) {
+				new File(importFile.getName()).delete();
+			}
 
 			try {
 				if (anImport != null && anImport.getImportId() != null) {
@@ -302,10 +304,6 @@ public class Importer implements Runnable {
 
 	public boolean isProcessed() {
 		return totalBytesToProcess == getBytesProcessed();
-	}
-
-	public void setInputStream(InputStream in) {
-		this.in = new CountingInputStream(in);
 	}
 
 	public boolean isRunning() {

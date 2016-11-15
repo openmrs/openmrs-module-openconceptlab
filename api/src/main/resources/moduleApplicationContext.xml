@@ -33,6 +33,7 @@
 			<bean class="org.openmrs.module.openconceptlab.ImportServiceImpl">
 				<property name="sessionFactory" ref="sessionFactory" />
 				<property name="adminService" ref="adminService" />
+				<property name="conceptService" ref="conceptService"/>
 			</bean>
 		</property>
 		<property name="preInterceptors">

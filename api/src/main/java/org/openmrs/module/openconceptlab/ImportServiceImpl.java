@@ -35,12 +35,15 @@ import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
+import org.openmrs.api.ConceptService;
 
 public class ImportServiceImpl implements ImportService {
 
 	SessionFactory sessionFactory;
 
 	AdministrationService adminService;
+
+	ConceptService conceptService;
 
 	public void setSessionFactory(SessionFactory sessionFactory) {
 	    this.sessionFactory = sessionFactory;
@@ -49,6 +52,10 @@ public class ImportServiceImpl implements ImportService {
     public void setAdminService(AdministrationService adminService) {
 	    this.adminService = adminService;
     }
+
+	public void setConceptService(ConceptService conceptService) {
+		this.conceptService = conceptService;
+	}
 
 	/**
 	 * @should return all updates ordered descending by ids
@@ -278,7 +285,27 @@ public class ImportServiceImpl implements ImportService {
 		criteria.add(Restrictions.not(Restrictions.eq("state", ItemState.ERROR)));
 		criteria.addOrder(Order.desc("itemId"));
 		criteria.setMaxResults(1);
-		return (Item) criteria.uniqueResult();
+
+		Item item = ((Item) criteria.uniqueResult());
+		if (item != null) {
+			switch (item.getType()) {
+				case MAPPING:
+					ConceptMap map = getConceptMapByUuid(item.getUuid());
+					if (map == null) {
+						return null;
+					}
+					break;
+				case CONCEPT:
+					Concept concept = conceptService.getConceptByUuid(item.getUuid());
+					if (concept == null) {
+						return null;
+					}
+					break;
+				default:
+					throw new RuntimeException("Item with UUID=" + item.getUuid() + " couldn't be recognized as Concept or Mapping");
+			}
+		}
+		return item;
 	}
 
 	@Override
@@ -512,4 +539,5 @@ public class ImportServiceImpl implements ImportService {
 		anImport.setSubscriptionUrl(url);
 		getSession().saveOrUpdate(anImport);
 	}
+
 }
