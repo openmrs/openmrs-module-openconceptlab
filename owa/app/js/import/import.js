@@ -26,7 +26,7 @@ function getImport(openmrsRest, $stateParams) {
 }
 
 function getItems(openmrsRest, $stateParams) {
-    return openmrsRest.getFull("openconceptlab/import/"+$stateParams.UUID+"/item", {itemState: "ERROR"}).then(function (response) {
+    return openmrsRest.getFull("openconceptlab/import/"+$stateParams.UUID+"/item", {state: "ERROR"}).then(function (response) {
         return response.results;
     })
 }
