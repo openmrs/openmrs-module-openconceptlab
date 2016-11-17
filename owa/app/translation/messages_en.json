@@ -25,5 +25,13 @@
   "unsubscribeinfo.text":"If you unsubscribe, no concepts will be deleted nor changed. All information about subscription will be deleted from your system",
   "importinprogress.text": "Import in progress",
   "importprogresstime.text" :"Update is in progress for ",
-  "completed.text": "Completed"
+  "completed.text": "Completed",
+  "fixAllErrorsMessage.text":"Please fix all errors so that you can continue to get updates. It may require fixing concepts locally (e.g. creating concept classes, changing concept names to eliminate duplicates, etc.) or asking your dictionary manager for fixes in the OCL.",
+  "fixAllErrorsWarning.text":"All items from the last failing update will be imported again. Make sure all errors have been fixed locally or in the OpenConceptLab server.",
+  "errorsInLastImportWarning.text":"Errors in last import!",
+  "ignoreAllErrorsQuestion.text":"Do you want to try install previous imports or ignore them?",
+  "importPrevious.button":"import previous",
+  "ignoreErrors.button":"ignore",
+  "showMore.text":"...show more",
+  "showLess.text":"...show less"
 }

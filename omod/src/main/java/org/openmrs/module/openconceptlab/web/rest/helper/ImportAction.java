@@ -1,5 +1,7 @@
 package org.openmrs.module.openconceptlab.web.rest.helper;
 
+import org.openmrs.module.openconceptlab.Import;
+
 /**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * v. 2.0. If a copy of the MPL was not distributed with this file, You
@@ -10,12 +12,22 @@ package org.openmrs.module.openconceptlab.web.rest.helper;
  */
 public class ImportAction {
 
+    private Import anImport;
+
     private boolean ignoreAllErrors;
 
     public ImportAction() {}
 
     public ImportAction(boolean ignoreAllErrors) {
         this.ignoreAllErrors = ignoreAllErrors;
+    }
+
+    public Import getAnImport() {
+        return anImport;
+    }
+
+    public void setAnImport(Import anImport) {
+        this.anImport = anImport;
     }
 
     public boolean isIgnoreAllErrors() {
