@@ -53,9 +53,15 @@
                     <tr ng-repeat="import in vm.previousImports.results">
                         <td><a href="#/import/{{import.uuid}}">{{import.localDateStarted | date:'medium'}}</a></td>
                         <td>{{import.importTime}}</td>
-                        <td>{{import.status | limitTo: vm.textLength}}
-                            <span ng-if="import.status.length > vm.textLength" ng-click="vm.setTextLength(import.status.length)">...show more</span>
-                            <span ng-if="import.status.length == vm.textLength" ng-click="vm.setTextLength(30)">&hellip;show less</span>
+
+                        <td ng-show="import.expanded">
+                            {{import.status}}
+                            <span ng-click="import.expanded = false"><br><a>&hellip;show less</a></span>
+                        </td>
+
+                        <td ng-show="!import.expanded">
+                            {{import.status | limitTo : vm.textLength}}
+                            <span ng-if="import.status.length > vm.textLength" ng-click="import.expanded = true"><br><a>&hellip;show more</a></span>
                         </td>
                     </tr>
                     </tbody>
