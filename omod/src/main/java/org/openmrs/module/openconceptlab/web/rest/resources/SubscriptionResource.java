@@ -8,6 +8,7 @@ import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestC
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
+import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
@@ -22,7 +23,6 @@ import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOp
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
 import java.util.Collections;
-import java.util.UUID;
 
 @Resource(name = RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/subscription", supportedClass = Subscription.class, supportedOpenmrsVersions = { "1.8.*",
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*" })
@@ -63,6 +63,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         delegatingResourceDescription.addRequiredProperty("url");
         delegatingResourceDescription.addRequiredProperty("token");
         delegatingResourceDescription.addProperty("subscribedToSnapshot");
+        delegatingResourceDescription.addProperty("validationType");
         return delegatingResourceDescription;
     }
 
@@ -72,6 +73,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
         delegatingResourceDescription.addProperty("url");
         delegatingResourceDescription.addProperty("token");
         delegatingResourceDescription.addProperty("subscribedToSnapshot");
+        delegatingResourceDescription.addProperty("validationType");
         return delegatingResourceDescription;
     }
 
@@ -88,6 +90,7 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
             description.addProperty("url");
             description.addProperty("token");
             description.addProperty("subscribedToSnapshot");
+            description.addProperty("validationType");
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
             return description;
@@ -113,6 +116,16 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     @Override
     protected PageableResult doGetAll(RequestContext context) throws ResponseException {
         return new NeedsPaging<Subscription>(Collections.singletonList(getImportService().getSubscription()), context);
+    }
+
+    @PropertyGetter("subscribedToSnapshot")
+    public boolean getSubscribedToSnapshot(Subscription subscription){
+        return subscription.isSubscribedToSnapshot();
+    }
+
+    @PropertySetter("subscribedToSnapshot")
+    public void setSubscribedToSnapshot(Subscription subscription, Object value){
+        subscription.setSubscribedToSnapshot(Boolean.valueOf(value.toString()));
     }
 
     private UpdateScheduler getUpdateScheduler() {

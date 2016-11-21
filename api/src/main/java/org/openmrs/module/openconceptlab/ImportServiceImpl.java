@@ -318,6 +318,11 @@ public class ImportServiceImpl implements ImportService {
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
 		subscription.setToken(token);
 
+		String validationType = adminService.getGlobalProperty(OpenConceptLabConstants.GP_VALIDATION_TYPE);
+		if (StringUtils.isNotBlank(validationType)) {
+			subscription.setValidationType(ValidationType.valueOf(validationType));
+		}
+
 		String days = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (!StringUtils.isBlank(days)) {
 			subscription.setDays(Integer.valueOf(days));
@@ -366,6 +371,13 @@ public class ImportServiceImpl implements ImportService {
 		}
 		token.setPropertyValue(subscription.getToken());
 		adminService.saveGlobalProperty(token);
+
+		GlobalProperty validationType = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_VALIDATION_TYPE);
+		if (validationType == null) {
+			validationType = new GlobalProperty(OpenConceptLabConstants.GP_VALIDATION_TYPE);
+		}
+		validationType.setPropertyValue(subscription.getValidationType().name());
+		adminService.saveGlobalProperty(validationType);
 
 		GlobalProperty days = adminService.getGlobalPropertyObject(OpenConceptLabConstants.GP_SCHEDULED_DAYS);
 		if (days == null) {

@@ -32,4 +32,5 @@ public class OpenConceptLabConstants {
 	public static final String GP_SCHEDULED_TIME = MODULE_ID + ".scheduledTime";
 	public static final String GP_TOKEN = MODULE_ID + ".token";
 	public static final String GP_SUBSCRIBED_TO_SNAPSHOT = MODULE_ID + ".subscribedToSnapshot";
+	public static final String GP_VALIDATION_TYPE = MODULE_ID + ".validationType";
 }
