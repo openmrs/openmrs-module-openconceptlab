@@ -9,6 +9,33 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Daemon;
+import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportProgress;
+import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
+import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.Utils;
+import org.openmrs.module.openconceptlab.client.OclClient;
+import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
+import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -23,31 +50,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.api.ConceptService;
-import org.openmrs.api.context.Daemon;
-import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.ItemState;
-import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
-import org.openmrs.module.openconceptlab.Subscription;
-import org.openmrs.module.openconceptlab.Import;
-import org.openmrs.module.openconceptlab.ImportProgress;
-import org.openmrs.module.openconceptlab.ImportService;
-import org.openmrs.module.openconceptlab.client.OclClient;
-import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
-import org.openmrs.module.openconceptlab.client.OclConcept;
-import org.openmrs.module.openconceptlab.client.OclMapping;
-import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+import java.util.zip.ZipFile;
 
 public class Importer implements Runnable {
 
@@ -73,6 +76,8 @@ public class Importer implements Runnable {
 
 	private volatile long totalBytesToProcess;
 
+	private ZipFile importFile;
+
 	private interface Task {
 		void run() throws Exception;
 	}
@@ -93,23 +98,33 @@ public class Importer implements Runnable {
 	    this.saver = persister;
     }
 
+	public void setImportFile(ZipFile importFile) {
+		this.importFile = importFile;
+	}
+
 	/**
-	 * Runs an anImport for a configured subscription.
+	 * Runs an import for a configured subscription.
 	 * <p>
 	 * It is not run directly, rather by a dedicated scheduler {@link UpdateScheduler}.
+	 * if input stream is already defined from file, subscription logic is skipped by calling run(InputStream).
 	 *
-	 * @should start first anImport with response date
-	 * @should start next anImport with updated since
+	 * @should start first import with response date
+	 * @should start next import with updated since
 	 * @should create item for each concept and mapping
 	 */
 	@Override
 	public void run() {
-		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			@Override
-			public void run() {
-				runTask();
-			}
-		}, OpenConceptLabActivator.getDaemonToken());
+		if (importFile != null) {
+			run(importFile);
+		}
+		else {
+			Daemon.runInDaemonThreadAndWait(new Runnable() {
+				@Override
+				public void run() {
+					runTask();
+				}
+			}, OpenConceptLabActivator.getDaemonToken());
+		}
 	}
 
     public void runTask() {
@@ -168,16 +183,37 @@ public class Importer implements Runnable {
 			@Override
 			public void run() {
 				runAndHandleErrors(new Task() {
-
 					@Override
 					public void run() throws IOException {
 						in = new CountingInputStream(inputStream);
-
 						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
-
+						Date date = new Date();
+						importService.updateOclDateStarted(anImport, date);
 						processInput();
-
 						in.close();
+					}
+				});
+			}
+		}, OpenConceptLabActivator.getDaemonToken());
+	}
+
+	/**
+	 * This run is used to update sources from zipfile
+	 */
+	public void run(final ZipFile zipPackage) {
+		Daemon.runInDaemonThreadAndWait(new Runnable() {
+			@Override
+			public void run() {
+				runAndHandleErrors(new Task() {
+
+					@Override
+					public void run() throws IOException {
+						InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
+						in = new CountingInputStream(zipInputStream);
+						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
+						processInput();
+						in.close();
+						new File(zipPackage.getName()).delete();
 					}
 				});
 			}
@@ -204,6 +240,10 @@ public class Importer implements Runnable {
 		}
 		finally {
 			IOUtils.closeQuietly(in);
+
+			if (importFile != null && new File(importFile.getName()).exists()) {
+				new File(importFile.getName()).delete();
+			}
 
 			try {
 				if (anImport != null && anImport.getImportId() != null) {
@@ -289,7 +329,6 @@ public class Importer implements Runnable {
 		if (token != JsonToken.START_OBJECT) {
 			throw new IOException("JSON must start from an object");
 		}
-		token = parser.nextToken();
 
 		token = advanceToListOf("concepts", "mappings", parser);
 

@@ -1,5 +1,5 @@
 class HomeController {
-  constructor($rootScope, $interval, openmrsNotification, openmrsRest) {
+  constructor($rootScope, $interval, $location, Upload, openmrsNotification, openmrsRest) {
     "ngInject"
     $rootScope.links = {};
     $rootScope.links["Open Concept Lab"] = "/";
@@ -12,6 +12,15 @@ class HomeController {
     vm.startImport = startImport;
     vm.getRunningImport = getRunningImport;
     vm.setTextLength = setTextLength;
+    vm.isImporting = isImporting;
+    vm.uploadZip = uploadZip;
+    vm.isFileCorrect = isFileCorrect;
+
+    /*
+     * Upload button params
+     */
+    vm.endpoint = '/openmrs/ws/rest/v1/openconceptlab/import';
+    vm.allowedFormat = 'application/zip, application/octet-stream';
 
     activate();
     
@@ -23,9 +32,35 @@ class HomeController {
       }
     }
     
+    function isFileCorrect(fileName) {
+      return fileName.endsWith(".zip");
+    }
+
+    function uploadZip(file) {
+      vm.isUploading = true;
+
+
+
+
+
+      let upload = Upload.upload({
+        url: vm.endpoint,
+        data: {file: file},
+      });
+
+      upload.then(function(response) {
+        openmrsNotification.success("File loaded successfully, importing...");
+        handleStartImportSuccess(response);
+      }, function(response) {
+        openmrsNotification.error("Failed to load file");
+        vm.isUploading = false;
+      });
+    }
+    
     function getRunningImport() {
       openmrsRest.getFull("openconceptlab/import", {runningImport: true}).then(function (response) {
         vm.showLoading = false;
+        vm.isUploading = false;
         vm.runningImport = response.results[0];
         if(angular.isDefined(vm.runningImport) && vm.runningImport.importProgress === 100){
           if(angular.isDefined(vm.updater)){
@@ -39,6 +74,10 @@ class HomeController {
           getPreviousImports();
         }
       })
+    }
+    
+    function isImporting() {
+      return vm.runningImport != null;
     }
 
     function startImport() {
@@ -72,6 +111,7 @@ class HomeController {
     function onGetImportException(exception) {
       openmrsNotification.error(exception.data.error.message);
     }
+
   }
 }
 

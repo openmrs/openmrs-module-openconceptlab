@@ -118,6 +118,22 @@ table td {
     animation: spin 2s linear infinite;
 }
 
+#loader-small {
+    width: 20px;
+    height: 20px;
+    float: right;
+    position: absolute;
+    top: 50%;
+    right: 50%;
+}
+
+.loader.ng-animate {
+    transition:0s none;
+    -webkit-transition:0s none;
+    animation: 0s none;
+    -webkit-animation: 0s none;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

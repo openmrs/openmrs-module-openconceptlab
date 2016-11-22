@@ -33,4 +33,5 @@ public class OpenConceptLabConstants {
 	public static final String GP_TOKEN = MODULE_ID + ".token";
 	public static final String GP_SUBSCRIBED_TO_SNAPSHOT = MODULE_ID + ".subscribedToSnapshot";
 	public static final String GP_VALIDATION_TYPE = MODULE_ID + ".validationType";
+	public static final String GP_OCL_LOAD_AT_STARTUP_PATH = MODULE_ID + ".oclLoadAtStartupPath";
 }

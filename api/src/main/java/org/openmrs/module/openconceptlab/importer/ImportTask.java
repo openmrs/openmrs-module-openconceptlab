@@ -9,27 +9,27 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
-import org.openmrs.module.openconceptlab.Import;
-import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImportTask implements Runnable {
 	
 	private final Log log = LogFactory.getLog(getClass());
 	
-	private Saver importer;
+	private Saver saver;
 	
 	private ImportService updateService;
 	
@@ -41,8 +41,8 @@ public class ImportTask implements Runnable {
 	
 	private CacheService cacheService;
 	
-	public ImportTask(Saver importer, CacheService cacheService, ImportService updateService, Import anImport) {
-		this.importer = importer;
+	public ImportTask(Saver saver, CacheService cacheService, ImportService updateService, Import anImport) {
+		this.saver = saver;
 		this.updateService = updateService;
 		this.anImport = anImport;
 		this.cacheService = cacheService;
@@ -70,7 +70,7 @@ public class ImportTask implements Runnable {
 					for (OclConcept oclConcept : oclConcepts) {
 						Item item = null;
 						try {
-							item = importer.saveConcept(cacheService, anImport, oclConcept);
+							item = saver.saveConcept(cacheService, anImport, oclConcept);
 							log.info("Imported concept " + oclConcept);
 						}
 						catch (Throwable e) {
@@ -93,7 +93,7 @@ public class ImportTask implements Runnable {
 					for (OclMapping oclMapping : oclMappings) {
 						Item item = null;
 						try {
-							item = importer.saveMapping(cacheService, anImport, oclMapping);
+							item = saver.saveMapping(cacheService, anImport, oclMapping);
 							log.info("Imported mapping " + oclMapping);
 						}
 						catch (Throwable e) {
