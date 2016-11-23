@@ -9,22 +9,9 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -36,16 +23,29 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.db.hibernate.DbSession;
+import org.openmrs.api.db.hibernate.DbSessionFactory;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class ImportServiceImpl implements ImportService {
 
-	SessionFactory sessionFactory;
+	DbSessionFactory sessionFactory;
 
 	AdministrationService adminService;
 
 	ConceptService conceptService;
 
-	public void setSessionFactory(SessionFactory sessionFactory) {
+	public void setSessionFactory(DbSessionFactory sessionFactory) {
 	    this.sessionFactory = sessionFactory;
     }
 
@@ -372,7 +372,7 @@ public class ImportServiceImpl implements ImportService {
 		return subscription;
 	}
 
-	private Session getSession() {
+	private DbSession getSession() {
 		return sessionFactory.getCurrentSession();
 	}
 
