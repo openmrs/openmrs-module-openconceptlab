@@ -18,6 +18,7 @@ import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
+import org.springframework.cache.annotation.Cacheable;
 
 public class CacheService {
 
@@ -45,17 +46,10 @@ public class CacheService {
 		conceptsByUuids.clear();
 	}
 
+	@Cacheable(value = "conceptDataType")
 	public ConceptDatatype getConceptDatatypeByName(String name) {
-		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
-		if (conceptDatatype != null) {
-			return conceptDatatype;
-		} else {
-			conceptDatatype = conceptService.getConceptDatatypeByName(name);
-			if (conceptDatatype != null) {
-				conceptDatatypes.put(name, conceptDatatype);
-			}
-			return conceptDatatype;
-		}
+		ConceptDatatype conceptDatatype = conceptService.getConceptDatatypeByName(name);
+		return conceptDatatype;
 	}
 
 	public ConceptClass getConceptClassByName(String name) {
