@@ -20,6 +20,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Import;
@@ -27,6 +28,7 @@ import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
+import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.client.OclClient;
@@ -34,6 +36,7 @@ import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +63,7 @@ public class Importer implements Runnable {
 
 	public final static int THREAD_POOL_SIZE = 16;
 
-	public final static String IMPORTED_VIA_API = "file:///imported/via/api";
+	public final static String POSTED_VIA_REST = "file:///posted/via/rest";
 
 	private ImportService importService;
 
@@ -76,7 +79,9 @@ public class Importer implements Runnable {
 
 	private volatile long totalBytesToProcess;
 
-	private ZipFile importFile;
+	private ZipFile zipFile;
+
+	private MultipartFile multipartFile;
 
 	private interface Task {
 		void run() throws Exception;
@@ -98,8 +103,12 @@ public class Importer implements Runnable {
 	    this.saver = persister;
     }
 
-	public void setImportFile(ZipFile importFile) {
-		this.importFile = importFile;
+	public void setZipFile(ZipFile zipFile) {
+		this.zipFile = zipFile;
+	}
+
+	public void setMultipartFile(MultipartFile multipartFile) {
+		this.multipartFile = multipartFile;
 	}
 
 	/**
@@ -114,10 +123,11 @@ public class Importer implements Runnable {
 	 */
 	@Override
 	public void run() {
-		if (importFile != null) {
-			run(importFile);
-		}
-		else {
+		if (zipFile != null) {
+			run(zipFile);
+		} else if (multipartFile != null) {
+			run(multipartFile);
+		} else {
 			Daemon.runInDaemonThreadAndWait(new Runnable() {
 				@Override
 				public void run() {
@@ -171,32 +181,6 @@ public class Importer implements Runnable {
         });
     }
 
-    /**
-	 * It can be used to run anImport from the given input e.g. from a resource bundled with a module.
-	 * <p>
-	 * It does not require any subscription to be setup.
-	 *
-	 * @param inputStream to JSON in OCL format
-	 */
-	public void run(final InputStream inputStream) {
-		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			@Override
-			public void run() {
-				runAndHandleErrors(new Task() {
-					@Override
-					public void run() throws IOException {
-						in = new CountingInputStream(inputStream);
-						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
-						Date date = new Date();
-						importService.updateOclDateStarted(anImport, date);
-						processInput();
-						in.close();
-					}
-				});
-			}
-		}, OpenConceptLabActivator.getDaemonToken());
-	}
-
 	/**
 	 * This run is used to update sources from zipfile
 	 */
@@ -210,7 +194,8 @@ public class Importer implements Runnable {
 					public void run() throws IOException {
 						InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
 						in = new CountingInputStream(zipInputStream);
-						importService.updateSubscriptionUrl(anImport, IMPORTED_VIA_API);
+						String subscriptionUrl = Context.getAdministrationService().getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
+						importService.updateSubscriptionUrl(anImport, subscriptionUrl);
 						processInput();
 						in.close();
 						new File(zipPackage.getName()).delete();
@@ -218,6 +203,38 @@ public class Importer implements Runnable {
 				});
 			}
 		}, OpenConceptLabActivator.getDaemonToken());
+	}
+
+	/**
+	 * This run is used to update sources from multipartfile
+	 */
+	public void run(MultipartFile multipartFile){
+		try {
+			File file = File.createTempFile("ocl", ".zip");
+			multipartFile.transferTo(file);
+			final ZipFile zipPackage = new ZipFile(file);
+			Daemon.runInDaemonThreadAndWait(new Runnable() {
+				@Override
+				public void run() {
+					runAndHandleErrors(new Task() {
+
+						@Override
+						public void run() throws IOException {
+							InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
+							in = new CountingInputStream(zipInputStream);
+							importService.updateSubscriptionUrl(anImport, POSTED_VIA_REST);
+							processInput();
+							new File(zipPackage.getName()).delete();
+						}
+					});
+				}
+			}, OpenConceptLabActivator.getDaemonToken());
+		} catch (IOException e) {
+			importService.failImport(anImport, getErrorMessage(e));
+			throw new ImportException(e);
+		} finally {
+			IOUtils.closeQuietly(in);
+		}
 	}
 
 	private void runAndHandleErrors(Task task) {
@@ -241,8 +258,8 @@ public class Importer implements Runnable {
 		finally {
 			IOUtils.closeQuietly(in);
 
-			if (importFile != null && new File(importFile.getName()).exists()) {
-				new File(importFile.getName()).delete();
+			if (zipFile != null && new File(zipFile.getName()).exists()) {
+				new File(zipFile.getName()).delete();
 			}
 
 			try {

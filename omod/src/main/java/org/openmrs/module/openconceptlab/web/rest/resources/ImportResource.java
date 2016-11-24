@@ -182,14 +182,10 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     @Override
     public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
 
-        File file = File.createTempFile("ocl", ".zip");
-        multipartFile.transferTo(file);
-        ZipFile zipFile = new ZipFile(file);
-
         ImportService importService = getImportService();
         Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
 
-        importer.setImportFile(zipFile);
+        importer.setMultipartFile(multipartFile);
 
         UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
         updateScheduler.scheduleNow();
