@@ -1,5 +1,5 @@
 class SubscriptionController {
-  constructor($rootScope, $location, $window, openmrsRest, openmrsNotification) {
+  constructor($rootScope, $location, openmrsRest, openmrsNotification) {
     "ngInject"
     $rootScope.links = {};
     $rootScope.links["Open Concept Lab"] = "/";
@@ -10,15 +10,6 @@ class SubscriptionController {
     vm.subscribe = subscribe;
     vm.unSubscribe = unSubscribe;
 
-    function activate() {
-      if(!angular.isDefined(vm.subscription)){
-        vm.subscription = {
-          url: "",
-          token: ""
-        }
-      }
-    }
-
     function cancel(){
       $location.path('/');
     }
@@ -28,7 +19,8 @@ class SubscriptionController {
     }
 
     function handleUnSubscribeSuccess(success) {
-      $window.location.reload();
+      openmrsNotification.success("Unsubscribed successfully");
+      getSubscription();
     }
 
     function handleUnSubscribeException(exception) {
@@ -49,6 +41,12 @@ class SubscriptionController {
 
     function handleSubscribeException(exception) {
       openmrsNotification.error(exception.data.error.message);
+    }
+
+    function getSubscription() {
+      openmrsRest.getFull("openconceptlab/subscription").then(function (response) {
+        vm.subscription = response.results[0];
+      })
     }
   }
 }

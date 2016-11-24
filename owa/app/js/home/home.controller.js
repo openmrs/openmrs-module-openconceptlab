@@ -1,8 +1,10 @@
 class HomeController {
-  constructor($rootScope, $interval, $location, Upload, openmrsNotification, openmrsRest) {
+  constructor($rootScope, $interval, Upload, openmrsNotification, openmrsRest) {
     "ngInject"
     $rootScope.links = {};
     $rootScope.links["Open Concept Lab"] = "/";
+
+    openmrsNotification.routeNotification();
 
     var vm = this;
     vm.showLoading = false;
