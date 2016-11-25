@@ -9,7 +9,7 @@
   "dependencies": {
     "angular": "^1.5.3",
     "angular-ui-router": "^0.3.0",
-    "openmrs-contrib-uicommons": "^0.4.2",
+    "openmrs-contrib-uicommons": "^0.4.3",
     "ng-file-upload": "^12.2.13"
   },
   "devDependencies": {
