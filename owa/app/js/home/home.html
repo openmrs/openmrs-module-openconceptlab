@@ -1,3 +1,15 @@
+<script type="text/ng-template" id="importWarning.html">
+    <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">{{"errorsInLastImportWarning.text" | translate}}</h3>
+    </div>
+    <div class="modal-body" id="modal-body">
+        <p>{{"ignoreAllErrorsQuestion.text" | translate}}</p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="button" ng-click="confirm(false)">{{"importPrevious.button" | translate}}</button>
+        <button class="btn btn-warning" type="button" ng-click="confirm(true)">{{"ignoreErrors.button" | translate}}</button>
+    </div>
+</script>
 <div ng-show="!vm.subscription" xmlns:top="http://www.w3.org/1999/xhtml" xmlns:top="http://www.w3.org/1999/xhtml">
     <div>
         <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a>
@@ -15,8 +27,10 @@
             <legend>{{"nextimports.text" | translate}}</legend><br>
             <div style="text-align: center">
                 <div ng-hide="vm.showLoading">
-                    <button ng-click="vm.startImport()">{{"importnow.button" | translate}}</button>
-                    &nbsp;{{"avoidUpdatesInfo.text" | translate}}
+                    <button ng-click="vm.startImportIfNoErrors()">{{"importnow.button" | translate}}</button>
+                    &nbsp;{{"avoidUpdatesInfo.text" | translate}}<br>
+                    <p ng-show="vm.previousImports.results[0].errorItemsCount == 0">&nbsp;
+                        <i>{{"fixAllErrorsWarning.text" | translate}}</i></p>
                 </div>
                 <div class="loader" ng-show="vm.showLoading"></div>
             </div><br>
@@ -56,12 +70,12 @@
 
                         <td ng-show="import.expanded">
                             {{import.status}}
-                            <span ng-click="import.expanded = false"><br><a>&hellip;show less</a></span>
+                            <span ng-click="import.expanded = false"><br><a>{{"showLess.text" | translate}}</a></span>
                         </td>
 
                         <td ng-show="!import.expanded">
                             {{import.status | limitTo : vm.textLength}}
-                            <span ng-if="import.status.length > vm.textLength" ng-click="import.expanded = true"><br><a>&hellip;show more</a></span>
+                            <span ng-if="import.status.length > vm.textLength" ng-click="import.expanded = true"><br><a>{{"showMore.text" | translate}}</a></span>
                         </td>
                     </tr>
                     </tbody>

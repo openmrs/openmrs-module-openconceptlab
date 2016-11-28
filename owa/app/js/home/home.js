@@ -3,8 +3,9 @@ import uiRouter from 'angular-ui-router';
 import homeComponent from './home.component.js';
 import uicommons from 'openmrs-contrib-uicommons';
 import ngFileUpload from 'ng-file-upload';
+import ngDialog from 'ng-dialog';
 
-let homeModule = angular.module('home', [ uiRouter, 'openmrs-contrib-uicommons', 'ngFileUpload'])
+let homeModule = angular.module('home', [ uiRouter, 'openmrs-contrib-uicommons', 'ngFileUpload', ngDialog])
     .config(($stateProvider, $urlRouterProvider) => {
         "ngInject";
         $urlRouterProvider.otherwise('/');

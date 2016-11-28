@@ -1,5 +1,5 @@
 class HomeController {
-  constructor($rootScope, $interval, Upload, openmrsNotification, openmrsRest) {
+  constructor($rootScope, $interval, Upload, openmrsNotification, openmrsRest, ngDialog) {
     "ngInject"
     $rootScope.links = {};
     $rootScope.links["Open Concept Lab"] = "/";
@@ -11,7 +11,7 @@ class HomeController {
     vm.textLength = 30;
     vm.updater = null;
 
-    vm.startImport = startImport;
+    vm.startImportIfNoErrors = startImportIfNoErrors;
     vm.getRunningImport = getRunningImport;
     vm.setTextLength = setTextLength;
     vm.isImporting = isImporting;
@@ -82,7 +82,25 @@ class HomeController {
       return vm.runningImport != null;
     }
 
-    function startImport() {
+    function startImportIfNoErrors() {
+      if(angular.isDefined(vm.previousImports.results[0]) && vm.previousImports.results[0].errorItemsCount == 0){
+        ngDialog.openConfirm({
+          template: 'importWarning.html',
+          className: 'ngdialog-theme-default'
+        }).then(function(value){
+          if(value){
+            ignoreErrors();
+          } else {
+            startImport();
+          }
+        });
+      } else {
+        startImport();
+      }
+    }
+
+    function startImport(){
+      ngDialog.close();
       let anImport = {};
       openmrsRest.create("openconceptlab/import", anImport).then(handleStartImportSuccess, handleStartImportException);
       vm.showLoading = true;
@@ -114,6 +132,22 @@ class HomeController {
       openmrsNotification.error(exception.data.error.message);
     }
 
+    function ignoreErrors() {
+      let importAction = {
+        anImport: vm.previousImports.results[0].uuid,
+        ignoreAllErrors: true
+      };
+      openmrsRest.create("openconceptlab/importaction", importAction).then(handleIgnoreErrorsSuccess, handleIgnoreErrorsException);
+      vm.showLoading = true;
+    }
+
+    function handleIgnoreErrorsSuccess(success) {
+      startImport();
+    }
+
+    function handleIgnoreErrorsException(exception) {
+      openmrsNotification.error(exception.data.error.message);
+    }
   }
 }
 
