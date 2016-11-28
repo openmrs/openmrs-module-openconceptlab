@@ -108,10 +108,8 @@ public class OclClient {
 		}
 
 		String latestVersion = fetchLatestOclReleaseVersion(url, token);
-		
-		String exportUrl = fetchExportUrl(url, token, latestVersion);
-		
-		GetMethod exportUrlGet = new GetMethod(exportUrl);
+
+		GetMethod exportUrlGet = new GetMethod(url + "/" + latestVersion + "/export");
 		
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
@@ -314,33 +312,58 @@ public class OclClient {
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(latestVersionExportUrlGet);
-		if (latestVersionExportUrlGet.getStatusCode() != 200) {
+		if (latestVersionExportUrlGet.getStatusCode() != 303) {
 			throw new IOException(latestVersionExportUrlGet.getPath() + " responded with " + latestVersionExportUrlGet.getStatusLine().toString());
 		}
 		
-		String exportUrl = latestVersionExportUrlGet.getResponseHeader("exportURL").getValue();
-	    return exportUrl;
+		return latestVersionExportUrlGet.getResponseHeader("Location").getValue();
     }
 
 	public String fetchLatestOclReleaseVersion(String url, String token) throws IOException {
-	    String latestVersionUrl = url + "/latest";
+
+		if (url.endsWith("/")) {
+			url = url.substring(0, url.lastIndexOf('/'));
+		}
+
+	    String latestVersionUrl = url + "/versions";
 		
-		GetMethod latestVersionGet = new GetMethod(latestVersionUrl);
+		GetMethod versionsGet = new GetMethod(latestVersionUrl);
 		if (!StringUtils.isBlank(token)) {
-			latestVersionGet.addRequestHeader("Authorization", "Token " + token);
+			versionsGet.addRequestHeader("Authorization", "Token " + token);
 		}
 		
-		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
-		client.executeMethod(latestVersionGet);
-		if (latestVersionGet.getStatusCode() != 200) {
-			throw new IOException(latestVersionGet.getStatusLine().toString());
+		HttpClient versionsClient = new HttpClient();
+		versionsClient.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+		versionsClient.executeMethod(versionsGet);
+		if (versionsGet.getStatusCode() != 200) {
+			throw new IOException(versionsGet.getStatusLine().toString());
 		}
 		
 		ObjectMapper objectMapper = new ObjectMapper();
 		@SuppressWarnings("unchecked")
-        Map<String, Object> latestVersionResponse = objectMapper.readValue(latestVersionGet.getResponseBodyAsStream(), Map.class);
-		String latestVersion = (String) latestVersionResponse.get("id");
-	    return latestVersion;
+        Map<String, Object>[] versionsResponse = objectMapper.readValue(versionsGet.getResponseBodyAsStream(), Map[].class);
+
+		for (Map version : versionsResponse) {
+			String versionName = ((String) version.get("id"));
+			if (!versionName.contains("HEAD") && StringUtils.isNotBlank(versionName)) {
+
+				GetMethod exportGet = new GetMethod(url + "/" + versionName + "/export");
+
+				HttpClient exportClient = new HttpClient();
+				exportClient.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+				try {
+					exportClient.executeMethod(exportGet);
+				} catch (IOException e) {
+					throw new IllegalStateException("Couldn't execute GET to " + url + versionName + "/export");
+				}
+
+				int statusCode = exportGet.getStatusCode();
+				if (statusCode == 200) {
+					return versionName;
+				}
+			}
+		}
+		throw new IllegalStateException("There is no released version of given source");
     }
+
 }
