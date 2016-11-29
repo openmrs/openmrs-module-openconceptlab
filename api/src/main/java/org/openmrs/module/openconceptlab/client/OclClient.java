@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -323,24 +324,57 @@ public class OclClient {
     }
 
 	public String fetchLatestOclReleaseVersion(String url, String token) throws IOException {
-	    String latestVersionUrl = url + "/latest";
+	    String latestVersionUrl = url + "/versions";
 		
-		GetMethod latestVersionGet = new GetMethod(latestVersionUrl);
+		GetMethod versionsGet = new GetMethod(latestVersionUrl);
 		if (!StringUtils.isBlank(token)) {
-			latestVersionGet.addRequestHeader("Authorization", "Token " + token);
+			versionsGet.addRequestHeader("Authorization", "Token " + token);
 		}
 		
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
-		client.executeMethod(latestVersionGet);
-		if (latestVersionGet.getStatusCode() != 200) {
-			throw new IOException(latestVersionGet.getStatusLine().toString());
+		client.executeMethod(versionsGet);
+		if (versionsGet.getStatusCode() != 200) {
+			throw new IOException(versionsGet.getStatusLine().toString());
 		}
 		
 		ObjectMapper objectMapper = new ObjectMapper();
 		@SuppressWarnings("unchecked")
-        Map<String, Object> latestVersionResponse = objectMapper.readValue(latestVersionGet.getResponseBodyAsStream(), Map.class);
-		String latestVersion = (String) latestVersionResponse.get("id");
-	    return latestVersion;
+        Map<String, Object>[] versionsResponse = objectMapper.readValue(versionsGet.getResponseBodyAsStream(), Map[].class);
+
+		for (Map version : versionsResponse) {
+			String versionName = ((String) version.get("id"));
+			if (!versionName.contains("HEAD") && StringUtils.isNotBlank(versionName)) {
+
+				PostMethod postMethod = executePostToVersion(url + versionName, token);
+				int versionPostHttpCode = postMethod.getStatusCode();
+
+				if (versionPostHttpCode == 202 || versionPostHttpCode == 409) {
+					break;
+				}
+				else if (versionPostHttpCode == 303) {
+					//TODO export file from the Location header
+				}
+				return versionName;
+			}
+		}
+		throw new IllegalStateException("There is no released version of given source");
     }
+
+	private PostMethod executePostToVersion(String versionUrl, String token) {
+		PostMethod versionPost = new PostMethod(versionUrl);
+		if (!StringUtils.isBlank(token)) {
+			versionPost.addRequestHeader("Authorization", "Token " + token);
+		}
+
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+		try {
+			client.executeMethod(versionPost);
+		} catch (IOException e) {
+			throw new IllegalStateException("Couldn't execute POST to " + versionUrl);
+		}
+
+		return versionPost;
+	}
 }
