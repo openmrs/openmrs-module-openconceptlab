@@ -10,6 +10,7 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.RootLogger;
 import org.hamcrest.Matcher;
@@ -22,19 +23,28 @@ import org.openmrs.Concept;
 import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.importer.Saver;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.File;
-import java.io.InputStream;
-import java.util.*;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.zip.ZipFile;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -302,7 +312,11 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void run_shouldSetSubscriptionUrl() {
+	public void run_shouldSetSpecificSubscriptionUrlForMultipartFile() throws IOException {
+		final String fileName = "test.txt";
+		MockMultipartFile mockMultipartFile =
+				new MockMultipartFile("complexDataFile", fileName, "text/plain", IOUtils.toByteArray(TestResources.getSimpleResponseAsStream()));
+
 		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
 		RootLogger.getRootLogger().setLevel(Level.OFF);
 		Importer importer = new Importer();
@@ -311,14 +325,32 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		importer.setSaver(saver);
 
 		TestResources.setupDaemonToken();
-		InputStream in = TestResources.getSimpleResponseAsJsonStream();
-		importer.run(in);
+		importer.run(mockMultipartFile);
 
 		Import lastImport = importService.getLastImport();
 
-		assertThat(lastImport.getSubscriptionUrl(), is("file:///imported/via/api"));
+		assertEquals("file:///posted/via/rest", lastImport.getSubscriptionUrl());
 		RootLogger.getRootLogger().setLevel(rootLoggerLevel);
 	}
 
+	@Test
+	public void run_shouldSetSubscriptionUrlForLocalFilePath() throws IOException, URISyntaxException {
+		ZipFile zipFile = TestResources.getSimpleZipFile();
+		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
+		RootLogger.getRootLogger().setLevel(Level.OFF);
+		Importer importer = new Importer();
+		importer.setImportService(importService);
+		importer.setConceptService(conceptService);
+		importer.setSaver(saver);
+
+		TestResources.setupDaemonToken();
+		importer.run(zipFile);
+
+		Import lastImport = importService.getLastImport();
+
+		assertEquals(Context.getAdministrationService().getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH),
+				lastImport.getSubscriptionUrl());
+		RootLogger.getRootLogger().setLevel(rootLoggerLevel);
+	}
 
 }

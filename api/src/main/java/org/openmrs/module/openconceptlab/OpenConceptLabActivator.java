@@ -79,7 +79,7 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 				try {
 					ZipFile zipFile = (new ZipFile(files[0]));
 					Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
-					importer.setImportFile(zipFile);
+					importer.setZipFile(zipFile);
 					scheduler.scheduleNow();
 				} catch (IOException e) {
 					throw new IllegalStateException("Failed to open zip file", e);

@@ -9,11 +9,18 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Map;
+import java.util.zip.ZipFile;
 
+import org.apache.commons.io.IOUtils;
 import org.openmrs.module.DaemonToken;
 import org.openmrs.module.ModuleFactory;
 import org.openmrs.module.openconceptlab.client.OclClient;
@@ -23,6 +30,19 @@ public class TestResources {
 	
 	public static InputStream getSimpleResponseAsStream() {
 		return TestResources.class.getClassLoader().getResourceAsStream("response.zip");
+	}
+
+	public static URL getSimpleResponseZipFileUrl() {
+		return TestResources.class.getClassLoader().getResource("response.zip");
+	}
+
+	public static ZipFile getSimpleZipFile() throws IOException, URISyntaxException {
+		File zipFile = new File(getSimpleResponseZipFileUrl().toURI());
+		File newZipFile = new File(getSimpleResponseZipFileUrl().getPath() + "new_file.zip");
+
+		IOUtils.copy(new FileInputStream(zipFile), new FileOutputStream(newZipFile));
+
+		return new ZipFile(newZipFile);
 	}
 
 	public static InputStream getSimpleResponseAsJsonStream() {
