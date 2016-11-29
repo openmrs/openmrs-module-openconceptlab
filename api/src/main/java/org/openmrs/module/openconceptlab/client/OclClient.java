@@ -102,25 +102,28 @@ public class OclClient {
 	public OclResponse fetchLastReleaseVersion(String url, String token) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
-		
-		if (url.endsWith("/")) {
-			url = url.substring(0, url.length() - 1);
-		}
 
 		String latestVersion = fetchLatestOclReleaseVersion(url, token);
 
-		GetMethod exportUrlGet = new GetMethod(url + "/" + latestVersion + "/export");
-		
-		HttpClient client = new HttpClient();
-		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
-		client.executeMethod(exportUrlGet);
-		
-		if (exportUrlGet.getStatusCode() != 200) {
-			throw new IOException(exportUrlGet.getStatusLine().toString());
-		}
+		GetMethod exportUrlGet = executeExportRequest(url, latestVersion);
 		
 		return extractResponse(exportUrlGet);
     }
+
+    public GetMethod executeExportRequest(String url, String latestVersion) throws IOException{
+
+		GetMethod exportUrlGet = new GetMethod(url + "/" + latestVersion + "/export");
+
+		HttpClient client = new HttpClient();
+		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
+		client.executeMethod(exportUrlGet);
+
+		if (exportUrlGet.getStatusCode() != 200) {
+			throw new IOException(exportUrlGet.getStatusLine().toString());
+		}
+
+		return exportUrlGet;
+	}
 
 	public OclResponse fetchLastReleaseVersion(String url, String token, String lastReleaseVersion) throws IOException {
 		String latestOclReleaseVersion = fetchLatestOclReleaseVersion(url, token);
@@ -178,7 +181,7 @@ public class OclClient {
     }
 	
 	@SuppressWarnings("resource")
-    public OclResponse ungzipAndUntarResponse(InputStream response, Date date) throws IOException {
+    public static OclResponse ungzipAndUntarResponse(InputStream response, Date date) throws IOException {
 		GZIPInputStream gzipIn = new GZIPInputStream(response);
 		TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn);
 		boolean foundEntry = false;
@@ -202,7 +205,7 @@ public class OclClient {
 	}
 	
 	@SuppressWarnings("resource")
-	public OclResponse unzipResponse(InputStream response, Date date) throws IOException {
+	public static OclResponse unzipResponse(InputStream response, Date date) throws IOException {
 		ZipInputStream zip = new ZipInputStream(response);
 		boolean foundEntry = false;
 		try {
@@ -225,7 +228,7 @@ public class OclClient {
 		throw new IOException("Unsupported format of response. Expected zip with export.json.");
 	}
 	
-	File newFile(Date date) {
+	public File newFile(Date date) {
 		SimpleDateFormat fileNameFormat = new SimpleDateFormat(FILE_NAME_FORMAT);
 		String fileName = fileNameFormat.format(date) + ".zip";
 		File oclDirectory = new File(dataDirectory, "ocl");
@@ -303,19 +306,19 @@ public class OclClient {
 
 	private String fetchExportUrl(String url, String token, String latestVersion) throws IOException, HttpException {
 	    String latestVersionExportUrl = url + "/" + latestVersion + "/export";
-		
+
 		GetMethod latestVersionExportUrlGet = new GetMethod(latestVersionExportUrl);
 		if (!StringUtils.isBlank(token)) {
 			latestVersionExportUrlGet.addRequestHeader("Authorization", "Token " + token);
 		}
-		
+
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
 		client.executeMethod(latestVersionExportUrlGet);
 		if (latestVersionExportUrlGet.getStatusCode() != 303) {
 			throw new IOException(latestVersionExportUrlGet.getPath() + " responded with " + latestVersionExportUrlGet.getStatusLine().toString());
 		}
-		
+
 		return latestVersionExportUrlGet.getResponseHeader("Location").getValue();
     }
 

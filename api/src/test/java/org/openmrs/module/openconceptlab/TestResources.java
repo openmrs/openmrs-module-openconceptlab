@@ -32,6 +32,10 @@ public class TestResources {
 		return TestResources.class.getClassLoader().getResourceAsStream("response.zip");
 	}
 
+	public static InputStream getResponseAsStream(String testResourcePath) {
+		return TestResources.class.getClassLoader().getResourceAsStream(testResourcePath);
+	}
+
 	public static URL getSimpleResponseZipFileUrl() {
 		return TestResources.class.getClassLoader().getResource("response.zip");
 	}

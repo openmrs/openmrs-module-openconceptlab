@@ -55,7 +55,12 @@ public class Subscription {
 	}
 
 	public void setUrl(String url) {
-		this.url = url;
+		if (url.endsWith("/")) {
+			this.url = url.substring(0, url.lastIndexOf("/"));
+		}
+		else {
+			this.url = url;
+		}
 	}
 	
 	public String getToken() {
