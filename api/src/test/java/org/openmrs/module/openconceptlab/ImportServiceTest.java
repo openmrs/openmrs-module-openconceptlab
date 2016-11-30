@@ -30,6 +30,7 @@ import org.openmrs.module.openconceptlab.importer.Saver;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.annotation.NotTransactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +46,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -287,6 +289,42 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         importService.updateReleaseVersion(anImport, version);
         assertThat(version, is(importService.getLastSuccessfulSubscriptionImport().getReleaseVersion()));
     }
+
+    @NotTransactional
+    @Test
+	public void update_shouldFetchLatestReferenceApplicationCollectionConcepts() throws Exception {
+		Concept concept = null;
+    	try {
+			Subscription subscription = new Subscription();
+			subscription.setUrl("https://api.staging.openconceptlab.org/orgs/openmrs/collections/reference-application");
+			subscription.setToken("53fc72f0498a707a26e4d903c0f24c2db24d1e35");
+			importService.saveSubscription(subscription);
+
+			File tempDir = File.createTempFile("ocl", "");
+			FileUtils.deleteQuietly(tempDir);
+			tempDir.deleteOnExit();
+			OclClient oclClient = new OclClient(tempDir.getAbsolutePath());
+
+			Importer importer = new Importer();
+			importer.setImportService(importService);
+			importer.setConceptService(conceptService);
+			importer.setSaver(saver);
+			importer.setOclClient(oclClient);
+
+			TestResources.setupDaemonToken();
+			importer.run();
+
+			concept = conceptService.getConceptByUuid("159947AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+			assertThat(concept, is(notNullValue()));
+		}
+		finally {
+    		if (concept != null) {
+				conceptService.purgeConcept(concept);
+			}
+			importService.unsubscribe();
+		}
+	}
 
 	@Test
 	public void getDuplicateConceptNames_shoudlFindDuplicates() throws Exception {
