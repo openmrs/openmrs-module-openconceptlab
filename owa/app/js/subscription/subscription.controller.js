@@ -2,7 +2,7 @@ class SubscriptionController {
   constructor($rootScope, $location, openmrsRest, openmrsNotification) {
     "ngInject"
     $rootScope.links = {};
-    $rootScope.links["Open Concept Lab"] = "/";
+    $rootScope.links["Open Concept Lab"] = "";
     $rootScope.links["Subscription"] = "subscription";
 
     var vm = this;
