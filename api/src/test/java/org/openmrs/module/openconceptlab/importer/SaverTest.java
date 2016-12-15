@@ -371,7 +371,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
 
 		Concept concept = assertImported(oclConcept);
-		assertTrue(concept.isRetired());
+		assertTrue(concept.getRetired());
 	}
 
 	/**
@@ -391,7 +391,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
 
 		Concept concept = assertImported(oclConcept);
-		assertFalse(concept.isRetired());
+		assertFalse(concept.getRetired());
 
 	}
 
@@ -702,7 +702,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
 
 		assertThat(concept.getConceptMappings(), is(empty()));
-		assertThat(term.isRetired(), is(true));
+		assertThat(term.getRetired(), is(true));
 	}
 
 	@Test

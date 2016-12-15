@@ -12,7 +12,7 @@
 		${project.parent.description}
 	</description>
 	<updateURL>https://modules.openmrs.org/modules/download/${project.parent.artifactId}/anImport.rdf</updateURL>
-	<require_version>1.9.9</require_version>
+	<require_version>2.1.0-SNAPSHOT</require_version>
 	<!-- / Module Properties -->
 	<require_modules>
 		<require_module version="${webservices.restVersion}">org.openmrs.module.webservices.rest</require_module>
@@ -24,12 +24,7 @@
 	
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.OpenConceptLabActivator</activator>
-	
-	<!-- Adds link to admin page -->
-	<extension>
-		<point>org.openmrs.admin.list</point>
-		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.AdminList</class>
-	</extension>
+
 
 	<!-- Adds a link to the concept page to check if a concept is subscribed or not -->
 	<extension>

@@ -54,8 +54,7 @@
 	</modules>
 
 	<properties>
-		<openMRSVersion>1.9.11</openMRSVersion>
-
+		<openMRSVersion>2.1.0-SNAPSHOT</openMRSVersion>
 		<!-- Module dependencies -->
 		<webservices.restVersion>2.17-SNAPSHOT</webservices.restVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -131,8 +130,6 @@
 				<classifier>tests</classifier>
 				<scope>provided</scope>
 			</dependency>
-
-
 
 			<!-- End OpenMRS modules -->
 

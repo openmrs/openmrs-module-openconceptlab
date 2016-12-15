@@ -59,7 +59,7 @@ public class UpdateScheduler {
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
 			
-			scheduledUpdate = scheduler.scheduleAtFixedRate(importer, calendar.getTime(), subscription.getDays()
+			scheduledUpdate = (ScheduledFuture<Importer>) scheduler.scheduleAtFixedRate(importer, calendar.getTime(), subscription.getDays()
 			        * DAY_PERIOD);
 		}
 	}

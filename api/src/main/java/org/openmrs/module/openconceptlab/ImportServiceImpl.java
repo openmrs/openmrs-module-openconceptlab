@@ -97,7 +97,7 @@ public class ImportServiceImpl implements ImportService {
 	public List<ConceptName> changeDuplicateConceptNamesToIndexTerms(Concept conceptToImport) {
 		List<ConceptName> result = new ArrayList<ConceptName>();
 
-		if (conceptToImport.isRetired()) {
+		if (conceptToImport.getRetired()) {
 			return Collections.emptyList();
 		}
 
@@ -106,7 +106,7 @@ public class ImportServiceImpl implements ImportService {
 		while(it.hasNext()) {
 			ConceptName nameToImport = it.next();
 
-			if (nameToImport.isVoided()) {
+			if (nameToImport.getVoided()) {
 				continue;
 			}
 
@@ -114,7 +114,7 @@ public class ImportServiceImpl implements ImportService {
 				continue; //index terms are never considered duplicates
 			}
 
-			if (nameToImport.isLocalePreferred() || nameToImport.isFullySpecifiedName()
+			if (nameToImport.getLocalePreferred() || nameToImport.isFullySpecifiedName()
 					|| nameToImport.equals(nameToImport.getConcept().getName(nameToImport.getLocale()))) {
 				Criteria criteria = getSession().createCriteria(ConceptName.class);
 				criteria.add(Restrictions.eq("voided", false));
@@ -130,11 +130,11 @@ public class ImportServiceImpl implements ImportService {
 		        List<ConceptName> conceptNames = criteria.list();
 
 				for (ConceptName conceptName : conceptNames) {
-					if (conceptName.getConcept().isRetired()) {
+					if (conceptName.getConcept().getRetired()) {
 						continue;
 					} else if (conceptName.getConcept().getUuid().equals(conceptToImport.getUuid())) {
 						continue;
-					} else if (conceptName.isLocalePreferred() || conceptName.isFullySpecifiedName()
+					} else if (conceptName.getLocalePreferred() || conceptName.isFullySpecifiedName()
 							|| conceptName.equals(conceptName.getConcept().getName(nameToImport.getLocale()))) {
 						//if it is the default name for locale
 						nameToImport.setConceptNameType(ConceptNameType.INDEX_TERM);

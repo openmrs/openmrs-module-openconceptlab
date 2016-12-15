@@ -72,4 +72,7 @@
 			</list>
 		</property>
 	</bean>
+
+	<context:component-scan base-package="org.openmrs.module.openconceptlab"/>
+
 </beans>

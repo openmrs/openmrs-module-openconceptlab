@@ -205,7 +205,7 @@ public class Saver {
 
 			numeric.setUnits(extras.getUnits());
 
-			numeric.setPrecise(extras.getPrecise());
+			numeric.setAllowDecimal(extras.getPrecise());
 		}
 
 		concept.setRetired(oclConcept.isRetired());
@@ -418,7 +418,7 @@ public class Saver {
             }
 		}
 
-		if (term.isRetired() != oclMapping.isRetired()) {
+		if (term.getRetired() != oclMapping.isRetired()) {
 			term.setRetired(oclMapping.isRetired());
 			if (oclMapping.isRetired()) {
 				term.setRetireReason("OCL subscription");
@@ -546,7 +546,7 @@ public class Saver {
 					break;
 				}
 			}
-			if (!nameFound && !name.isVoided()) {
+			if (!nameFound && !name.getVoided()) {
 				name.setVoided(true);
 				name.setVoidReason("Removed from OCL");
 			}
