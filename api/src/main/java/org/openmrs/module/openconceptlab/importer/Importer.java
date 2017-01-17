@@ -210,9 +210,8 @@ public class Importer implements Runnable {
 	 */
 	public void run(MultipartFile multipartFile){
 		try {
-			File file = File.createTempFile("ocl", ".zip");
+			final File file = File.createTempFile("ocl", ".zip");
 			multipartFile.transferTo(file);
-			final ZipFile zipPackage = new ZipFile(file);
 			Daemon.runInDaemonThreadAndWait(new Runnable() {
 				@Override
 				public void run() {
@@ -220,11 +219,12 @@ public class Importer implements Runnable {
 
 						@Override
 						public void run() throws IOException {
-							InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
+							zipFile = new ZipFile(file);
+							InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipFile);
 							in = new CountingInputStream(zipInputStream);
 							importService.updateSubscriptionUrl(anImport, POSTED_VIA_REST);
 							processInput();
-							new File(zipPackage.getName()).delete();
+							file.delete();
 						}
 					});
 				}
@@ -260,7 +260,10 @@ public class Importer implements Runnable {
 
 			if (zipFile != null && new File(zipFile.getName()).exists()) {
 				new File(zipFile.getName()).delete();
+				zipFile = null;
 			}
+
+			multipartFile = null;
 
 			try {
 				if (anImport != null && anImport.getImportId() != null) {

@@ -12,10 +12,10 @@
 </script>
 <div ng-show="!vm.subscription" xmlns:top="http://www.w3.org/1999/xhtml" xmlns:top="http://www.w3.org/1999/xhtml">
     <div>
-        <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a>
-    </div><br>
+        <p>{{"nosubscriptionmessage.info" | translate}}</p><br/>
+    </div>
     <div>
-        <p>{{"nosubscriptionmessage.info" | translate}}</p>
+       <p></p><a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a></p>
     </div>
 </div>
 <div ng-show="vm.subscription">
@@ -24,16 +24,33 @@
     </div>
     <div ng-show="!vm.runningImport" >
         <fieldset>
-            <legend>{{"nextimports.text" | translate}}</legend><br>
-            <div style="text-align: center">
-                <div ng-hide="vm.showLoading">
-                    <button ng-click="vm.startImportIfNoErrors()">{{"importnow.button" | translate}}</button>
-                    &nbsp;{{"avoidUpdatesInfo.text" | translate}}<br>
-                    <p ng-show="vm.previousImports.results[0].errorItemsCount == 0">&nbsp;
+            <legend>{{"newimport.text" | translate}}</legend>
+            <div ng-hide="vm.showLoading">
+                <p>{{"avoidUpdatesInfo.text" | translate}}</p>
+                <p>&nbsp;</p>
+                <div>
+                    <p><button ng-click="vm.startImportIfNoErrors()">{{"importFromServer.button" | translate}}</button><br/></p>
+                    <p ng-show="vm.hasErrorsInPreviousImport()">
                         <i>{{"fixAllErrorsWarning.text" | translate}}</i></p>
+                    <p>&nbsp;</p>
+                    <p>- OR -</p>
+                    <p>&nbsp;</p>
                 </div>
-                <div class="loader" ng-show="vm.showLoading"></div>
-            </div><br>
+
+                <form name="fileUpload">
+                    <p>Import off-line from a zip file</p>
+                    <p><input type="file"
+                           style="border: none"
+                           ngf-select
+                           ng-model="zipFile"
+                           name="file"
+                           accept="{{vm.allowedFormat}}"
+                           required></p>
+                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
+                            ng-click="vm.uploadZip(zipFile)">{{"importFromFile.button" | translate}}</button></p>
+                </form>
+            </div>
+            <div class="loader" ng-show="vm.showLoading"></div>
         </fieldset>
     </div>
     <div ng-show="vm.runningImport">
@@ -83,29 +100,4 @@
             </div>
         </fieldset>
     </div>
-
-    <fieldset ng-disabled="vm.isImporting() || vm.isUploading" style="margin-top: 15px">
-        <legend>Upload source using file</legend>
-        <form name="fileUpload">
-            <div style="overflow: hidden; margin-bottom: 5px; margin-top: 5px">
-                <div style="width: 70%; float: left">
-                    <input type="file"
-                           style="border: none"
-                           ngf-select
-                           ng-model="zipFile"
-                           name="file"
-                           accept="{{vm.allowedFormat}}"
-                           required>
-                </div>
-                <div style="position: relative">
-
-                    <button style="float: right"
-                            ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
-                            ng-click="vm.uploadZip(zipFile)">Submit</button>
-
-                    <div class="loader" id="loader-small" ng-show="vm.isUploading"></div>
-                </div>
-            </div>
-        </form>
-    </fieldset>
 </div>

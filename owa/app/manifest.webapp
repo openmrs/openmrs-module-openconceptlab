@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "name": "openconceptlab",
+  "version": "1.2.0",
+  "name": "Open Concept Lab",
   "description": "UI for OpenMRS OpenConceptLab module",
   "launch_path": "index.html",
   "icons": {

@@ -11,8 +11,11 @@
                     <label name="subscription-token">{{"tokenurl.label" | translate}}</label><br>
                     <input id="subscription-token" ng-model="vm.subscription.token" style="width: 60%" required/>
                 </p>
-                <input ng-model="vm.subscription.subscribedToSnapshot" type="checkbox"> {{"subscription.options.checkbox" | translate}}<br>
-                <input ng-model="vm.subscription.validationType" type="checkbox" ng-true-value="'NONE'" ng-false-value="'FULL'"> {{"subscription.validationType.checkbox" | translate}}<br>
+                <p><a ng-click="vm.isShowAdvanced = !vm.isShowAdvanced" ng-init="vm.isShowAdvanced = false">{{"showAdvanced.text" | translate}}</a></p>
+                <div ng-show="vm.isShowAdvanced">
+                    <input ng-model="vm.subscription.subscribedToSnapshot" type="checkbox"> {{"subscription.options.checkbox" | translate}}<br>
+                    <input ng-model="vm.subscription.validationType" type="checkbox" ng-true-value="'NONE'" ng-false-value="'FULL'"> {{"subscription.validationType.checkbox" | translate}}<br>
+                </div>
             </div>
             <br>
             <div>
@@ -23,9 +26,11 @@
     </form>
 </div>
 <div ng-show="vm.subscription.uuid">
-    <fieldset>
-        <legend>{{"unsubscribe.text" | translate}}</legend><br>
-        <button ng-click="vm.unSubscribe()">{{"unsubscribe.button" | translate}}</button>
-        <p>{{"unsubscribeinfo.text" | translate}}</p>
-    </fieldset>
+    <form>
+        <fieldset>
+            <legend>{{"unsubscribe.text" | translate}}</legend>
+            <p>{{"unsubscribeinfo.text" | translate}}</p>
+            <p><button ng-click="vm.unSubscribe()">{{"unsubscribe.button" | translate}}</button></p>
+        </fieldset>
+    </form>
 </div>

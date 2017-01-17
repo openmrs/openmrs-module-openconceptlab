@@ -22,7 +22,7 @@ class HomeController {
      * Upload button params
      */
     vm.endpoint = '/openmrs/ws/rest/v1/openconceptlab/import';
-    vm.allowedFormat = 'application/zip, application/octet-stream';
+    vm.allowedFormat = '.zip,application/zip,application/x-zip,application/x-zip-compressed,application/octet-stream';
 
     activate();
     
@@ -39,11 +39,7 @@ class HomeController {
     }
 
     function uploadZip(file) {
-      vm.isUploading = true;
-
-
-
-
+      vm.showLoading = true;
 
       let upload = Upload.upload({
         url: vm.endpoint,
@@ -55,14 +51,21 @@ class HomeController {
         handleStartImportSuccess(response);
       }, function(response) {
         openmrsNotification.error("Failed to load file");
-        vm.isUploading = false;
+        vm.showLoading = false;
       });
+    }
+
+    function hasErrorsInPreviousImport() {
+      if (angular.isDefined(vm.previousImports.results) && vm.previousImports.results.length != 0) {
+        return vm.previousImports.results[0].errorItemsCount != 0;
+      } else {
+        return false;
+      }
     }
     
     function getRunningImport() {
       openmrsRest.getFull("openconceptlab/import", {runningImport: true}).then(function (response) {
         vm.showLoading = false;
-        vm.isUploading = false;
         vm.runningImport = response.results[0];
         if(angular.isDefined(vm.runningImport) && vm.runningImport.importProgress === 100){
           if(angular.isDefined(vm.updater)){
@@ -83,7 +86,7 @@ class HomeController {
     }
 
     function startImportIfNoErrors() {
-      if(angular.isDefined(vm.previousImports.results[0]) && vm.previousImports.results[0].errorItemsCount == 0){
+      if(hasErrorsInPreviousImport()){
         ngDialog.openConfirm({
           template: 'importWarning.html',
           className: 'ngdialog-theme-default'
