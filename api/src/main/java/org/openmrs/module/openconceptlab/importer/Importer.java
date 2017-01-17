@@ -198,7 +198,6 @@ public class Importer implements Runnable {
 						importService.updateSubscriptionUrl(anImport, subscriptionUrl);
 						processInput();
 						in.close();
-						new File(zipPackage.getName()).delete();
 					}
 				});
 			}
@@ -224,7 +223,6 @@ public class Importer implements Runnable {
 							in = new CountingInputStream(zipInputStream);
 							importService.updateSubscriptionUrl(anImport, POSTED_VIA_REST);
 							processInput();
-							file.delete();
 						}
 					});
 				}
@@ -249,6 +247,14 @@ public class Importer implements Runnable {
 			Integer errors = importService.getImportItemsCount(anImport, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
 			if (errors > 0) {
 				importService.failImport(anImport);
+			} else {
+
+				if (zipFile != null) {
+					File file = new File(zipFile.getName());
+					if (file.exists()) {
+						file.delete();
+					}
+				}
 			}
 		}
 		catch (Throwable e) {
@@ -258,11 +264,7 @@ public class Importer implements Runnable {
 		finally {
 			IOUtils.closeQuietly(in);
 
-			if (zipFile != null && new File(zipFile.getName()).exists()) {
-				new File(zipFile.getName()).delete();
-				zipFile = null;
-			}
-
+			zipFile = null;
 			multipartFile = null;
 
 			try {
