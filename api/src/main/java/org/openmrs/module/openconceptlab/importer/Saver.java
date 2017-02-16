@@ -554,28 +554,30 @@ public class Saver {
 	}
 
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
-		for (OclConcept.Description oclDescription : oclConcept.getDescriptions()) {
-			if (StringUtils.isBlank(oclDescription.getDescription())) {
-				continue;
-			}
+		if (oclConcept.getDescriptions() != null) {
+			for (Description oclDescription : oclConcept.getDescriptions()) {
+                if (StringUtils.isBlank(oclDescription.getDescription())) {
+                    continue;
+                }
 
-			boolean nameFound = false;
-			for (ConceptDescription description : concept.getDescriptions()) {
-				if (isMatch(oclDescription, description)) {
-					//Let's make sure all is the same
-					description.setDescription(oclDescription.getDescription());
-					description.setLocale(oclDescription.getLocale());
-					nameFound = true;
-					break;
-				}
-			}
+                boolean nameFound = false;
+                for (ConceptDescription description : concept.getDescriptions()) {
+                    if (isMatch(oclDescription, description)) {
+                        //Let's make sure all is the same
+                        description.setDescription(oclDescription.getDescription());
+                        description.setLocale(oclDescription.getLocale());
+                        nameFound = true;
+                        break;
+                    }
+                }
 
-			if (!nameFound) {
-				ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
-				        oclDescription.getLocale());
-				description.setUuid(oclDescription.getExternalId());
-				concept.addDescription(description);
-			}
+                if (!nameFound) {
+                    ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
+                            oclDescription.getLocale());
+                    description.setUuid(oclDescription.getExternalId());
+                    concept.addDescription(description);
+                }
+            }
 		}
 	}
 
