@@ -41,6 +41,8 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -205,7 +207,11 @@ public class Saver {
 
 			numeric.setUnits(extras.getUnits());
 
-			numeric.setPrecise(extras.getPrecise());
+			try {
+				numeric.setPrecise(extras.getPrecise());
+			} catch (NoSuchMethodError e) {
+				setAllowDecimalUsingReflection(numeric, extras);
+			}
 		}
 
 		concept.setRetired(oclConcept.isRetired());
@@ -225,6 +231,19 @@ public class Saver {
 		addDescriptionsFromOcl(concept, oclConcept);
 
 		return concept;
+	}
+
+	private void setAllowDecimalUsingReflection(ConceptNumeric numeric, Extras extras) {
+		try {
+            Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
+            setAllowDecimal.invoke(numeric, extras.getPrecise());
+        } catch (NoSuchMethodException e1) {
+			throw new ImportException(e1);
+		} catch (IllegalAccessException e1) {
+			throw new ImportException(e1);
+        } catch (InvocationTargetException e1) {
+			throw new ImportException(e1);
+        }
 	}
 
 	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {
