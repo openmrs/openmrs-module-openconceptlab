@@ -19,14 +19,18 @@
         <thead>
         <tr>
             <th>Errors (listing limited to first 50 errors)</th>
+            <th>Message</th>
         </tr>
         </thead>
         <tbody>
         <tr ng-repeat="item in vm.items">
             <td class="small" ng-if="item.state === 'ERROR'">{{ item.type }}
-                ({{item.uuid }})
-                <a href="{{item.versionUrl }}">View in OCL</a>\n
+                ({{item.uuid }})<br>
+                <a href="{{item.versionUrl }}">View in OCL</a>
                 {{ item.status}}
+            </td>
+            <td>
+                {{item.errorMessage}}
             </td>
         </tr>
         </tbody>

@@ -301,8 +301,8 @@ public class Saver {
 			}
 
 			if (fromConcept == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping from concept with URL "
-				        + oclMapping.getFromConceptUrl() + ", because the concept has not been imported");
+				throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
+						+ ", because the concept has not been imported");
 			}
 		}
 
@@ -315,7 +315,7 @@ public class Saver {
 			}
 
 			if (toConcept == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Cannot create mapping to concept with URL "
+				throw new SavingException("Cannot create mapping to concept with URL "
 				        + oclMapping.getToConceptUrl() + ", because the concept has not been imported");
 			}
 		}
@@ -345,7 +345,7 @@ public class Saver {
 			String mapTypeName = oclMapping.getMapType().replace("-", "_");
 			ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 			if (mapType == null) {
-				return new Item(update, oclMapping, ItemState.ERROR, "Map type " + mapTypeName + " does not exist");
+				throw new SavingException("Map type " + mapTypeName + " does not exist");
 			}
 
 			if (fromConcept != null) {
@@ -383,7 +383,7 @@ public class Saver {
 
 				importService.updateConceptWithoutValidation(fromConcept);
 			} else {
-				return new Item(update, oclMapping, ItemState.ERROR, "Mapping " + oclMapping.getUrl() + " is not supported");
+				throw new SavingException("Mapping " + oclMapping.getUrl() + " is not supported");
 			}
 		}
 		return item;

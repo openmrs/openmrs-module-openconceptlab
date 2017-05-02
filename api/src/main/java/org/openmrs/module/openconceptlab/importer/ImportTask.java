@@ -95,8 +95,13 @@ public class ImportTask implements Runnable {
 						try {
 							item = saver.saveMapping(cacheService, anImport, oclMapping);
 							log.info("Imported mapping " + oclMapping);
-						}
-						catch (Throwable e) {
+						} catch (SavingException e) {
+							log.error("Failed to save mapping " + oclMapping, e);
+							Context.clearSession();
+							cacheService.clearCache();
+
+							item = new Item(anImport, oclMapping, ItemState.ERROR, e.getMessage());
+						} catch (Throwable e) {
 							log.error("Failed to import mapping " + oclMapping, e);
 							Context.clearSession();
 							cacheService.clearCache();
