@@ -226,6 +226,34 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Saver#importConcept(OclConcept,ImportQueue)
+	 */
+	@Test
+	public void importConcept_shouldAcceptNoneDatatype() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setDatatype("None");
+		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+
+		assertThat(oclConcept.getDatatype(), equalTo("N/A"));
+
+		assertImported(oclConcept);
+	}
+
+	/**
+	 * @see Saver#importConcept(OclConcept,ImportQueue)
+	 */
+	@Test
+	public void importConcept_shouldAcceptFullySpecifiedNameType() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.getNames().get(0).setNameType("Fully Specified");
+		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+
+		assertThat(oclConcept.getNames().get(0).getNameType(), equalTo("FULLY_SPECIFIED"));
+
+		assertImported(oclConcept);
+	}
+
+	/**
+	 * @see Saver#importConcept(OclConcept,ImportQueue)
 	 * @verifies anImport concept class
 	 */
 	@Test

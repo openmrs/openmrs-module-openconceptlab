@@ -158,6 +158,8 @@ public class Saver {
 	}
 
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
+		convertConceptDatatypes(oclConcept);
+
 		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
@@ -222,6 +224,8 @@ public class Saver {
 			concept.setRetiredBy(null);
 		}
 
+		convertConceptNameTypes(oclConcept);
+
 		voidNamesRemovedFromOcl(concept, oclConcept);
 
 		updateOrAddNamesFromOcl(concept, oclConcept);
@@ -231,6 +235,20 @@ public class Saver {
 		addDescriptionsFromOcl(concept, oclConcept);
 
 		return concept;
+	}
+
+	private void convertConceptDatatypes(OclConcept oclConcept) {
+		if (StringUtils.equalsIgnoreCase("None", oclConcept.getDatatype())) {
+			oclConcept.setDatatype("N/A");
+		}
+	}
+
+	private void convertConceptNameTypes(OclConcept oclConcept) {
+		for (OclConcept.Name oclName: oclConcept.getNames()) {
+			if (StringUtils.equalsIgnoreCase("Fully Specified", oclName.getNameType())) {
+				oclName.setNameType("FULLY_SPECIFIED");
+			}
+		}
 	}
 
 	private void setAllowDecimalUsingReflection(ConceptNumeric numeric, Extras extras) {
