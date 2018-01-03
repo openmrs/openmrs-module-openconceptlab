@@ -9,6 +9,7 @@ import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
+import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
@@ -55,10 +56,6 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     @Override
     public Import save(Import delegate) {
         if (delegate != null) {
-            Import anImport = getImportService().getLastImport();
-            if (anImport != null) {
-                getImportService().ignoreAllErrors(anImport);
-            }
             UpdateScheduler updateScheduler = getUpdateScheduler();
             updateScheduler.scheduleNow();
             return getImportService().getLastImport();

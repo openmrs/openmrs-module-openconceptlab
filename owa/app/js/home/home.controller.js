@@ -87,16 +87,20 @@ class HomeController {
 
     function startImportIfNoErrors() {
       if(hasErrorsInPreviousImport()){
-        ngDialog.openConfirm({
-          template: 'importWarning.html',
-          className: 'ngdialog-theme-default'
-        }).then(function(value){
-          if(value){
-            ignoreErrors();
-          } else {
-            startImport();
-          }
-        });
+        if (vm.subscription.subscribedToSnapshot) {
+          ngDialog.openConfirm({
+            template: 'importWarning.html',
+            className: 'ngdialog-theme-default'
+          }).then(function(value){
+            if(value){
+              ignoreErrors();
+            } else {
+              startImport();
+            }
+          });
+        } else {
+          startImport();
+        }
       } else {
         startImport();
       }
