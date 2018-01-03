@@ -87,12 +87,18 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
             description.addProperty("localDateStarted");
             description.addProperty("localDateStopped");
             description.addProperty("oclDateStarted");
+            description.addProperty("releaseVersion");
             description.addProperty("errorMessage");
             description.addProperty("importProgress");
             description.addProperty("importTime");
             description.addProperty("allItemsCount");
             description.addProperty("errorItemsCount");
             description.addProperty("ignoredErrorsCount");
+            description.addProperty("updatedItemsCount");
+            description.addProperty("upToDateItemsCount");
+            description.addProperty("retiredItemsCount");
+            description.addProperty("unretiredItemsCount");
+            description.addProperty("addedItemsCount");
             description.addProperty("status");
             description.addLink("ref", ".?v=" + RestConstants.REPRESENTATION_REF);
             description.addSelfLink();
@@ -141,16 +147,37 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
     @PropertyGetter("errorItemsCount")
     public static Integer getErrorItemsCount(Import instance){
-        Set<ItemState> inError = new HashSet<ItemState>();
-        inError.add(ItemState.ERROR);
-        return getImportService().getImportItemsCount(instance, inError);
+        return getImportService().getImportItemsCount(instance, states(ItemState.ERROR));
     }
 
     @PropertyGetter("ignoredErrorsCount")
     public static Integer getIgnoredErrorsCount(Import instance){
-        Set<ItemState> ignoredError = new HashSet<ItemState>();
-        ignoredError.add(ItemState.IGNORED_ERROR);
-        return getImportService().getImportItemsCount(instance, ignoredError);
+        return getImportService().getImportItemsCount(instance, states(ItemState.IGNORED_ERROR));
+    }
+
+    @PropertyGetter("updatedItemsCount")
+    public static Integer getUpdatedItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, states(ItemState.UPDATED));
+    }
+
+    @PropertyGetter("upToDateItemsCount")
+    public static Integer getUpToDateItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, states(ItemState.UP_TO_DATE));
+    }
+
+    @PropertyGetter("addedItemsCount")
+    public static Integer getAddedItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, states(ItemState.ADDED));
+    }
+
+    @PropertyGetter("retiredItemsCount")
+    public static Integer getRetiredItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, states(ItemState.RETIRED));
+    }
+
+    @PropertyGetter("unretiredItemsCount")
+    public static Integer getUnretiredItemsCount(Import instance){
+        return getImportService().getImportItemsCount(instance, states(ItemState.UNRETIRED));
     }
 
     private static Set<ItemState> states(ItemState... states) {
@@ -161,30 +188,18 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
     @PropertyGetter("status")
     public static String getStatus(Import instance){
-        Integer errors = getImportService().getImportItemsCount(instance, states(ItemState.ERROR));
-        Integer upToDateItems =  getImportService().getImportItemsCount(instance, states(ItemState.UP_TO_DATE));
-        Integer updatedItems = getImportService().getImportItemsCount(instance, states(ItemState.UPDATED));
-        Integer addedItems = getImportService().getImportItemsCount(instance, states(ItemState.ADDED));
-        Integer retiredItems = getImportService().getImportItemsCount(instance, states(ItemState.RETIRED));
-        Integer unretiredItems = getImportService().getImportItemsCount(instance, states(ItemState.UNRETIRED));
         String errorMessage = instance.getErrorMessage();
         if(StringUtils.isNotBlank(errorMessage)){
             return errorMessage;
         }
+
+        Integer allItemsCount = getAllItemsCount(instance);
+        Integer errors = getErrorItemsCount(instance);
+
         StringBuilder status = new StringBuilder();
-        status.append(errors + upToDateItems + updatedItems + addedItems + retiredItems + unretiredItems).append(" items fetched");
+        status.append(allItemsCount).append(" items fetched");
         if(errors > 0) {
             status.append(", \n").append(String.valueOf(errors) + " errors");
-        } else if (upToDateItems > 0) {
-            status.append(", \n").append(upToDateItems).append(" up to date, \n");
-        } else if (updatedItems > 0) {
-            status.append(", \n").append(updatedItems).append(" updated, \n");
-        } else if (addedItems > 0) {
-            status.append(", \n").append(addedItems).append(" added, \n");
-        } else if (retiredItems > 0) {
-            status.append(", \n").append(retiredItems).append(" retired, \n");
-        } else if (unretiredItems > 0) {
-            status.append(", \n").append(unretiredItems).append(" unretired \n");
         }
         return status.toString();
     }

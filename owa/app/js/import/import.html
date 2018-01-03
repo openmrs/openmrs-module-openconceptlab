@@ -2,14 +2,24 @@
     <p>
         The update started on<span class="formatFields"> <b>{{vm.anImport.localDateStarted | date:'yyyy-MM-dd'}}</b>
     </span>at<span class="formatFields"><b> {{vm.anImport.localDateStarted | date:'HH:mm:ss '}}</b></span>.
-        It completed in <span class="formatFields"><b>{{vm.anImport.importTime}}</b></span>
+        It completed in <span class="formatFields"><b>{{vm.anImport.importTime}}</b></span>.
     </p>
+    <p>&nbsp;</p>
+    <p ng-show="vm.anImport.releaseVersion">
+        The imported version was "{{vm.anImport.releaseVersion}}".
+    </p>
+    <p>&nbsp;</p>
     <p>
-        There were <span class="formatFields">{{ vm.anImport.allItemsCount - vm.anImport.errorItemsCount}}</span> objects updated and
-        <span class="formatFieldsErrors">{{vm.anImport.errorItemsCount}} in error
-			<span ng-if="vm.anImport.ignoredErrorsCount > 0">(ignored {{vm.anImport.ignoredErrorsCount}} errors)</span>
-        </span>
+        There were <span class="formatFields">{{ vm.anImport.allItemsCount}}</span> objects fetched.
     </p>
+    <p>&nbsp;</p>
+    <p ng-show="vm.anImport.errorItemsCount > 0"><span class="formatFieldsErrors">{{vm.anImport.errorItemsCount}}</span> errors</p>
+    <p ng-show="vm.anImport.ignoredErrorsCount > 0"><span class="formatFields">{{vm.anImport.ignoredErrorsCount}}</span> ignored errors</p>
+    <p ng-show="vm.anImport.upToDateItemsCount > 0"><span class="formatFields">{{vm.anImport.upToDateItemsCount}}</span> up to date</p>
+    <p ng-show="vm.anImport.addedItemsCount > 0"><span class="formatFields">{{vm.anImport.addedItemsCount}}</span> added</p>
+    <p ng-show="vm.anImport.updatedItemsCount > 0"><span class="formatFields">{{vm.anImport.updatedItemsCount}}</span> updated</p>
+    <p ng-show="vm.anImport.retiredItemsCount > 0"><span class="formatFields">{{vm.anImport.retiredItemsCount}}</span> retired</p>
+    <p ng-show="vm.anImport.unretiredItemsCount > 0"><span class="formatFields">{{vm.anImport.unretiredItemsCount}}</span> unretired</p>
 </div>
 <div ng-show="vm.anImport.errorItemsCount > 0">
     <br><p>{{"fixAllErrorsMessage.text" | translate}}</p>
