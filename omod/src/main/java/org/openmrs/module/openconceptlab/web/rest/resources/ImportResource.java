@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipFile;
@@ -152,20 +153,40 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
         return getImportService().getImportItemsCount(instance, ignoredError);
     }
 
+    private static Set<ItemState> states(ItemState... states) {
+        Set<ItemState> set = new HashSet<ItemState>();
+        set.addAll(Arrays.asList(states));
+        return set;
+    }
+
     @PropertyGetter("status")
     public static String getStatus(Import instance){
-        Set<ItemState> states = new HashSet<ItemState>();
-        states.add(ItemState.ERROR);
-        Integer errors = getImportService().getImportItemsCount(instance, states);
-        Integer totalItems =  getImportService().getImportItemsCount(instance, new HashSet<ItemState>());
+        Integer errors = getImportService().getImportItemsCount(instance, states(ItemState.ERROR));
+        Integer upToDateItems =  getImportService().getImportItemsCount(instance, states(ItemState.UP_TO_DATE));
+        Integer updatedItems = getImportService().getImportItemsCount(instance, states(ItemState.UPDATED));
+        Integer addedItems = getImportService().getImportItemsCount(instance, states(ItemState.ADDED));
+        Integer retiredItems = getImportService().getImportItemsCount(instance, states(ItemState.RETIRED));
+        Integer unretiredItems = getImportService().getImportItemsCount(instance, states(ItemState.UNRETIRED));
         String errorMessage = instance.getErrorMessage();
         if(StringUtils.isNotBlank(errorMessage)){
             return errorMessage;
-        } else if(errors > 0){
-            return String.valueOf(errors)+ " errors";
-        } else {
-            return String.valueOf(totalItems) + " items updated";
         }
+        StringBuilder status = new StringBuilder();
+        status.append(errors + upToDateItems + updatedItems + addedItems + retiredItems + unretiredItems).append(" items fetched");
+        if(errors > 0) {
+            status.append(", \n").append(String.valueOf(errors) + " errors");
+        } else if (upToDateItems > 0) {
+            status.append(", \n").append(upToDateItems).append(" up to date, \n");
+        } else if (updatedItems > 0) {
+            status.append(", \n").append(updatedItems).append(" updated, \n");
+        } else if (addedItems > 0) {
+            status.append(", \n").append(addedItems).append(" added, \n");
+        } else if (retiredItems > 0) {
+            status.append(", \n").append(retiredItems).append(" retired, \n");
+        } else if (unretiredItems > 0) {
+            status.append(", \n").append(unretiredItems).append(" unretired \n");
+        }
+        return status.toString();
     }
 
     private UpdateScheduler getUpdateScheduler() {

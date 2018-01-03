@@ -127,10 +127,14 @@ public class OclClient {
 
 	public OclResponse fetchLastReleaseVersion(String url, String token, String lastReleaseVersion) throws IOException {
 		String latestOclReleaseVersion = fetchLatestOclReleaseVersion(url, token);
-		if (!lastReleaseVersion.equals(latestOclReleaseVersion)) {
+		if (lastReleaseVersion == null || !lastReleaseVersion.equals(latestOclReleaseVersion)) {
+			//If there is no lastReleaseVersion then the subscription has been changed from snapshot to releases
+			//and we need to fetch the latest OCL release version.
+			//If lastReleaseVersion does not match the latest OCL release version then we need to fetch it too.
 			return fetchLastReleaseVersion(url, token);
 		}
 		else {
+			//No new version
 			return null;
 		}
 	}
