@@ -4,70 +4,6 @@
 	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd
     http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-	<changeSet author="rkorytkowski" id="openconceptlab-v1-1">
-		<preConditions onFail="MARK_RAN">
-    		<not><tableExists tableName="openconceptlab_update"/></not>
-    	</preConditions>
-    	<comment>Create openconceptlab_update table</comment>
-        <createTable tableName="openconceptlab_update">
-            <column autoIncrement="true" name="update_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="local_date_started" type="datetime">
-                <constraints nullable="false"/>
-            </column>
-            <column name="local_date_stopped" type="datetime"/>
-            <column name="ocl_date_started" type="datetime" />
-            <column name="error_message" type="varchar(1024)" />
-        </createTable>
-    </changeSet>
-    
-    <changeSet author="rkorytkowski" id="openconceptlab-v1-2">
-    	<preConditions onFail="MARK_RAN">
-    		<not><tableExists tableName="openconceptlab_item"/></not>
-    	</preConditions>
-    	<comment>Create openconceptlab_item table</comment>
-        <createTable tableName="openconceptlab_item">
-            <column autoIncrement="true" name="item_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="update_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="type" type="varchar(512)">
-            	<constraints nullable="false"/>
-            </column>
-            <column name="uuid" type="char(38)" />
-            <column name="version_url" type="varchar(1024)" />
-            <column name="url" type="varchar(1024)" />
-            <column name="hashed_url" type="binary(16)" />
-            <column name="state" type="int">
-            	<constraints nullable="false"/>
-            </column>
-            <column name="error_message" type="varchar(1024)" />
-        </createTable>
-        <addForeignKeyConstraint constraintName="openconceptlab_item_update" baseTableName="openconceptlab_item" baseColumnNames="update_id" referencedTableName="openconceptlab_update" referencedColumnNames="update_id"/>
-    </changeSet>
-    
-    <changeSet author="rkorytkowski" id="openconceptlab-v1-3">
-    	<preConditions onFail="MARK_RAN">
-    		<not><indexExists indexName="openconceptlab_item_url_state"/></not>
-    	</preConditions>
-    	<comment>Create openconceptlab_item_url_state index</comment>
-    	<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_url_state">
-    		<column name="hashed_url" />
-    		<column name="state" />
-    	</createIndex>
-    </changeSet>
-    
-    <changeSet author="rkorytkowski" id="openconceptlab-v1-4" dbms="mysql">
-    	<comment>Change character set to UTF-8</comment>
-    	<sql>
-    		ALTER TABLE openconceptlab_update CHARACTER SET utf8;
-    		ALTER TABLE openconceptlab_item CHARACTER SET utf8;
-    	</sql>
-    </changeSet>
-    
     <changeSet author="rkorytkowski" id="openconceptlab-v1-5">
     	<preConditions onFail="MARK_RAN">
     		<not><indexExists tableName="concept_reference_map" columnNames="uuid"/></not>
@@ -119,29 +55,6 @@
     		<column name="locale" />
     		<column name="voided" />
     	</createIndex>
-    </changeSet>
-    
-    <changeSet author="rkorytkowski" id="openconceptlab-v1-10">
-    	<preConditions onFail="MARK_RAN">
-    		<not><indexExists indexName="openconceptlab_item_update_state"/></not>
-    	</preConditions>
-    	<comment>Create openconceptlab_item_update_state index</comment>
-    	<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_update_state">
-    		<column name="update_id" />
-    		<column name="state" />
-    	</createIndex>
-    </changeSet>
-
-    <changeSet author="pawelgutkowski" id="openconceptlab-v1-11">
-    	<preConditions onFail="MARK_RAN">
-    		<not>
-    			<columnExists tableName="openconceptlab_item" columnName="openconceptlab_item_updated_on"/>
-			</not>
-    	</preConditions>
-    	<comment>Create openconceptlab_item_update_on</comment>
-    	<addColumn tableName="openconceptlab_item">
-    		<column name="openconceptlab_updated_on" type="datetime"/>
-    	</addColumn>
     </changeSet>
 
 	<changeSet id="openconceptlab-v1-03.11.2016-16.10" author="adamgrzybkowski">
@@ -240,6 +153,16 @@
 		<addColumn tableName="openconceptlab_import">
 			<column name="subscription_url" type="text"/>
 		</addColumn>
+	</changeSet>
+
+	<changeSet author="rkorytkowski" id="openconceptlab-v1-14.03.2018">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_item" columnNames="hashed_url"/></not>
+		</preConditions>
+		<comment>Add openconceptlab_item_url index</comment>
+		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_url">
+			<column name="hashed_url" />
+		</createIndex>
 	</changeSet>
 
 </databaseChangeLog>
