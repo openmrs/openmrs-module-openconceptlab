@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public interface ImportService {
 
@@ -70,6 +71,9 @@ public interface ImportService {
 
     @Transactional(readOnly = true)
 	Item getLastSuccessfulItemByUrl(String url);
+
+	@Transactional(readOnly = true)
+	Item getLastSuccessfulItemByUrl(String url, CacheService cacheService);
 
     @Transactional
 	void saveItem(Item item);
@@ -132,4 +136,7 @@ public interface ImportService {
 
 	@Transactional
 	void updateSubscriptionUrl(Import anImport, String url);
+
+	@Transactional
+	<T> T runInTransaction(Callable<T> callable) throws Exception;
 }

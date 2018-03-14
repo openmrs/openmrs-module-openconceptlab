@@ -2,15 +2,20 @@
     <p>
         The update started on<span class="formatFields"> <b>{{vm.anImport.localDateStarted | date:'yyyy-MM-dd'}}</b>
     </span>at<span class="formatFields"><b> {{vm.anImport.localDateStarted | date:'HH:mm:ss '}}</b></span>.
+    </p>
+    <p ng-show="vm.anImport.localDateStopped">
         It completed in <span class="formatFields"><b>{{vm.anImport.importTime}}</b></span>.
+    </p>
+    <p ng-show="vm.anImport.localDateStopped == null">
+        It is running for <span class="formatFields"><b>{{vm.anImport.importTime}}</b></span> now.
     </p>
     <p>&nbsp;</p>
     <p ng-show="vm.anImport.releaseVersion">
-        The imported version was "{{vm.anImport.releaseVersion}}".
+        The imported version is "{{vm.anImport.releaseVersion}}".
     </p>
     <p>&nbsp;</p>
     <p>
-        There were <span class="formatFields">{{ vm.anImport.allItemsCount}}</span> objects fetched.
+        Processed <span class="formatFields">{{ vm.anImport.allItemsCount}}</span> objects with the following results:
     </p>
     <p>&nbsp;</p>
     <p ng-show="vm.anImport.errorItemsCount > 0"><span class="formatFieldsErrors">{{vm.anImport.errorItemsCount}}</span> errors</p>

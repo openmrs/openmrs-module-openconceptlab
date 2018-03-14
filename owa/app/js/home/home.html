@@ -58,7 +58,7 @@
             <legend>{{"importinprogress.text" | translate}}</legend><br>
             <div>
                <p>{{"importprogresstime.text" | translate}} {{vm.runningImport.importTime}}</p>
-                <p>{{"completed.text" | translate}} {{vm.runningImport.importProgress}} %</p>
+                <p>{{"completed.text" | translate}} {{vm.runningImport.importProgress}} % ({{import.status | limitTo : vm.textLength}}, <a href="#/import/{{import.uuid}}">see details</a>)</p>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" aria-valuenow="{{vm.runningImport.importProgress}}"
                          aria-valuemin="0" aria-valuemax="100" style="width:{{vm.runningImport.importProgress}}%">
@@ -81,7 +81,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat="import in vm.previousImports.results">
+                    <tr ng-repeat="import in vm.previousImports.results" ng-if="import.localDateStopped">
                         <td><a href="#/import/{{import.uuid}}">{{import.localDateStarted | date:'medium'}}</a></td>
                         <td>{{import.importTime}}</td>
 

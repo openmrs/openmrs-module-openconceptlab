@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.openmrs.Concept;
 import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
+import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
@@ -35,14 +36,17 @@ public class CacheService {
 
 	Map<String, ConceptMapType> conceptMapTypes = new ConcurrentHashMap<String, ConceptMapType>();
 
-	Map<String, Concept> conceptsByUuids = new ConcurrentHashMap<String, Concept>();
+	Map<String, ConceptMap> conceptMaps = new ConcurrentHashMap<String, ConceptMap>();
+
+	Map<String, Concept> concepts = new ConcurrentHashMap<String, Concept>();
 
 	public void clearCache() {
 		conceptDatatypes.clear();
 		conceptClasses.clear();
 		conceptSources.clear();
 		conceptMapTypes.clear();
-		conceptsByUuids.clear();
+		conceptMaps.clear();
+		concepts.clear();
 	}
 
 	public ConceptDatatype getConceptDatatypeByName(String name) {
@@ -97,14 +101,27 @@ public class CacheService {
 		}
     }
 
+	public ConceptMap getConceptMapByUuid(String uuid, ImportService importService) {
+		ConceptMap conceptMap = conceptMaps.get(uuid);
+		if (conceptMap != null) {
+			return conceptMap;
+		} else {
+			conceptMap = importService.getConceptMapByUuid(uuid);
+			if (conceptMap != null) {
+				conceptMaps.put(uuid, conceptMap);
+			}
+			return conceptMap;
+		}
+	}
+
 	public Concept getConceptByUuid(String uuid) {
-		Concept concept = conceptsByUuids.get(uuid);
+		Concept concept = concepts.get(uuid);
 		if (concept != null) {
 			return concept;
 		} else {
 			concept = conceptService.getConceptByUuid(uuid);
 			if (concept != null) {
-				conceptsByUuids.put(uuid, concept);
+				concepts.put(uuid, concept);
 			}
 			return concept;
 		}

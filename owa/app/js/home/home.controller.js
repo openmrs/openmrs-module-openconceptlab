@@ -116,7 +116,7 @@ class HomeController {
     function handleStartImportSuccess(success) {
       vm.updater = vm.updater = $interval(function () {
         vm.getRunningImport();
-      }, 2000);
+      }, 5000);
     }
     function handleStartImportException(exception) {
       vm.showLoading = false;

@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class ImportServiceImpl implements ImportService {
 
@@ -280,8 +281,14 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Item getLastSuccessfulItemByUrl(String url) {
+		return getLastSuccessfulItemByUrl(url, new CacheService(conceptService));
+	}
+
+	@Override
+	public Item getLastSuccessfulItemByUrl(String url, CacheService cacheService) {
 		Criteria criteria = getSession().createCriteria(Item.class);
-		criteria.add(Restrictions.eq("hashedUrl", Item.hashUrl(url)));
+		criteria.add(Restrictions.eq("hashedUrl", Item.hashUrl(url))); //hashedUrl is indexed to speed up the search
+		criteria.add(Restrictions.eq("url", url));
 		criteria.add(Restrictions.not(Restrictions.eq("state", ItemState.ERROR)));
 		criteria.addOrder(Order.desc("itemId"));
 		criteria.setMaxResults(1);
@@ -290,13 +297,13 @@ public class ImportServiceImpl implements ImportService {
 		if (item != null) {
 			switch (item.getType()) {
 				case MAPPING:
-					ConceptMap map = getConceptMapByUuid(item.getUuid());
+					ConceptMap map = cacheService.getConceptMapByUuid(item.getUuid(), this);
 					if (map == null) {
 						return null;
 					}
 					break;
 				case CONCEPT:
-					Concept concept = conceptService.getConceptByUuid(item.getUuid());
+					Concept concept = cacheService.getConceptByUuid(item.getUuid());
 					if (concept == null) {
 						return null;
 					}
@@ -538,6 +545,11 @@ public class ImportServiceImpl implements ImportService {
 	public void updateSubscriptionUrl(Import anImport, String url) {
 		anImport.setSubscriptionUrl(url);
 		getSession().saveOrUpdate(anImport);
+	}
+
+	@Override
+	public <T> T runInTransaction(Callable<T> callable) throws Exception {
+		return callable.call();
 	}
 
 }

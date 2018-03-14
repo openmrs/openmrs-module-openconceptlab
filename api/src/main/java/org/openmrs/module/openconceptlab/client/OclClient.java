@@ -327,7 +327,6 @@ public class OclClient {
     }
 
 	public String fetchLatestOclReleaseVersion(String url, String token) throws IOException {
-
 		if (url.endsWith("/")) {
 			url = url.substring(0, url.lastIndexOf('/'));
 		}

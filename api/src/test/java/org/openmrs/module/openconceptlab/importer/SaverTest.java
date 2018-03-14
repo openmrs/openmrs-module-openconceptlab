@@ -450,7 +450,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
 
 		oclConcept.setConceptClass(null);
-		exception.expect(NullPointerException.class);
+		exception.expect(ImportException.class);
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
 	}
 
@@ -466,7 +466,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		concept.setDatatype("Some missing datatype");
 
 		exception.expect(ImportException.class);
-		exception.expectMessage("Datatype 'Some missing datatype' is not supported by OpenMRS");
+		exception.expectMessage("Cannot create concept /orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		saver.saveConcept(new CacheService(conceptService), update, concept);
 	}
 
