@@ -310,123 +310,108 @@ public class Saver {
 	 */
 	public Item saveMapping(final CacheService cacheService, final Import update, final OclMapping oclMapping) throws ImportException {
 		try {
-			return importService.runInTransaction(new Callable<Item>() {
-				@Override
-				public Item call() throws Exception {
-					Item oldMappingItem = importService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
-					if (oldMappingItem != null && isMappingUpToDate(oldMappingItem, oclMapping)) {
-						return new Item(update, oclMapping, ItemState.UP_TO_DATE);
+				Item oldMappingItem = importService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
+				if (oldMappingItem != null && isMappingUpToDate(oldMappingItem, oclMapping)) {
+					return new Item(update, oclMapping, ItemState.UP_TO_DATE);
+				}
+
+				final Item item;
+
+				Item fromItem = null;
+				Concept fromConcept = null;
+				if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
+					fromItem = importService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
+					if (fromItem != null) {
+						fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 					}
 
-					final Item item;
+					if (fromConcept == null) {
+						throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
+								+ ", because the concept has not been imported");
+					}
+				}
 
-					Item fromItem = null;
-					Concept fromConcept = null;
-					if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
-						fromItem = importService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
-						if (fromItem != null) {
-							fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
-						}
+				Item toItem = null;
+				Concept toConcept = null;
+				if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
+					toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
+					if (toItem != null) {
+						toConcept = cacheService.getConceptByUuid(toItem.getUuid());
+					}
 
-						if (fromConcept == null) {
-							throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
-									+ ", because the concept has not been imported");
+					if (toConcept == null) {
+						throw new SavingException("Cannot create mapping to concept with URL "
+								+ oclMapping.getToConceptUrl() + ", because the concept has not been imported");
+					}
+				}
+
+				if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
+					if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
+						item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
+					} else {
+						item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
+					}
+
+					importService.updateConceptWithoutValidation(fromConcept);
+				} else {
+					ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
+					if (toSource == null) {
+						synchronized (CREATE_CONCEPT_SOURCE_LOCK) {
+							toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
+							if (toSource == null) {
+								toSource = new ConceptSource();
+								toSource.setName(oclMapping.getToSourceName());
+								toSource.setDescription("Imported from " + oclMapping.getUrl());
+								conceptService.saveConceptSource(toSource);
+							}
 						}
 					}
 
-					Item toItem = null;
-					Concept toConcept = null;
-					if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
-						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
-						if (toItem != null) {
-							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
-						}
-
-						if (toConcept == null) {
-							throw new SavingException("Cannot create mapping to concept with URL "
-									+ oclMapping.getToConceptUrl() + ", because the concept has not been imported");
-						}
+					String mapTypeName = oclMapping.getMapType().replace("-", "_");
+					ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
+					if (mapType == null) {
+						throw new SavingException("Map type " + mapTypeName + " does not exist");
 					}
 
-					if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
-						if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
-							item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
+					if (fromConcept != null) {
+						ConceptMap conceptMap = importService.getConceptMapByUuid(oclMapping.getExternalId());
+
+						ConceptReferenceTerm term = createOrUpdateConceptReferenceTerm(oclMapping, conceptMap, toSource);
+
+						if (conceptMap != null) {
+							if (!conceptMap.getConcept().equals(fromConcept)) {
+								//Concept changed, it would be unusual, but still probable
+								Concept previousConcept = conceptMap.getConcept();
+
+								previousConcept.removeConceptMapping(conceptMap);
+								importService.updateConceptWithoutValidation(previousConcept);
+
+								fromConcept.addConceptMapping(conceptMap);
+							}
+
+							if (Boolean.TRUE.equals(oclMapping.getRetired())) {
+								item = new Item(update, oclMapping, ItemState.RETIRED);
+								fromConcept.removeConceptMapping(conceptMap);
+							} else {
+								item = new Item(update, oclMapping, ItemState.UPDATED);
+								conceptMap.setConceptMapType(mapType);
+							}
 						} else {
-							item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
+							conceptMap = new ConceptMap();
+							conceptMap.setUuid(oclMapping.getExternalId());
+							conceptMap.setConceptReferenceTerm(term);
+							conceptMap.setConceptMapType(mapType);
+							fromConcept.addConceptMapping(conceptMap);
+
+							item = new Item(update, oclMapping, ItemState.ADDED);
 						}
 
 						importService.updateConceptWithoutValidation(fromConcept);
 					} else {
-						ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
-						if (toSource == null) {
-							synchronized (CREATE_CONCEPT_SOURCE_LOCK) {
-								toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
-								if (toSource == null) {
-									toSource = new ConceptSource();
-									toSource.setName(oclMapping.getToSourceName());
-									toSource.setDescription("Imported from " + oclMapping.getUrl());
-									final ConceptSource saveSource = toSource;
-
-									//Needed, because saveConceptSource is not marked as Transactional in core
-									importService.runInTransaction(new Callable<Object>() {
-										@Override
-										public Object call() throws Exception {
-											conceptService.saveConceptSource(saveSource);
-											return null;
-										}
-									});
-
-								}
-							}
-						}
-
-						String mapTypeName = oclMapping.getMapType().replace("-", "_");
-						ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
-						if (mapType == null) {
-							throw new SavingException("Map type " + mapTypeName + " does not exist");
-						}
-
-						if (fromConcept != null) {
-							ConceptMap conceptMap = importService.getConceptMapByUuid(oclMapping.getExternalId());
-
-							ConceptReferenceTerm term = createOrUpdateConceptReferenceTerm(oclMapping, conceptMap, toSource);
-
-							if (conceptMap != null) {
-								if (!conceptMap.getConcept().equals(fromConcept)) {
-									//Concept changed, it would be unusual, but still probable
-									Concept previousConcept = conceptMap.getConcept();
-
-									previousConcept.removeConceptMapping(conceptMap);
-									importService.updateConceptWithoutValidation(previousConcept);
-
-									fromConcept.addConceptMapping(conceptMap);
-								}
-
-								if (Boolean.TRUE.equals(oclMapping.getRetired())) {
-									item = new Item(update, oclMapping, ItemState.RETIRED);
-									fromConcept.removeConceptMapping(conceptMap);
-								} else {
-									item = new Item(update, oclMapping, ItemState.UPDATED);
-									conceptMap.setConceptMapType(mapType);
-								}
-							} else {
-								conceptMap = new ConceptMap();
-								conceptMap.setUuid(oclMapping.getExternalId());
-								conceptMap.setConceptReferenceTerm(term);
-								conceptMap.setConceptMapType(mapType);
-								fromConcept.addConceptMapping(conceptMap);
-
-								item = new Item(update, oclMapping, ItemState.ADDED);
-							}
-
-							importService.updateConceptWithoutValidation(fromConcept);
-						} else {
-							throw new SavingException("Mapping " + oclMapping.getUrl() + " is not supported");
-						}
+						throw new SavingException("Mapping " + oclMapping.getUrl() + " is not supported");
 					}
-					return item;
 				}
-			});
+				return item;
 		} catch (Exception e) {
 			throw new ImportException("Cannot save mapping " + oclMapping.getUrl(), e);
 		}

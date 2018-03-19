@@ -58,7 +58,7 @@
             <legend>{{"importinprogress.text" | translate}}</legend><br>
             <div>
                <p>{{"importprogresstime.text" | translate}} {{vm.runningImport.importTime}}</p>
-                <p>{{"completed.text" | translate}} {{vm.runningImport.importProgress}} % ({{import.status | limitTo : vm.textLength}}, <a href="#/import/{{import.uuid}}">see details</a>)</p>
+                <p>{{"completed.text" | translate}} {{vm.runningImport.importProgress}} % ({{vm.runningImport.status | limitTo : vm.textLength}}, <a href="#/import/{{vm.runningImport.uuid}}">see details</a>)</p>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" aria-valuenow="{{vm.runningImport.importProgress}}"
                          aria-valuemin="0" aria-valuemax="100" style="width:{{vm.runningImport.importProgress}}%">
@@ -71,7 +71,7 @@
     <div>
         <fieldset>
             <legend>{{"previousimports.text" | translate}}</legend>
-            <div>
+            <td>
                 <table>
                     <thead>
                     <tr>
@@ -95,6 +95,7 @@
                             <span ng-if="import.status.length > vm.textLength" ng-click="import.expanded = true"><br><a>{{"showMore.text" | translate}}</a></span>
                         </td>
                     </tr>
+                    <tr ng-show="(vm.runningImport && vm.previousImports.results.length == 1) || (!vm.runningImport && vm.previousImports.results.length == 0)"><td colspan="3">None</td></tr>
                     </tbody>
                 </table>
             </div>
