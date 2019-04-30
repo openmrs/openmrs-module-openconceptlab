@@ -171,7 +171,10 @@ public class Saver {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
 		}
 
-		Concept concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
+		Concept concept = null;
+		if (oclConcept.getExternalId() != null) {
+			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
+		}
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
