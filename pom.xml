@@ -57,7 +57,7 @@
 		<openMRSVersion>1.9.11</openMRSVersion>
 
 		<!-- Module dependencies -->
-		<webservices.restVersion>2.17-SNAPSHOT</webservices.restVersion>
+		<webservices.restVersion>2.17</webservices.restVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
