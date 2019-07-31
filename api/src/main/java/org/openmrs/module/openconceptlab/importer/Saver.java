@@ -256,6 +256,10 @@ public class Saver {
 		for (OclConcept.Name oclName: oclConcept.getNames()) {
 			if (StringUtils.equalsIgnoreCase("Fully Specified", oclName.getNameType())) {
 				oclName.setNameType("FULLY_SPECIFIED");
+			} else if (StringUtils.equalsIgnoreCase("Index Term", oclName.getNameType())) {
+				oclName.setNameType("INDEX_TERM");
+			} else if (StringUtils.equalsIgnoreCase("Short", oclName.getNameType())) {
+				oclName.setNameType("SHORT");
 			}
 		}
 	}
