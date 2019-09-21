@@ -66,4 +66,4 @@ Every time you make changes in code in the api directory, you need to build and 
 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
-OCL Module is now available from the Advanced System Administration or at '/openmrs/openconceptlab/status.page'
+OCL Module is now available from the Advanced System Administration or at `/openmrs/openconceptlab/status.page`
