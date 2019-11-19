@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @SubResource(parent = ImportResource.class, path = "item", supportedClass = Item.class, supportedOpenmrsVersions = { "1.8.*",
-        "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*" })
+        "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*" })
 public class ItemResource extends DelegatingSubResource<Item, Import, ImportResource>{
 
     @Override
