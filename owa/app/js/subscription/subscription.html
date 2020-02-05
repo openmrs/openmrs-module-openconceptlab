@@ -13,8 +13,8 @@
                 </p>
                 <p><a ng-click="vm.isShowAdvanced = !vm.isShowAdvanced" ng-init="vm.isShowAdvanced = false">{{"showAdvanced.text" | translate}}</a></p>
                 <div ng-show="vm.isShowAdvanced">
-                    <input ng-model="vm.subscription.subscribedToSnapshot" type="checkbox"> {{"subscription.options.checkbox" | translate}}<br>
-                    <input ng-model="vm.subscription.validationType" type="checkbox" ng-true-value="'NONE'" ng-false-value="'FULL'"> {{"subscription.validationType.checkbox" | translate}}<br>
+                    <input ng-disabled="vm.isVersionAdded(vm.subscription.url)" ng-model="vm.subscription.subscribedToSnapshot" type="checkbox"> {{"subscription.options.checkbox" | translate}}<br>
+                    <p style="color:#ffcc00; font-size:12px" ng-show="vm.isVersionAdded(vm.subscription.url)">You cannot subscribe to a SNAPSHOT if you've provided the collection version</p>                    <input ng-model="vm.subscription.validationType" type="checkbox" ng-true-value="'NONE'" ng-false-value="'FULL'"> {{"subscription.validationType.checkbox" | translate}}<br>
                 </div>
             </div>
             <br>

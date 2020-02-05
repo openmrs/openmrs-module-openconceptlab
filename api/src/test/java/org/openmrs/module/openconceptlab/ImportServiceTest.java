@@ -331,7 +331,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(response.available()));
 
 			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version)).thenReturn(mockedGetMethod);
-			when(mockedOclClient.fetchLastReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
+			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(version);
 
 			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
@@ -405,7 +405,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(initialResponse.available()));
 
 			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), initialVersion)).thenReturn(mockedGetMethod);
-			when(mockedOclClient.fetchLastReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
+			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(initialVersion);
 
 			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
@@ -439,7 +439,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(followupResponse.available()));
 
 			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), followupVersion)).thenReturn(mockedGetMethod);
-			when(mockedOclClient.fetchLastReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken(), initialVersion)).thenCallRealMethod();
+			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken(), initialVersion)).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(followupVersion);
 
 			date = format.parse(followupDateHeaderValue);
@@ -503,7 +503,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(response.available()));
 
 			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version)).thenReturn(mockedGetMethod);
-			when(mockedOclClient.fetchLastReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
+			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(version);
 
 			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
