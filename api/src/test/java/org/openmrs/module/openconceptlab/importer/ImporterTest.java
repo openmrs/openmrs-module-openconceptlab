@@ -84,7 +84,7 @@ public class ImporterTest extends BaseContextMockTest {
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(importService.getLastImport()).thenReturn(null);
-		when(oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
 
 		importer.run();
 
@@ -115,7 +115,7 @@ public class ImporterTest extends BaseContextMockTest {
         OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, new Date());
 
         when(oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken())).thenReturn(release2name);
-        when(oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion())).thenReturn(oclResponse);
+        when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion())).thenReturn(oclResponse);
 
         importer.run();
     }

@@ -54,7 +54,6 @@
 		<description>The OCL API Token</description>
 	</globalProperty>
 
-
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
 				

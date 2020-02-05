@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,11 +43,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class OclClient {
-	
+
 	public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-	
+
 	public static final String FILE_NAME_FORMAT = "yyyyMMdd_HHmmss";
-	
+
+	public static final int NUMBER_OF_SLASHES_AFTER_BASE_URL = 5;
+
 	private final String dataDirectory;
 	
 	private final int bufferSize = 64 * 1024;
@@ -56,7 +59,7 @@ public class OclClient {
 	private volatile long bytesDownloaded = 0;
 	
 	private volatile long totalBytesToDownload = 0;
-	
+
 	public OclClient() {
 		dataDirectory = OpenmrsUtil.getApplicationDataDirectory();
 	}
@@ -64,7 +67,7 @@ public class OclClient {
 	public OclClient(String dataDirectory) {
 		this.dataDirectory = dataDirectory;
 	}
-	
+
 	public OclResponse fetchSnapshotUpdates(String url, String token, Date updatedSince) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
@@ -99,20 +102,20 @@ public class OclClient {
 		return extractResponse(get);
 	}
 	
-	public OclResponse fetchLastReleaseVersion(String url, String token) throws IOException {
+	public OclResponse fetchOclConcepts(String url, String token) throws IOException {
 		totalBytesToDownload = -1; //unknown yet
 		bytesDownloaded = 0;
 
-		String latestVersion = fetchLatestOclReleaseVersion(url, token);
+		String collectionVersion = getOclReleaseVersion(url, token);
 
-		GetMethod exportUrlGet = executeExportRequest(url, latestVersion);
+		GetMethod exportUrlGet = executeExportRequest(url, collectionVersion);
 		
 		return extractResponse(exportUrlGet);
     }
 
-    public GetMethod executeExportRequest(String url, String latestVersion) throws IOException{
+    public GetMethod executeExportRequest(String url, String collectionVersion) throws IOException{
 
-		GetMethod exportUrlGet = new GetMethod(url + "/" + latestVersion + "/export");
+		GetMethod exportUrlGet = getExportUrl(url, collectionVersion);
 
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);
@@ -125,13 +128,73 @@ public class OclClient {
 		return exportUrlGet;
 	}
 
-	public OclResponse fetchLastReleaseVersion(String url, String token, String lastReleaseVersion) throws IOException {
-		String latestOclReleaseVersion = fetchLatestOclReleaseVersion(url, token);
-		if (lastReleaseVersion == null || !lastReleaseVersion.equals(latestOclReleaseVersion)) {
+	/**
+	 * This constructs the url to import concepts from the subscription url provided
+	 * @param url, the subscription url
+	 * @param version, desired version of the specified collection
+	 * @return GetMethod configured with the export url
+	 */
+	public GetMethod getExportUrl(String url, String version){
+		GetMethod exportUrlGet;
+
+		url = removeLastUrlForwardSlashIfExist(url);
+
+		if(url.contains(version)){
+			exportUrlGet = new GetMethod(url + "/export");
+		}else {
+			exportUrlGet = new GetMethod(url + "/" + version + "/export");
+		}
+		return exportUrlGet;
+	}
+
+	/**
+	 * This gets the desired collection release version
+	 * @param url, the subscription url
+	 * @param token, the subscription API token
+	 * @return the retrieved collection version
+	 * @throws IOException
+	 */
+	public String  getOclReleaseVersion(String url, String token) throws IOException {
+		String exportVersion;
+		url = removeLastUrlForwardSlashIfExist(url);
+		URL subscriptionURL = new URL(url);
+
+		String subUrlAfterBaseUrl = subscriptionURL.getPath();
+
+
+		int count = StringUtils.countMatches(subUrlAfterBaseUrl, "/");
+		/**
+		 *This checks if collection version has been passed to subscription url by checking number of forward slashes after ocl base url
+		 *If the number is 5, such as with https://api.openconceptlab.org/users/username/collections/collectionname/v1.0
+		 *that means collection version was passed and it's assigned to exportVersion
+		 */
+		if (count == NUMBER_OF_SLASHES_AFTER_BASE_URL){
+			exportVersion =  url.substring(url.lastIndexOf("/") + 1);
+		}else {
+			exportVersion = fetchLatestOclReleaseVersion(url, token);
+		}
+		return exportVersion;
+	}
+
+	/**
+	 * This changes the url by removing the last forward slash if it exists
+	 * @param url, this is the subscription url
+	 * @return the url format expected by the ocl server
+	 */
+	public String removeLastUrlForwardSlashIfExist(String url){
+		if (url.endsWith("/")) {
+			url = url.substring(0, url.lastIndexOf('/'));
+		}
+		return url;
+	}
+
+	public OclResponse fetchOclConcepts(String url, String token, String lastReleaseVersion) throws IOException {
+		String versionToImport = getOclReleaseVersion(url, token);
+		if (lastReleaseVersion == null || !lastReleaseVersion.equals(versionToImport)) {
 			//If there is no lastReleaseVersion then the subscription has been changed from snapshot to releases
 			//and we need to fetch the latest OCL release version.
 			//If lastReleaseVersion does not match the latest OCL release version then we need to fetch it too.
-			return fetchLastReleaseVersion(url, token);
+			return fetchOclConcepts(url, token);
 		}
 		else {
 			//No new version
@@ -327,9 +390,7 @@ public class OclClient {
     }
 
 	public String fetchLatestOclReleaseVersion(String url, String token) throws IOException {
-		if (url.endsWith("/")) {
-			url = url.substring(0, url.lastIndexOf('/'));
-		}
+		url = removeLastUrlForwardSlashIfExist(url);
 
 	    String latestVersionUrl = url + "/versions";
 		

@@ -152,18 +152,18 @@ public class Importer implements Runnable {
                 OclResponse oclResponse;
 
                 if (updatedSince == null) {
-                    oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken());
+                    oclResponse = oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken());
 					importService.updateReleaseVersion(anImport,
-                            oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
+                            oclClient.getOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
                 } else {
                     if (subscription.isSubscribedToSnapshot()) {
                         oclResponse = oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(),
                                 updatedSince);
                     }
                     else {
-                        oclResponse = oclClient.fetchLastReleaseVersion(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion());
+                        oclResponse = oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken(), lastImport.getReleaseVersion());
 						importService.updateReleaseVersion(anImport,
-                                oclClient.fetchLatestOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
+                                oclClient.getOclReleaseVersion(subscription.getUrl(), subscription.getToken()));
                     }
                 }
 

@@ -10,6 +10,8 @@
 package org.openmrs.module.openconceptlab.client;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
@@ -22,28 +24,35 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.openmrs.module.openconceptlab.MockTest;
 import org.openmrs.module.openconceptlab.TestResources;
-import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 
 public class OclClientTest extends MockTest {
-	
+
 	@Mock
 	GetMethod get;
-	
+
 	OclClient oclClient;
-	
+
 	File tempDir;
-	
+
+	private static final String URL = "https://api.openconceptlab.org/users/username/collections/collectionname/";
+
+	private static final String URL_WITH_VERSION = "https://api.openconceptlab.org/users/username/collections/collectionname/v1.0";
+
+	private static final String URL_WITHOUT_VERSION = "https://api.openconceptlab.org/users/username/collections/collectionname";
+
 	@Before
 	public void createTempDir() throws IOException {
 		tempDir = File.createTempFile("ocl", "");
@@ -131,5 +140,36 @@ public class OclClientTest extends MockTest {
 		calendar.set(2015, 5, 22, 12, 12, 29);
 		
 		assertThat(date, is(calendar.getTime()));
+	}
+
+	@Test
+	public void getOclReleaseVersion_shouldGetOclReleaseVersion() throws IOException {
+		String subscriptionToken = "53fc72f0498a707a26e4d903c0f24c2db24d1e35";
+		String version = oclClient.getOclReleaseVersion(URL_WITH_VERSION, subscriptionToken);
+		assertThat(version, is("v1.0"));
+	}
+
+	@Test
+	public void getExportUrl_shouldConstructCorrectExportUrlWhenVersionIsPassedToUrl() throws URIException {
+		String collectionVersion = "v1.0";
+		GetMethod getMethodUrlWithVersion = oclClient.getExportUrl(URL_WITH_VERSION, collectionVersion);
+		assertThat(getMethodUrlWithVersion.getURI().toString(), is(URL_WITH_VERSION + "/export"));
+	}
+
+	@Test
+	public void getExportUrl_shouldConstructCorrectExportUrlWhenVersionIsNotPassedToUrl() throws URIException {
+		String collectionVersion = "v1.0";
+		GetMethod getMethodUrlWithoutVersion = oclClient.getExportUrl(URL_WITHOUT_VERSION, collectionVersion);
+		assertThat(getMethodUrlWithoutVersion.getURI().toString(), is(URL_WITHOUT_VERSION + "/v1.0" + "/export"));
+	}
+
+	@Test
+	public void removeLastUrlForwardSlashIfExist_shouldRemoveLastForwardSlashIfItExist() {
+		String newUrl = oclClient.removeLastUrlForwardSlashIfExist(URL);
+		int numberOfForwardSlashesInUrl = StringUtils.countMatches(URL, "/");
+
+		int numberOfForwardSlashesInNewUrl = StringUtils.countMatches(newUrl, "/");
+
+		assertThat(numberOfForwardSlashesInUrl, equalTo(numberOfForwardSlashesInNewUrl + 1));
 	}
 }
