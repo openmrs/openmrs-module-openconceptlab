@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public class Saver {
 
@@ -423,7 +422,7 @@ public class Saver {
 			throw new ImportException("Cannot save mapping " + oclMapping.getUrl(), e);
 		}
 	}
-	
+
 	/**
 	 * @param oldItem
 	 * @param newMapping
@@ -432,7 +431,7 @@ public class Saver {
 	 * @should should return false if both updatedOn are null
 	 * @should should return if mapping's updatedOn is after
 	 */
-	
+
 	public boolean isMappingUpToDate(Item oldItem, OclMapping newMapping) {
 		Date oldUpdatedOn = oldItem.getUpdatedOn();
 		Date newUpdatedOn = newMapping.getUpdatedOn();
@@ -558,7 +557,7 @@ public class Saver {
 
 	private void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
 		for (OclConcept.Name oclName : oclConcept.getNames()) {
-			ConceptNameType oclNameType = oclName.getNameType() != null ? ConceptNameType.valueOf(oclName.getNameType())
+			ConceptNameType oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ? ConceptNameType.valueOf(oclName.getNameType())
 			        : null;
 
 			boolean nameFound = false;
