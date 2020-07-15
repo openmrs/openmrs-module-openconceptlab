@@ -44,6 +44,8 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -556,7 +558,8 @@ public class Saver {
 	}
 
 	private void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
-		for (OclConcept.Name oclName : oclConcept.getNames()) {
+
+		for (OclConcept.Name oclName : sortedNames(oclConcept.getNames())) {
 			ConceptNameType oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ? ConceptNameType.valueOf(oclName.getNameType())
 			        : null;
 
@@ -589,6 +592,33 @@ public class Saver {
 			}
 		}
 	}
+
+	private List<OclConcept.Name> sortedNames(List<OclConcept.Name> names) {
+
+        // sort all FQN to the front of this, as the OpenMRS API expected FQN to be added first
+        List<OclConcept.Name> sortedNames = new ArrayList<OclConcept.Name>(names);
+
+        Collections.sort(sortedNames, new Comparator<OclConcept.Name>() {
+            @Override
+            public int compare(OclConcept.Name name0, OclConcept.Name name1) {
+                ConceptNameType nameType0 = StringUtils.isNotBlank(name0.getNameType()) ? ConceptNameType.valueOf(name0.getNameType())
+                        : null;
+                ConceptNameType nameType1 = StringUtils.isNotBlank(name1.getNameType()) ? ConceptNameType.valueOf(name1.getNameType())
+                        : null;
+                if (nameType0 != null && nameType0.equals(ConceptNameType.FULLY_SPECIFIED)) {
+                    return -1;
+                }
+                else if (nameType1 != null && nameType1.equals(ConceptNameType.FULLY_SPECIFIED)) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            }
+        });
+
+        return sortedNames;
+    }
 
 	void voidNamesRemovedFromOcl(Concept concept, OclConcept oclConcept) {
 		for (ConceptName name : concept.getNames(true)) {
