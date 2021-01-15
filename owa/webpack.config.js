@@ -126,7 +126,8 @@ plugins.push(new HtmlWebpackPlugin({
 }));
 
 plugins.push(new CopyWebpackPlugin([{
-    from: './app/manifest.webapp'
+    from: './app/manifest.webapp',
+	to: 'manifest.webapp'
 }]));
 
 plugins.push(new CopyWebpackPlugin([{
