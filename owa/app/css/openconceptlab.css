@@ -452,3 +452,11 @@ html.ngdialog-open,
 body.ngdialog-open {
     overflow: hidden;
 }
+
+#subscription-token {
+    filter: blur(5px);
+}
+
+#subscription-token:hover, #subscription-token:focus {
+    filter: none;
+}
