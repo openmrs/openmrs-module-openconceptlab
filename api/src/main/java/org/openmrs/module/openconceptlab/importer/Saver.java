@@ -117,7 +117,12 @@ public class Saver {
 		while (true) {
 			try {
 				try {
-					ValidationType validationType = importService.getSubscription().getValidationType();
+					ValidationType validationType;
+					if (importService.getSubscription() != null) {
+						validationType = importService.getSubscription().getValidationType();
+					} else {
+						validationType = ValidationType.FULL;
+					}
 					if (ValidationType.FULL.equals(validationType)) {
 						conceptService.saveConcept(concept);
 					} else if (ValidationType.NONE.equals(validationType)) {
