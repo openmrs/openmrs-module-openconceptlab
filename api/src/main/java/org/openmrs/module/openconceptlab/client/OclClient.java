@@ -108,14 +108,17 @@ public class OclClient {
 
 		String collectionVersion = getOclReleaseVersion(url, token);
 
-		GetMethod exportUrlGet = executeExportRequest(url, collectionVersion);
+		GetMethod exportUrlGet = executeExportRequest(url, collectionVersion, token);
 		
 		return extractResponse(exportUrlGet);
     }
 
-    public GetMethod executeExportRequest(String url, String collectionVersion) throws IOException{
+    public GetMethod executeExportRequest(String url, String collectionVersion, String token) throws IOException{
 
 		GetMethod exportUrlGet = getExportUrl(url, collectionVersion);
+		if (!StringUtils.isBlank(token)) {
+			exportUrlGet.addRequestHeader("Authorization", "Token " + token);
+		}
 
 		HttpClient client = new HttpClient();
 		client.getHttpConnectionManager().getParams().setSoTimeout(TIMEOUT_IN_MS);

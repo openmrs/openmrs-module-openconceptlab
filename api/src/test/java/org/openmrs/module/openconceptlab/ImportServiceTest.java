@@ -330,7 +330,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseBodyAsStream()).thenReturn(response);
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(response.available()));
 
-			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version)).thenReturn(mockedGetMethod);
+			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version, importService.getSubscription().getToken())).thenReturn(mockedGetMethod);
 			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(version);
 
@@ -404,7 +404,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseBodyAsStream()).thenReturn(initialResponse);
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(initialResponse.available()));
 
-			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), initialVersion)).thenReturn(mockedGetMethod);
+			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), initialVersion, importService.getSubscription().getToken())).thenReturn(mockedGetMethod);
 			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(initialVersion);
 
@@ -438,7 +438,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseBodyAsStream()).thenReturn(followupResponse);
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(followupResponse.available()));
 
-			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), followupVersion)).thenReturn(mockedGetMethod);
+			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), followupVersion, importService.getSubscription().getToken())).thenReturn(mockedGetMethod);
 			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken(), initialVersion)).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(followupVersion);
 
@@ -502,7 +502,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			when(mockedGetMethod.getResponseBodyAsStream()).thenReturn(response);
 			when(mockedGetMethod.getResponseContentLength()).thenReturn(Long.valueOf(response.available()));
 
-			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version)).thenReturn(mockedGetMethod);
+			when(mockedOclClient.executeExportRequest(importService.getSubscription().getUrl(), version, importService.getSubscription().getToken())).thenReturn(mockedGetMethod);
 			when(mockedOclClient.fetchOclConcepts(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenCallRealMethod();
 			when(mockedOclClient.fetchLatestOclReleaseVersion(importService.getSubscription().getUrl(),importService.getSubscription().getToken())).thenReturn(version);
 
