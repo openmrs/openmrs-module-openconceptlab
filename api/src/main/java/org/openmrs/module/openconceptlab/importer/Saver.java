@@ -362,6 +362,9 @@ public class Saver {
 					if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
 						item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
 					} else {
+						if (!fromConcept.getSet()) {
+						    fromConcept.setSet(true);
+						}
 						item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
 					}
 
