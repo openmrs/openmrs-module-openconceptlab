@@ -161,4 +161,10 @@ public class OclMapping {
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();
 	}
+	
+@JsonIgnoreProperties(ignoreUnknown = true)
+public static class extras {
+	@JsonProperty("sort_Weight")
+	private Number sortWeight;	
+	}
 }
