@@ -42,7 +42,7 @@ public class OclMapping {
 	private String toConceptUrl;
 	
 	@JsonProperty("to_source_name_resolved")
-	private String toSourceName;
+	private String toSourceNameResolved;
 	
 	@JsonProperty("to_concept_code")
 	private String toConceptCode;
