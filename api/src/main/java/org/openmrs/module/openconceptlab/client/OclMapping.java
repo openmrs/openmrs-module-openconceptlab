@@ -41,7 +41,7 @@ public class OclMapping {
 	@JsonProperty("to_concept_url")
 	private String toConceptUrl;
 	
-	@JsonProperty("to_source_name")
+	@JsonProperty("to_source_name_resolved")
 	private String toSourceName;
 	
 	@JsonProperty("to_concept_code")
@@ -55,6 +55,8 @@ public class OclMapping {
 		public static final String Q_AND_A = "Q-AND-A";
 		
 		public static final String SET = "CONCEPT-SET";
+		
+		public static final Number Concept_Extras
 	}
 	
 	public String getId() {
@@ -126,7 +128,7 @@ public class OclMapping {
 	}
 	
 	public String getToSourceName() {
-		return toSourceName;
+		return toSourceName != null ? toSourceName : toSourceNameResolved;
 	}
 	
 	public void setToSourceName(String toSourceName) {
@@ -155,6 +157,10 @@ public class OclMapping {
 
 	public void setUpdatedOn(Date updatedOn) {
 		this.updatedOn = updatedOn;
+	}
+	
+	public number getExtras() {
+		return updatedOn;
 	}
 
 	@Override
