@@ -128,12 +128,16 @@ public class OclMapping {
 		this.fromConceptUrl = fromConceptUrl;
 	}
 	
+	public void getToSourceName(String toSourceName) {
+		this.toSourceName = toSourceName;
+	}
+	
 	public String getToSourceNameResolved() {
 		return toSourceName != null ? toSourceName : toSourceNameResolved;
 	}
 	
-	public void setToSourceName(String toSourceNameResolved) {
-		this.toSourceName = toSourceNameResolved;
+	public void setToSourceName(String toSourceName) {
+		this.toSourceName = toSourceName;
 	}
 	
 	public String getToConceptCode() {
