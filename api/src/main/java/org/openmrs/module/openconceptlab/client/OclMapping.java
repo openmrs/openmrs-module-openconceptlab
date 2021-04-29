@@ -41,6 +41,9 @@ public class OclMapping {
 	@JsonProperty("to_concept_url")
 	private String toConceptUrl;
 	
+	@JsonProperty("to_source_name_resolved")
+	private String toSourceNameResolved;
+	
 	@JsonProperty("to_source_name")
 	private String toSourceName;
 	
@@ -126,10 +129,18 @@ public class OclMapping {
 	}
 	
 	public String getToSourceName() {
-		return toSourceName;
+		return toSourceName != null ? toSourceName : toSourceNameResolved;
 	}
 	
 	public void setToSourceName(String toSourceName) {
+		this.toSourceName = toSourceName;
+	}
+	
+	public String getToSourceNameResolved() {
+		return toSourceNameResolved;
+	}
+	
+	public void setToSourceNameResolved(String toSourceName) {
 		this.toSourceName = toSourceName;
 	}
 	
