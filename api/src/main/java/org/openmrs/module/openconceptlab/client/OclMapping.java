@@ -53,6 +53,9 @@ public class OclMapping {
 	@JsonProperty("updated_on")
 	private Date updatedOn;
 	
+	@JsonProperty("extras_sortWeight")
+	private number ConceptAnswer sortWeight;
+	
 	public static abstract class MapType {
 		
 		public static final String Q_AND_A = "Q-AND-A";
@@ -166,6 +169,14 @@ public class OclMapping {
 
 	public void setUpdatedOn(Date updatedOn) {
 		this.updatedOn = updatedOn;
+	}
+	
+	public String getExtras() {
+		return ConceptAnswer's sortWeight;
+	}
+	
+	public void setExtras(Number ConceptAnswer's sortWeight) {
+		this.ConceptAnswer's sortWeight = ConceptAnswer's sortWeight;
 	}
 
 	@Override
