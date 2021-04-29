@@ -132,8 +132,8 @@ public class OclMapping {
 		return toSourceName;
 	}
 	
-	public void setToSourceName() {
-		this.toSourceName;
+	public void setToSourceName(String toSourceName) {
+		this.toSourceName = toSourceName;
 	}
 	
 	public String getToSourceNameResolved() {
