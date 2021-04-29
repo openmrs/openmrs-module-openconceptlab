@@ -128,7 +128,7 @@ public class OclMapping {
 		this.fromConceptUrl = fromConceptUrl;
 	}
 	
-	public void getToSourceName() {
+	public String getToSourceName() {
 		return toSourceName;
 	}
 	
