@@ -53,6 +53,17 @@ public class OclMapping {
 	@JsonProperty("updated_on")
 	private Date updatedOn;
 	
+	@JsonProperty("sort_Weight")
+	private Double sortWeight;
+	
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class Extras {
+	     @JsonProperty("sort_weight")
+	     private Double sortWeight;
+	}
+	
+	private Extras extras;
+	
 	public static abstract class MapType {
 		
 		public static final String Q_AND_A = "Q-AND-A";
@@ -166,6 +177,14 @@ public class OclMapping {
 
 	public void setUpdatedOn(Date updatedOn) {
 		this.updatedOn = updatedOn;
+	}
+	
+	public Extras getExtras() {
+		return extras;
+	}
+
+	public void setExtras(Extras extras) {
+		this.extras = extras;
 	}
 
 	@Override
