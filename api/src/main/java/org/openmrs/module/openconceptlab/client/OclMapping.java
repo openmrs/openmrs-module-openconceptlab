@@ -53,7 +53,8 @@ public class OclMapping {
 	@JsonProperty("updated_on")
 	private Date updatedOn;
 	
-	private Extras extras;
+	@JsonProperty("extras_sortWeight")
+	private number extrasSortWeight;
 	
 	public static abstract class MapType {
 		
@@ -171,11 +172,11 @@ public class OclMapping {
 	}
 	
 	public Extras getExtras() {
-		return extras;
+		return sortWeight;
 	}
 	
-	public void setExtras(Extras extras) {
-		this.extras = extras;
+	public void setExtras(Number sortWeight) {
+		this.sortWeight = sortWeight;
 	}
 
 	@Override
