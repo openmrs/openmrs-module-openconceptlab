@@ -52,13 +52,9 @@ public class OclMapping {
 	
 	@JsonProperty("updated_on")
 	private Date updatedOn;
-	
-	public static abstract class MapType {
-		
-		public static final String Q_AND_A = "Q-AND-A";
-		
-		public static final String SET = "CONCEPT-SET";
-	}
+
+	@JsonProperty("extras")
+	private Extras extras;
 	
 	public String getId() {
 		return id;
@@ -167,9 +163,38 @@ public class OclMapping {
 	public void setUpdatedOn(Date updatedOn) {
 		this.updatedOn = updatedOn;
 	}
+	
+	public Extras getExtras() {
+		return extras;
+	}
+
+	public void setExtras(Extras extras) {
+		this.extras = extras;
+	}
 
 	@Override
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();
+	}
+	
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class Extras {
+	     @JsonProperty("sort_weight")
+	     private Double sortWeight;
+
+		public Double getSortWeight() {
+			return sortWeight;
+		}
+
+		public void setSortWeight(Double sortWeight) {
+			this.sortWeight = sortWeight;
+		}
+	}
+	
+	public static final class MapType {
+		
+		public static final String Q_AND_A = "Q-AND-A";
+		
+		public static final String SET = "CONCEPT-SET";
 	}
 }

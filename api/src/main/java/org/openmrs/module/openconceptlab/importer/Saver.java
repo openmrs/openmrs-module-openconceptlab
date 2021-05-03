@@ -546,6 +546,9 @@ public class Saver {
 				} else {
 					item = new Item(update, oclMapping, ItemState.UPDATED);
 					conceptAnswer.setAnswerConcept(answer);
+					if (oclMapping.getExtras() != null) {
+						conceptAnswer.setSortWeight(oclMapping.getExtras().getSortWeight());
+					}
 				}
 
 				break;
