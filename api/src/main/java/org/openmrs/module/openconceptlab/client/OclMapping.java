@@ -56,20 +56,7 @@ public class OclMapping {
 	@JsonProperty("sort_Weight")
 	private Double sortWeight;
 	
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Extras {
-	     @JsonProperty("sort_weight")
-	     private Double sortWeight;
-	}
-	
 	private Extras extras;
-	
-	public static abstract class MapType {
-		
-		public static final String Q_AND_A = "Q-AND-A";
-		
-		public static final String SET = "CONCEPT-SET";
-	}
 	
 	public String getId() {
 		return id;
@@ -190,5 +177,18 @@ public class OclMapping {
 	@Override
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();
+	}
+	
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class Extras {
+	     @JsonProperty("sort_weight")
+	     private Double sortWeight;
+	}
+	
+	public static final class MapType {
+		
+		public static final String Q_AND_A = "Q-AND-A";
+		
+		public static final String SET = "CONCEPT-SET";
 	}
 }
