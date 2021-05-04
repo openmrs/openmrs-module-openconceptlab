@@ -1,6 +1,6 @@
 ## OpenMRS Open Concept Lab module
 
-[![Build Status](https://travis-ci.org/openmrs/openmrs-module-openconceptlab.svg?branch=master)](https://travis-ci.org/openmrs/openmrs-module-openconceptlab) [![Codacy Badge](https://api.codacy.com/project/badge/grade/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab) [![Codacy Badge](https://api.codacy.com/project/badge/coverage/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab)
+[![Build Status](https://github.com/openmrs/openmrs-module-openconceptlab/actions/workflows/maven.yml/badge.svg)](https://github.com/openmrs/openmrs-module-openconceptlab/actions/workflows/maven.yml)[![Codacy Badge](https://api.codacy.com/project/badge/grade/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab) [![Codacy Badge](https://api.codacy.com/project/badge/coverage/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab)
 
 ### Project page
 
