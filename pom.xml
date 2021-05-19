@@ -1,313 +1,311 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.openmrs.module</groupId>
-	<artifactId>openconceptlab</artifactId>
-	<version>1.2.6-SNAPSHOT</version>
-	<packaging>pom</packaging>
-	<name>Open Concept Lab Module</name>
-	<description>Sustainable solution for using the CIEL dictionary and applying changes over time</description>
-	<url>https://wiki.openmrs.org/display/docs/Open+Concept+Lab+Module+Module</url>
+    <groupId>org.openmrs.module</groupId>
+    <artifactId>openconceptlab</artifactId>
+    <version>1.2.6-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Open Concept Lab Module</name>
+    <description>Sustainable solution for using the CIEL dictionary and applying changes over time</description>
+    <url>https://wiki.openmrs.org/display/docs/Open+Concept+Lab+Module+Module</url>
 
-	<developers>
-		<developer>
-			<name>Nicholas Ingosi Magaja</name>
-			<email>nicotwendelee@gmail.com</email>
-			<organization>I-TECH</organization>
-			<organizationUrl>http://www.go2itech.org/</organizationUrl>
-		</developer>
-		<developer>
-			<name>Rafal Korytkowski</name>
-		</developer>
-	</developers>
+    <developers>
+        <developer>
+            <name>Nicholas Ingosi Magaja</name>
+            <email>nicotwendelee@gmail.com</email>
+            <organization>I-TECH</organization>
+            <organizationUrl>https://www.go2itech.org/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Rafal Korytkowski</name>
+        </developer>
+    </developers>
 
-	<organization>
-		<name>OpenMRS</name>
-		<url>http://openmrs.org</url>
-	</organization>
+    <organization>
+        <name>OpenMRS</name>
+        <url>https://openmrs.org</url>
+    </organization>
 
-	<scm>
-		<connection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</connection>
-		<developerConnection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</developerConnection>
-		<url>https://github.com/openmrs/openmrs-module-openconceptlab</url>
-	  <tag>HEAD</tag>
-  </scm>
+    <scm>
+        <connection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</connection>
+        <developerConnection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</developerConnection>
+        <url>https://github.com/openmrs/openmrs-module-openconceptlab</url>
+        <tag>HEAD</tag>
+    </scm>
 
-	<distributionManagement>
-		<repository>
-			<id>openmrs-repo-modules</id>
-			<name>Modules</name>
-			<url>http://mavenrepo.openmrs.org/nexus/content/repositories/modules</url>
-		</repository>
-		<snapshotRepository>
-			<id>openmrs-repo-snapshots</id>
-			<name>Modules</name>
-			<url>http://mavenrepo.openmrs.org/nexus/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>openmrs-repo-modules</id>
+            <name>Modules</name>
+            <url>https://mavenrepo.openmrs.org/modules</url>
+        </repository>
+        <snapshotRepository>
+            <id>openmrs-repo-snapshots</id>
+            <name>Modules</name>
+            <url>https://mavenrepo.openmrs.org/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
-	<modules>
-		<module>api</module>
-		<module>omod</module>
-		<module>owa</module>
-	</modules>
+    <modules>
+        <module>api</module>
+        <module>omod</module>
+        <module>owa</module>
+    </modules>
 
-	<properties>
-		<openMRSVersion>1.9.11</openMRSVersion>
+    <properties>
+        <openMRSVersion>1.9.11</openMRSVersion>
 
-		<!-- Module dependencies -->
-		<webservices.restVersion>2.17</webservices.restVersion>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
+        <!-- Module dependencies -->
+        <webservices.restVersion>2.17</webservices.restVersion>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<!-- Begin OpenMRS core -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Begin OpenMRS core -->
+            <dependency>
+                <groupId>org.openmrs.api</groupId>
+                <artifactId>openmrs-api</artifactId>
+                <version>${openMRSVersion}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.openmrs.api</groupId>
-				<artifactId>openmrs-api</artifactId>
-				<version>${openMRSVersion}</version>
-				<type>jar</type>
-				<scope>provided</scope>
-			</dependency>
+            <dependency>
+                <groupId>org.openmrs.web</groupId>
+                <artifactId>openmrs-web</artifactId>
+                <version>${openMRSVersion}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.openmrs.web</groupId>
-				<artifactId>openmrs-web</artifactId>
-				<version>${openMRSVersion}</version>
-				<type>jar</type>
-				<scope>provided</scope>
-			</dependency>
+            <dependency>
+                <groupId>org.openmrs.api</groupId>
+                <artifactId>openmrs-api</artifactId>
+                <version>${openMRSVersion}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.openmrs.api</groupId>
-				<artifactId>openmrs-api</artifactId>
-				<version>${openMRSVersion}</version>
-				<type>test-jar</type>
-				<scope>test</scope>
-			</dependency>
+            <dependency>
+                <groupId>org.openmrs.web</groupId>
+                <artifactId>openmrs-web</artifactId>
+                <version>${openMRSVersion}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.openmrs.web</groupId>
-				<artifactId>openmrs-web</artifactId>
-				<version>${openMRSVersion}</version>
-				<type>test-jar</type>
-				<scope>test</scope>
-			</dependency>
+            <dependency>
+                <groupId>org.openmrs.test</groupId>
+                <artifactId>openmrs-test</artifactId>
+                <version>${openMRSVersion}</version>
+                <type>pom</type>
+                <scope>test</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.openmrs.test</groupId>
-				<artifactId>openmrs-test</artifactId>
-				<version>${openMRSVersion}</version>
-				<type>pom</type>
-				<scope>test</scope>
-			</dependency>
+            <!-- End OpenMRS core -->
+            <!--
+            Libraries to add as dependencies with compile or runtime scope:
+            Find matching dependencies in the maven central repository.
+            <dependency>
+                <groupId>org.other.library</groupId>
+                <artifactId>library-name</artifactId>
+                <version>library.version</version>
+                <scope>compile</scope>
+            </dependency>
+            -->
+            <!-- Begin OpenMRS modules -->
 
-			<!-- End OpenMRS core -->
-			<!--
-			Libraries to add as dependencies with compile or runtime scope:
-			Find matching dependencies in the maven central repository.
-			<dependency>
-				<groupId>org.other.library</groupId>
-				<artifactId>library-name</artifactId>
-				<version>library.version</version>
-				<scope>compile</scope>
-			</dependency>
-			-->
-			<!-- Begin OpenMRS modules -->
-
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>webservices.rest-omod-1.9</artifactId>
-				<version>${webservices.restVersion}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.openmrs.module</groupId>
-				<artifactId>webservices.rest-omod-common</artifactId>
-				<version>${webservices.restVersion}</version>
-				<classifier>tests</classifier>
-				<scope>provided</scope>
-			</dependency>
-
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod-1.9</artifactId>
+                <version>${webservices.restVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod-common</artifactId>
+                <version>${webservices.restVersion}</version>
+                <classifier>tests</classifier>
+                <scope>provided</scope>
+            </dependency>
 
 
-			<!-- End OpenMRS modules -->
+            <!-- End OpenMRS modules -->
 
-			<dependency>
-				<groupId>commons-httpclient</groupId>
-				<artifactId>commons-httpclient</artifactId>
-				<version>3.1</version>
-				<exclusions>
-					<exclusion>
-						<groupId>commons-logging</groupId>
-						<artifactId>commons-logging</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+            <dependency>
+                <groupId>commons-httpclient</groupId>
+                <artifactId>commons-httpclient</artifactId>
+                <version>3.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
-		</dependencies>
-	</dependencyManagement>
+        </dependencies>
+    </dependencyManagement>
 
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-					<artifactId>maven-java-formatter-plugin</artifactId>
-						<version>0.3</version>
-						<configuration>
-							<compilerSource>${javaCompilerVersion}</compilerSource>
-							<compilerCompliance>${javaCompilerVersion}</compilerCompliance>
-							<compilerTargetPlatform>${javaCompilerVersion}</compilerTargetPlatform>
-							<configFile>eclipse/OpenMRSFormatter.xml</configFile>
-							<overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
-						</configuration>
-						<dependencies>
-							<dependency>
-								<groupId>org.openmrs.tools</groupId>
-								<artifactId>openmrs-tools</artifactId>
-								<version>${project.version}</version>
-							</dependency>
-						</dependencies>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<target>1.6</target>
-						<source>1.6</source>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.openmrs.maven.plugins</groupId>
-					<artifactId>maven-openmrs-plugin</artifactId>
-					<version>1.0.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-dependency-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-release-plugin</artifactId>
-					<version>2.3.2</version>
-					<configuration>
-						<useReleaseProfile>false</useReleaseProfile>
-						<autoVersionSubmodules>true</autoVersionSubmodules>
-						<arguments>-Prelease</arguments>
-						<tagNameFormat>@{project.version}</tagNameFormat>
-						<allowTimestampedSnapshots>true</allowTimestampedSnapshots>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>cobertura-maven-plugin</artifactId>
-					<version>2.7</version>
-			        <configuration>
-			            <formats>
-			                <format>html</format>
-			                <format>xml</format>
-			            </formats>
-			            <aggregate>true</aggregate>
-		                <forceMojoExecution>true</forceMojoExecution>
-			        </configuration>
-			        <executions>
-			          <execution>
-			            <goals>
-			              <goal>clean</goal>
-			            </goals>
-			          </execution>
-			        </executions>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-		<plugins>
-			 <plugin>
-          		<groupId>org.codehaus.mojo</groupId>
-          		<artifactId>cobertura-maven-plugin</artifactId>
-          		<version>2.7</version>
-        	</plugin>
-		</plugins>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>net.revelc.code.formatter</groupId>
+                    <artifactId>formatter-maven-plugin</artifactId>
+                    <version>2.15.0</version>
+                    <configuration>
+                        <compilerSource>${javaCompilerVersion}</compilerSource>
+                        <compilerCompliance>${javaCompilerVersion}</compilerCompliance>
+                        <compilerTargetPlatform>${javaCompilerVersion}</compilerTargetPlatform>
+                        <configFile>eclipse/OpenMRSFormatter.xml</configFile>
+                        <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.openmrs.tools</groupId>
+                            <artifactId>openmrs-tools</artifactId>
+                            <version>2.4.0</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <target>1.6</target>
+                        <source>1.6</source>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.openmrs.maven.plugins</groupId>
+                    <artifactId>maven-openmrs-plugin</artifactId>
+                    <version>1.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>3.0.0-M4</version>
+                    <configuration>
+                        <useReleaseProfile>false</useReleaseProfile>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <arguments>-Prelease</arguments>
+                        <tagNameFormat>@{project.version}</tagNameFormat>
+                        <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>cobertura-maven-plugin</artifactId>
+                    <version>2.7</version>
+                    <configuration>
+                        <formats>
+                            <format>html</format>
+                            <format>xml</format>
+                        </formats>
+                        <aggregate>true</aggregate>
+                        <forceMojoExecution>true</forceMojoExecution>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+        </plugins>
+    </build>
 
-	</build>
-	
-	<reporting>
-		<plugins>
-			 <plugin>
-          		<groupId>org.codehaus.mojo</groupId>
-          		<artifactId>cobertura-maven-plugin</artifactId>
-          		<version>2.7</version>
-        	</plugin>
-		</plugins>
-	</reporting>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
-	<profiles>
-		<profile>
-			<id>release</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>2.1.2</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.8.1</version>
-						<configuration>
-							<tags>
-								<tag>
-									<name>should</name>
-									<placement>a</placement>
-									<head>Should:</head>
-								</tag>
-							</tags>
-						</configuration>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <configuration>
+                            <tags>
+                                <tag>
+                                    <name>should</name>
+                                    <placement>a</placement>
+                                    <head>Should:</head>
+                                </tag>
+                            </tags>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
 
-	<repositories>
-		<repository>
-			<id>openmrs-repo</id>
-			<name>OpenMRS Nexus Repository</name>
-			<url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
-		</repository>
-	</repositories>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>openmrs-repo</id>
-			<name>OpenMRS Nexus Repository</name>
-			<url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
+    <repositories>
+        <repository>
+            <id>openmrs-repo</id>
+            <name>OpenMRS Nexus Repository</name>
+            <url>https://mavenrepo.openmrs.org/public</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>openmrs-repo</id>
+            <name>OpenMRS Nexus Repository</name>
+            <url>https://mavenrepo.openmrs.org/public</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
