@@ -152,15 +152,15 @@ public class OclClientTest extends MockTest {
 	@Test
 	public void getExportUrl_shouldConstructCorrectExportUrlWhenVersionIsPassedToUrl() throws URIException {
 		String collectionVersion = "v1.0";
-		GetMethod getMethodUrlWithVersion = oclClient.getExportUrl(URL_WITH_VERSION, collectionVersion);
-		assertThat(getMethodUrlWithVersion.getURI().toString(), is(URL_WITH_VERSION + "/export"));
+		String getMethodUrlWithVersion = oclClient.getExportUrl(URL_WITH_VERSION, collectionVersion);
+		assertThat(getMethodUrlWithVersion, is(URL_WITH_VERSION + "/export"));
 	}
 
 	@Test
 	public void getExportUrl_shouldConstructCorrectExportUrlWhenVersionIsNotPassedToUrl() throws URIException {
 		String collectionVersion = "v1.0";
-		GetMethod getMethodUrlWithoutVersion = oclClient.getExportUrl(URL_WITHOUT_VERSION, collectionVersion);
-		assertThat(getMethodUrlWithoutVersion.getURI().toString(), is(URL_WITHOUT_VERSION + "/v1.0" + "/export"));
+		String getMethodUrlWithoutVersion = oclClient.getExportUrl(URL_WITHOUT_VERSION, collectionVersion);
+		assertThat(getMethodUrlWithoutVersion, is(URL_WITHOUT_VERSION + "/v1.0" + "/export"));
 	}
 
 	@Test
