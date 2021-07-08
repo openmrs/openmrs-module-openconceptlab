@@ -23,28 +23,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class ImportTask implements Runnable {
 	
 	private final Logger log = LoggerFactory.getLogger(ImportTask.class);
 	
-	private Saver saver;
+	private final Saver saver;
 	
-	private ImportService updateService;
+	private final ImportService updateService;
 	
-	private Import anImport;
+	private final Long importId;
 	
 	private List<OclConcept> oclConcepts;
 	
 	private List<OclMapping> oclMappings;
 	
-	private CacheService cacheService;
+	private final CacheService cacheService;
 	
 	public ImportTask(Saver saver, CacheService cacheService, ImportService updateService, Import anImport) {
 		this.saver = saver;
 		this.updateService = updateService;
-		this.anImport = anImport;
+		this.importId = anImport.getImportId();
 		this.cacheService = cacheService;
 	}
 	
@@ -62,10 +63,10 @@ public class ImportTask implements Runnable {
 			
 			@Override
 			public void run() {
-				anImport = updateService.getImport(anImport.getImportId());
+				Import anImport = updateService.getImport(importId);
 				
 				if (oclConcepts != null) {
-					List<Item> items = new ArrayList<Item>();
+					List<Item> items = new ArrayList<>();
 					
 					for (OclConcept oclConcept : oclConcepts) {
 						Item item = null;
@@ -83,12 +84,28 @@ public class ImportTask implements Runnable {
 						} finally {
 							items.add(item);
 						}
+
+						if (oclConcept.getSource() != null) {
+							if (oclMappings == null) {
+								oclMappings = new ArrayList<>();
+							}
+
+							OclMapping sourceMapping = new OclMapping();
+							sourceMapping.setUrl(oclConcept.getSourceUrl() + "mappings/custom/" + oclConcept.getExternalId());
+							sourceMapping.setFromConceptUrl(oclConcept.getUrl());
+							sourceMapping.setToSourceName(oclConcept.getSource());
+							sourceMapping.setToConceptCode(oclConcept.getId());
+							sourceMapping.setMapType("SAME-AS");
+							sourceMapping.setUpdatedOn(new Date());
+
+							oclMappings.add(sourceMapping);
+						}
 	                }
 					updateService.saveItems(items);
 				}
 				
 				if (oclMappings != null) {
-					List<Item> items = new ArrayList<Item>();
+					List<Item> items = new ArrayList<>();
 					
 					for (OclMapping oclMapping : oclMappings) {
 						Item item = null;

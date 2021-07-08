@@ -199,17 +199,12 @@ public class ImporterTest extends BaseContextMockTest {
 		verify(importService).saveItems(
 		    argThat(hasItems(hasUuid("697bf112-a7ca-3ae3-af4f-8b46e3af7f10"),
 		        hasUuid("def16c32-0635-3afd-8a56-a080830e2bff"), hasUuid("b705416c-ad04-356f-9d43-8945ee382722"))));
-	}
 
-	public Matcher<Import> hasOclDateStarted(Date oclDateStarted) {
-		return new FeatureMatcher<Import, Date>(
-		                                        is(oclDateStarted), "oclDateStarted", "oclDateStarted") {
-
-			@Override
-			protected Date featureValueOf(Import actual) {
-				return actual.getOclDateStarted();
-			}
-		};
+		//mappings to original source
+		verify(importService).saveItems(
+			argThat(hasItems(hasUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/custom/1001AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+				hasUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/custom/1002AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+				hasUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/custom/1003AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))));
 	}
 
 	public Matcher<Item> hasUuid(String uuid) {
@@ -219,6 +214,16 @@ public class ImporterTest extends BaseContextMockTest {
 			@Override
 			protected String featureValueOf(Item actual) {
 				return actual.getUuid();
+			}
+		};
+	}
+
+	public Matcher<Item> hasUrl(String url) {
+		return new FeatureMatcher<Item, String>(is(url), "url", "url") {
+
+			@Override
+			protected String featureValueOf(Item actual) {
+				return actual.getUrl();
 			}
 		};
 	}
