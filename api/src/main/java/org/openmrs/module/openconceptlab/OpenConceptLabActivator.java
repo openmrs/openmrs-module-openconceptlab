@@ -11,8 +11,6 @@ package org.openmrs.module.openconceptlab;
 
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.DaemonToken;
@@ -21,6 +19,8 @@ import org.openmrs.module.ModuleActivator;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.util.OpenmrsUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,18 +30,18 @@ import java.util.zip.ZipFile;
  * This class contains the logic that is run every time this module is either started or stopped.
  */
 public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAware {
-	
-	protected Log log = LogFactory.getLog(getClass());
-	
+
+	private static final Logger log = LoggerFactory.getLogger(OpenConceptLabActivator.class);
+
 	private static DaemonToken daemonToken;
-		
+
 	/**
 	 * @see ModuleActivator#willRefreshContext()
 	 */
 	public void willRefreshContext() {
 		log.info("Refreshing Open Concept Lab Module");
 	}
-	
+
 	/**
 	 * @see ModuleActivator#contextRefreshed()
 	 */
@@ -54,7 +54,8 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 				.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
 		if (StringUtils.isBlank(loadAtStartupPath)) {
 			loadAtStartupPath =
-					new File(new File(new File(OpenmrsUtil.getApplicationDataDirectory(), "ocl"), "configuration"), "loadAtStartup").getAbsolutePath();
+					new File(new File(new File(OpenmrsUtil.getApplicationDataDirectory(), "ocl"), "configuration"),
+							"loadAtStartup").getAbsolutePath();
 			Context.getAdministrationService()
 					.saveGlobalProperty(
 							new GlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH, loadAtStartupPath)
@@ -72,15 +73,16 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 		if (files != null && files.length > 1) {
 			throw new IllegalStateException(
 					"There is more than one file in ocl/loadAtStartup directory\n" +
-					"Ensure that there is only one file\n" +
-					"Absolute directory path: " + loadAtStartupDir.getAbsolutePath());
+							"Ensure that there is only one file\n" +
+							"Absolute directory path: " + loadAtStartupDir.getAbsolutePath());
 		} else if (files != null && files.length != 0) {
 			if (files[0].getName().endsWith(".zip")) {
 				try {
 					ZipFile zipFile = (new ZipFile(files[0]));
 					Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
 					importer.run(zipFile);
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					throw new IllegalStateException("Failed to open zip file", e);
 				}
 			} else {
@@ -90,28 +92,28 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 		scheduler.scheduleUpdate();
 		log.info("Open Concept Lab Module refreshed");
 	}
-	
+
 	/**
 	 * @see ModuleActivator#willStart()
 	 */
 	public void willStart() {
 		log.info("Starting Open Concept Lab Module");
 	}
-	
+
 	/**
 	 * @see ModuleActivator#started()
 	 */
 	public void started() {
 		log.info("Open Concept Lab Module started");
 	}
-	
+
 	/**
 	 * @see ModuleActivator#willStop()
 	 */
 	public void willStop() {
 		log.info("Stopping Open Concept Lab Module");
 	}
-	
+
 	/**
 	 * @see ModuleActivator#stopped()
 	 */
@@ -120,12 +122,12 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 	}
 
 	@Override
-    public void setDaemonToken(DaemonToken token) {
-	    daemonToken = token;
-    }
-	
-    public static DaemonToken getDaemonToken() {
-	    return daemonToken;
-    }
-		
+	public void setDaemonToken(DaemonToken token) {
+		daemonToken = token;
+	}
+
+	public static DaemonToken getDaemonToken() {
+		return daemonToken;
+	}
+
 }

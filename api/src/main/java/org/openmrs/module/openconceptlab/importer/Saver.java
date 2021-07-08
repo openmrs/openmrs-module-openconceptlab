@@ -11,8 +11,6 @@ package org.openmrs.module.openconceptlab.importer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
@@ -40,6 +38,8 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -52,7 +52,7 @@ import java.util.List;
 
 public class Saver {
 
-	protected final Log log = LogFactory.getLog(getClass());
+	private static final Logger log = LoggerFactory.getLogger(Saver.class);
 
 	private static final Object CREATE_CONCEPT_REFERENCE_TERM_LOCK = new Object();
 
@@ -76,20 +76,6 @@ public class Saver {
 	/**
 	 * @param oclConcept
 	 * @throws ImportException
-	 * @should save new concept
-	 * @should add new names to concept
-	 * @should anImport name type in concept
-	 * @should anImport names with different uuids
-	 * @should void names from concept
-	 * @should add new descriptions to concept
-	 * @should void descriptions from concept
-	 * @should retire concept
-	 * @should unretire concept
-	 * @should fail if datatype missing
-	 * @should create concept class if missing
-	 * @should change duplicate synonym to index term
-	 * @should change duplicate fully specified name to index term
-	 * @should skip updating concept if it is already up to date
 	 */
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
 		Import thisImport = anImport;
@@ -106,10 +92,7 @@ public class Saver {
 			throw new ImportException("Cannot create concept " + oclConcept.getVersionUrl(), e);
 		}
 
-		boolean added = false;
-		if (concept.getId() == null) {
-			added = true;
-		}
+		boolean added = concept.getId() == null;
 
 		boolean retryOnFailure = true;
 		boolean retryOnDuplicateNames = true;
@@ -123,6 +106,7 @@ public class Saver {
 					} else {
 						validationType = ValidationType.FULL;
 					}
+
 					if (ValidationType.FULL.equals(validationType)) {
 						conceptService.saveConcept(concept);
 					} else if (ValidationType.NONE.equals(validationType)) {
@@ -189,6 +173,7 @@ public class Saver {
 			}
 			concept.setUuid(oclConcept.getExternalId());
 		}
+
 		ConceptClass conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
 			synchronized (CREATE_CONCEPT_CLASS_LOCK) {

@@ -9,8 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
@@ -21,13 +19,15 @@ import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ImportTask implements Runnable {
 	
-	private final Log log = LogFactory.getLog(getClass());
+	private final Logger log = LoggerFactory.getLogger(ImportTask.class);
 	
 	private Saver saver;
 	

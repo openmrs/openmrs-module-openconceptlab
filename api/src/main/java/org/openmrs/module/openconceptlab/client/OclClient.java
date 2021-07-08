@@ -54,13 +54,15 @@ public class OclClient {
 
 	public static final String FILE_NAME_FORMAT = "yyyyMMdd_HHmmss";
 
-	private final int BUFFER_SIZE = 64 * 1024;
+	private static final Pattern ARCHIVE_DATE_PATTERN = Pattern.compile("(?<date>[0-9]*).(?<extension>tgz|zip)");
 
-	public static final int NUMBER_OF_SLASHES_AFTER_BASE_URL = 5;
+	private static final int BUFFER_SIZE = 64 * 1024;
+
+	private static final int NUMBER_OF_SLASHES_AFTER_BASE_URL = 5;
+
+	private final static int TIMEOUT_IN_MS = 128000;
 
 	private final String dataDirectory;
-
-	public final static int TIMEOUT_IN_MS = 128000;
 
 	private long bytesDownloaded = 0;
 
@@ -238,11 +240,9 @@ public class OclClient {
 	}
 
 	Date parseDateFromPath(String path) throws IOException {
-		Pattern pattern = Pattern.compile("[0-9]*.tgz");
-		Matcher matcher = pattern.matcher(path);
+		Matcher matcher = ARCHIVE_DATE_PATTERN.matcher(path);
 		if (matcher.find()) {
-			String foundDate = matcher.group();
-			foundDate = foundDate.substring(0, foundDate.indexOf(".tgz"));
+			String foundDate = matcher.group("date");
 			try {
 				SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 				return format.parse(foundDate);

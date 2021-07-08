@@ -13,9 +13,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -36,6 +33,8 @@ import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -45,6 +44,7 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +57,7 @@ import java.util.zip.ZipFile;
 
 public class Importer implements Runnable {
 
-	private Log log = LogFactory.getLog(getClass());
+	private static final Logger log = LoggerFactory.getLogger(Importer.class);
 
 	public final static int BATCH_SIZE = 128;
 
@@ -244,7 +244,8 @@ public class Importer implements Runnable {
 		try {
 			task.run();
 
-			Integer errors = importService.getImportItemsCount(anImport, new HashSet<ItemState>(Arrays.asList(ItemState.ERROR)));
+			Integer errors = importService.getImportItemsCount(anImport, new HashSet<>(
+					Collections.singletonList(ItemState.ERROR)));
 			if (errors > 0) {
 				importService.failImport(anImport);
 			} else {
@@ -290,7 +291,7 @@ public class Importer implements Runnable {
 		}
 
 		String[] stackFrames = ExceptionUtils.getStackFrames(rootCause);
-		int endIndex = stackFrames.length > 5 ? 5 : stackFrames.length;
+		int endIndex = Math.min(stackFrames.length, 5);
 		message += "\n caused by: " + StringUtils.join(stackFrames, "\n", 0, endIndex);
 
 		if (message.length() > 1024) {
@@ -359,7 +360,7 @@ public class Importer implements Runnable {
 		}
 
 		String baseUrl = "";
-		if(importService.getSubscription() != null) {
+		if (importService.getSubscription() != null) {
 			baseUrl = importService.getSubscription().getUrl();
 			if (baseUrl != null) {
 				try {
@@ -376,7 +377,7 @@ public class Importer implements Runnable {
 		}
 
 		ThreadPoolExecutor runner = newRunner();
-		List<OclConcept> oclConcepts = new ArrayList<OclConcept>();
+		List<OclConcept> oclConcepts = new ArrayList<>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
@@ -389,7 +390,7 @@ public class Importer implements Runnable {
 						anImport);
 				importTask.setOclConcepts(oclConcepts);
 
-				oclConcepts = new ArrayList<OclConcept>();
+				oclConcepts = new ArrayList<>();
 
 				runner.execute(importTask);
 			}
@@ -404,7 +405,7 @@ public class Importer implements Runnable {
 
 		runner.shutdown();
 		try {
-			runner.awaitTermination(32, TimeUnit.DAYS);
+			runner.awaitTermination(5, TimeUnit.MINUTES);
 		}
 		catch (InterruptedException e) {
 			throw new RuntimeException(e);
@@ -417,7 +418,7 @@ public class Importer implements Runnable {
 		}
 
 		runner = newRunner();
-		List<OclMapping> oclMappings = new ArrayList<OclMapping>();
+		List<OclMapping> oclMappings = new ArrayList<>();
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
 			oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
@@ -432,7 +433,7 @@ public class Importer implements Runnable {
 						anImport);
 				importTask.setOclMappings(oclMappings);
 
-				oclMappings = new ArrayList<OclMapping>();
+				oclMappings = new ArrayList<>();
 
 				runner.execute(importTask);
 			}
@@ -447,7 +448,7 @@ public class Importer implements Runnable {
 
 		runner.shutdown();
 		try {
-			runner.awaitTermination(32, TimeUnit.DAYS);
+			runner.awaitTermination(5, TimeUnit.MINUTES);
 		}
 		catch (InterruptedException e) {
 			throw new RuntimeException(e);
@@ -484,8 +485,7 @@ public class Importer implements Runnable {
 		return baseUrl + url;
 	}
 
-	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException,
-	        JsonParseException {
+	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException {
 		JsonToken token = parser.getCurrentToken();
 		if (token == null) {
 			token = parser.nextToken();
@@ -534,7 +534,7 @@ public class Importer implements Runnable {
 
 			if (!isDownloaded()) {
 				double totalBytesToDownload = getTotalBytesToDownload();
-				double progress = 0;
+				double progress;
 				if (getBytesDownloaded() == 0) {
 					//simulate download progress until first bytes are downloaded
 					progress = (double) time / (time + 5) * 10.0;
@@ -562,10 +562,6 @@ public class Importer implements Runnable {
 		}
 		return updateProgress;
 
-	}
-
-	public ImportProgress getImportProgress() {
-		return getImportProgress(null);
 	}
 
 }
