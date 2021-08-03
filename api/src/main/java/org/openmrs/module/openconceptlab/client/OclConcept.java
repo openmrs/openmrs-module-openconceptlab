@@ -39,9 +39,9 @@ public class OclConcept {
 
 	private String datatype;
 
-	private List<Name> names = new ArrayList<OclConcept.Name>();
+	private List<Name> names = new ArrayList<>();
 
-	private List<Description> descriptions = new ArrayList<OclConcept.Description>();
+	private List<Description> descriptions = new ArrayList<>();
 
 	private boolean retired;
 
@@ -49,6 +49,11 @@ public class OclConcept {
 
 	@JsonProperty("version_url")
 	private String versionUrl;
+
+	private String source;
+
+	@JsonProperty("source_url")
+	private String sourceUrl;
 
 	@JsonProperty("created_on")
 	private Date dateCreated;
@@ -144,6 +149,22 @@ public class OclConcept {
 
 	public void setVersionUrl(String versionUrl) {
 		this.versionUrl = versionUrl;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public String getSourceUrl() {
+		return sourceUrl;
+	}
+
+	public void setSourceUrl(String sourceUrl) {
+		this.sourceUrl = sourceUrl;
 	}
 
 	public Date getDateCreated() {
