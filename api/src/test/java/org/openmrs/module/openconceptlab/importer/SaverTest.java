@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -824,6 +825,56 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
 		
 		assertTrue(saver.isMappingUpToDate(item, oclMapping));
+	}
+
+	@Test
+	public void saveMapping_ShouldNotSaveReferenceConceptIfMappingNotQnAorSet() {
+
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, oclConcept));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/100002/");
+		oclMapping.setToSourceName("CIELTEST");
+		oclMapping.setToConceptCode("100002");
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+
+		Concept toConcept = conceptService.getConcept(100002);
+		assertEquals(null, toConcept);
+
+	}
+
+	@Test
+	public void saveMapping_ShouldSaveMappingIfNotQnAorSetAndReferencedConceptDoesNotExist() {
+
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, oclConcept));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/100002/");
+		oclMapping.setToSourceName("CIELTEST");
+		oclMapping.setToConceptCode("100002");
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+
+		Concept fromConcept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertThat(fromConcept.getConceptMappings().size(), is(1));
+
 	}
 
 	public OclConcept newOclConcept() {

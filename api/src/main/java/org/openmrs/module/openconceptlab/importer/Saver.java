@@ -329,21 +329,21 @@ public class Saver {
 					}
 				}
 
-				Item toItem = null;
-				Concept toConcept = null;
-				if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
-					toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
-					if (toItem != null) {
-						toConcept = cacheService.getConceptByUuid(toItem.getUuid());
-					}
-
-					if (toConcept == null) {
-						throw new SavingException("Cannot create mapping to concept with URL "
-								+ oclMapping.getToConceptUrl() + ", because the concept has not been imported");
-					}
-				}
-
 				if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
+					Item toItem = null;
+					Concept toConcept = null;
+					if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
+						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
+						if (toItem != null) {
+							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
+						}
+
+						if (toConcept == null) {
+							throw new SavingException("Cannot create mapping to concept with URL "
+									+ oclMapping.getToConceptUrl() + ", because the concept has not been imported");
+						}
+					}
+
 					if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
 						item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
 					} else {
