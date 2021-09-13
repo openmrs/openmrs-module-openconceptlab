@@ -75,7 +75,7 @@ public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
 
     @PropertySetter("ignoreAllErrors")
     public ImportAction setIgnoreAllErrors(ImportAction importAction, Object value){
-        importAction.setIgnoreAllErrors(Boolean.valueOf(value.toString()));
+        importAction.setIgnoreAllErrors(Boolean.parseBoolean(value.toString()));
         return importAction;
     }
 

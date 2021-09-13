@@ -251,6 +251,9 @@ public class Saver {
 				oclName.setNameType("INDEX_TERM");
 			} else if (StringUtils.equalsIgnoreCase("Short", oclName.getNameType())) {
 				oclName.setNameType("SHORT");
+			} else if (StringUtils.equalsIgnoreCase("SYNONYM", oclName.getNameType()) ||
+					StringUtils.equalsIgnoreCase("Synonym", oclName.getNameType())) {
+				oclName.setNameType(null);
 			}
 		}
 	}
@@ -259,13 +262,9 @@ public class Saver {
 		try {
             Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
             setAllowDecimal.invoke(numeric, extras.getPrecise());
-        } catch (NoSuchMethodException e1) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
 			throw new ImportException(e1);
-		} catch (IllegalAccessException e1) {
-			throw new ImportException(e1);
-        } catch (InvocationTargetException e1) {
-			throw new ImportException(e1);
-        }
+		}
 	}
 
 	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {
