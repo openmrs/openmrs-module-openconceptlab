@@ -24,6 +24,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingCrudResou
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.GenericRestException;
+import org.openmrs.module.webservices.rest.web.response.IllegalRequestException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.springframework.web.multipart.MultipartFile;
@@ -214,16 +215,23 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
     @Override
     public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
+        if (multipartFile.isEmpty()) {
+            throw new IllegalRequestException("File uploaded cannot be empty");
+        } else if (!StringUtils.equalsIgnoreCase(multipartFile.getContentType(), "application/zip")) {
+            throw new IllegalRequestException("Supplied file must be a zip file");
+        }
 
         ImportService importService = getImportService();
         Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
 
-        importer.setMultipartFile(multipartFile);
+        File tempFile = File.createTempFile("ocl", "zip");
+        multipartFile.transferTo(tempFile);
+
+        importer.setZipFile(new ZipFile(tempFile));
 
         UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
         updateScheduler.scheduleNow();
 
         return importService.getLastImport();
-
     }
 }

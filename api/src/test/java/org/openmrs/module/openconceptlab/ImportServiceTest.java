@@ -612,28 +612,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void run_shouldSetSpecificSubscriptionUrlForMultipartFile() throws IOException {
-		final String fileName = "test.txt";
-		MockMultipartFile mockMultipartFile =
-				new MockMultipartFile("complexDataFile", fileName, "text/plain", IOUtils.toByteArray(TestResources.getSimpleResponseAsStream()));
-
-		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
-		RootLogger.getRootLogger().setLevel(Level.OFF);
-		Importer importer = new Importer();
-		importer.setImportService(importService);
-		importer.setConceptService(conceptService);
-		importer.setSaver(saver);
-
-		TestResources.setupDaemonToken();
-		importer.run(mockMultipartFile);
-
-		Import lastImport = importService.getLastImport();
-
-		assertEquals("file:///posted/via/rest", lastImport.getSubscriptionUrl());
-		RootLogger.getRootLogger().setLevel(rootLoggerLevel);
-	}
-
-	@Test
 	public void run_shouldSetSubscriptionUrlForLocalFilePath() throws IOException, URISyntaxException {
 		ZipFile zipFile = TestResources.getSimpleZipFile();
 		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
