@@ -170,7 +170,7 @@ public class Importer implements Runnable {
     }
 
 	/**
-	 * This run is used to update sources from zipfile
+	 * This run is used to update sources from zip file
 	 */
 	public void run(final ZipFile zipPackage) {
 		Daemon.runInDaemonThreadAndWait(new Runnable() {
@@ -210,7 +210,6 @@ public class Importer implements Runnable {
 			if (errors > 0) {
 				importService.failImport(anImport);
 			} else {
-
 				if (zipFile != null) {
 					File file = new File(zipFile.getName());
 					if (file.exists()) {
@@ -482,13 +481,15 @@ public class Importer implements Runnable {
 
 	public ImportProgress getImportProgress(String uuid){
 		ImportProgress updateProgress = new ImportProgress();
+
 		Import oclImport;
-		if(StringUtils.isNotBlank(uuid)){
+		if (StringUtils.isNotBlank(uuid)) {
 			oclImport = importService.getImport(uuid);
 		} else {
 			oclImport = importService.getLastImport();
 		}
-		if(oclImport.getLocalDateStopped() == null){
+
+		if (oclImport.getLocalDateStopped() == null) {
 			long time = (new Date().getTime() - oclImport.getLocalDateStarted().getTime()) / 1000;
 			updateProgress.setTime(time);
 
@@ -508,10 +509,11 @@ public class Importer implements Runnable {
 			} else if (!isProcessed()) {
 				double progress = 30;
 				if (getTotalBytesToProcess() == -1) {
-					progress = 30 + ((double) time / (time + 100) * 70.0);
+					progress += ((double) time / (time + 100) * 70.0);
 				} else {
-					progress = 30.0 + ((double) getBytesProcessed() / getTotalBytesToProcess() * 70.0);
+					progress += ((double) getBytesProcessed() / getTotalBytesToProcess() * 70.0);
 				}
+
 				updateProgress.setProgress((int) progress);
 			} else {
 				updateProgress.setProgress(100);
@@ -520,8 +522,8 @@ public class Importer implements Runnable {
 			updateProgress.setProgress(100);
 			updateProgress.setTime((oclImport.getLocalDateStopped().getTime() - oclImport.getLocalDateStarted().getTime()) / 1000);
 		}
-		return updateProgress;
 
+		return updateProgress;
 	}
 
 }
