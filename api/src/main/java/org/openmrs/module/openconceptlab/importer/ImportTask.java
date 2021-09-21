@@ -66,7 +66,7 @@ public class ImportTask implements Runnable {
 				Import anImport = updateService.getImport(importId);
 				
 				if (oclConcepts != null) {
-					List<Item> items = new ArrayList<>();
+					List<Item> items = new ArrayList<>(oclConcepts.size());
 					
 					for (OclConcept oclConcept : oclConcepts) {
 						Item item = null;
@@ -87,7 +87,7 @@ public class ImportTask implements Runnable {
 
 						if (oclConcept.getSource() != null) {
 							if (oclMappings == null) {
-								oclMappings = new ArrayList<>();
+								oclMappings = new ArrayList<>(oclConcepts.size());
 							}
 
 							OclMapping sourceMapping = new OclMapping();
@@ -105,7 +105,7 @@ public class ImportTask implements Runnable {
 				}
 				
 				if (oclMappings != null) {
-					List<Item> items = new ArrayList<>();
+					List<Item> items = new ArrayList<>(oclMappings.size());
 					
 					for (OclMapping oclMapping : oclMappings) {
 						Item item = null;
