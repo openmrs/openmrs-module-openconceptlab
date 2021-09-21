@@ -313,8 +313,7 @@ public class Saver {
 				}
 
 				final Item item;
-
-				Item fromItem = null;
+				Item fromItem;
 				Concept fromConcept = null;
 				if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
 					fromItem = importService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
@@ -328,8 +327,13 @@ public class Saver {
 					}
 				}
 
+				if (fromConcept == null) {
+					throw new SavingException("Cannot create mapping for " + oclMapping.getUrl() + " as no from concept is"
+							+ " defined");
+				}
+
 				if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
-					Item toItem = null;
+					Item toItem;
 					Concept toConcept = null;
 					if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
 						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
@@ -341,6 +345,10 @@ public class Saver {
 							throw new SavingException("Cannot create mapping to concept with URL "
 									+ oclMapping.getToConceptUrl() + ", because the concept has not been imported");
 						}
+					}
+
+					if (toConcept == null) {
+						throw new SavingException("Cannot create mapping " + oclMapping.getUrl() + " as no to concept is defined");
 					}
 
 					if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
