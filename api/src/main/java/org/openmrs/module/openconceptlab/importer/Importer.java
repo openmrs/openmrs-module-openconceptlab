@@ -337,7 +337,7 @@ public class Importer implements Runnable {
 		}
 
 		ThreadPoolExecutor runner = newRunner();
-		List<OclConcept> oclConcepts = new ArrayList<>();
+		List<OclConcept> oclConcepts = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
@@ -348,9 +348,9 @@ public class Importer implements Runnable {
 			if (oclConcepts.size() >= BATCH_SIZE) {
 				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
 						anImport);
-				importTask.setOclConcepts(oclConcepts);
+				importTask.setOclConcepts(new ArrayList<>(oclConcepts));
 
-				oclConcepts = new ArrayList<>();
+				oclConcepts.clear();
 
 				runner.execute(importTask);
 			}
@@ -378,7 +378,7 @@ public class Importer implements Runnable {
 		}
 
 		runner = newRunner();
-		List<OclMapping> oclMappings = new ArrayList<>();
+		List<OclMapping> oclMappings = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
 			oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
@@ -391,9 +391,9 @@ public class Importer implements Runnable {
 			if (oclMappings.size() >= BATCH_SIZE) {
 				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
 						anImport);
-				importTask.setOclMappings(oclMappings);
+				importTask.setOclMappings(new ArrayList<>(oclMappings));
 
-				oclMappings = new ArrayList<>();
+				oclMappings.clear();
 
 				runner.execute(importTask);
 			}
