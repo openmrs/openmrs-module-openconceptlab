@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 public class ImportTask implements Runnable {
 	
@@ -92,6 +93,7 @@ public class ImportTask implements Runnable {
 
 							OclMapping sourceMapping = new OclMapping();
 							sourceMapping.setUrl(oclConcept.getSourceUrl() + "mappings/custom/" + oclConcept.getExternalId());
+							sourceMapping.setExternalId(UUID.randomUUID().toString());
 							sourceMapping.setFromConceptUrl(oclConcept.getUrl());
 							sourceMapping.setToSourceName(oclConcept.getSource());
 							sourceMapping.setToConceptCode(oclConcept.getId());
