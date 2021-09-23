@@ -49,6 +49,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class Saver {
 
@@ -370,6 +371,7 @@ public class Saver {
 								toSource = new ConceptSource();
 								toSource.setName(oclMapping.getToSourceName());
 								toSource.setDescription("Imported from " + oclMapping.getUrl());
+								toSource.setUuid(UUID.randomUUID().toString());
 								conceptService.saveConceptSource(toSource);
 							}
 						}
