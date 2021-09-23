@@ -380,7 +380,11 @@ public class Saver {
 					String mapTypeName = oclMapping.getMapType().replace("-", "_");
 					ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 					if (mapType == null) {
-						throw new SavingException("Map type " + mapTypeName + " does not exist");
+						mapType = new ConceptMapType();
+						mapType.setName(mapTypeName);
+						mapType.setDescription("Imported from " + oclMapping.getUrl());
+						mapType.setUuid(UUID.randomUUID().toString());
+						conceptService.saveConceptMapType(mapType);
 					}
 
 					if (fromConcept != null) {
