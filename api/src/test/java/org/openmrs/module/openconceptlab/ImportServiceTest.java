@@ -615,20 +615,24 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	public void run_shouldSetSubscriptionUrlForLocalFilePath() throws IOException, URISyntaxException {
 		ZipFile zipFile = TestResources.getSimpleZipFile();
 		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
-		RootLogger.getRootLogger().setLevel(Level.OFF);
-		Importer importer = new Importer();
-		importer.setImportService(importService);
-		importer.setConceptService(conceptService);
-		importer.setSaver(saver);
+		try {
+			RootLogger.getRootLogger().setLevel(Level.OFF);
+			Importer importer = new Importer();
+			importer.setImportService(importService);
+			importer.setConceptService(conceptService);
+			importer.setSaver(saver);
 
-		TestResources.setupDaemonToken();
-		importer.run(zipFile);
+			TestResources.setupDaemonToken();
+			importer.run(zipFile);
 
-		Import lastImport = importService.getLastImport();
+			Import lastImport = importService.getLastImport();
 
-		assertEquals(Context.getAdministrationService().getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH),
-				lastImport.getSubscriptionUrl());
-		RootLogger.getRootLogger().setLevel(rootLoggerLevel);
+			assertEquals(Context.getAdministrationService()
+							.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH),
+					lastImport.getSubscriptionUrl());
+		} finally {
+			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
+		}
 	}
 
 }
