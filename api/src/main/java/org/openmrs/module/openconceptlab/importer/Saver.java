@@ -327,12 +327,12 @@ public class Saver {
 					}
 				}
 
-				if (fromConcept == null) {
-					throw new SavingException("Cannot create mapping for " + oclMapping.getUrl() + " as no from concept is"
-							+ " defined");
-				}
-
 				if (MapType.Q_AND_A.equals(oclMapping.getMapType()) || MapType.SET.equals(oclMapping.getMapType())) {
+					if (fromConcept == null) {
+						throw new SavingException("Cannot create mapping for " + oclMapping.getUrl() + " as no from concept is"
+								+ " defined");
+					}
+
 					Item toItem;
 					Concept toConcept = null;
 					if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
