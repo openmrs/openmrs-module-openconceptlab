@@ -412,7 +412,11 @@ public class Saver {
 							}
 						} else {
 							conceptMap = new ConceptMap();
-							conceptMap.setUuid(oclMapping.getExternalId());
+							if (oclMapping.getExternalId() != null) {
+								conceptMap.setUuid(oclMapping.getExternalId());
+							} else {
+								conceptMap.setUuid(UUID.randomUUID().toString());
+							}
 							conceptMap.setConceptReferenceTerm(term);
 							conceptMap.setConceptMapType(mapType);
 							fromConcept.addConceptMapping(conceptMap);
