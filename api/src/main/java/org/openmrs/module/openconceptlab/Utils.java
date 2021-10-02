@@ -9,8 +9,14 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.openmrs.GlobalProperty;
+import org.openmrs.api.AdministrationService;
+import org.openmrs.api.context.Context;
+import org.openmrs.util.OpenmrsUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -121,4 +127,40 @@ public class Utils {
 		return in;
 	}
 
+	public static File getOclDirectory() {
+		return OpenmrsUtil.getDirectoryInApplicationDataDirectory("ocl");
+	}
+
+	public static File getOclConfigurationDirectory() {
+		File configDir = new File(getOclDirectory(), "configuration");
+		if (!configDir.exists()) {
+			configDir.mkdirs();
+		}
+		return configDir;
+	}
+
+	public static File getLoadAtStartupDirectory() {
+		AdministrationService as = Context.getAdministrationService();
+		String gpName = OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH;
+		File loadAtStartupDir = new File(getOclConfigurationDirectory(), "loadAtStartup");
+		String loadAtStartupPath = as.getGlobalProperty(gpName);
+		if (StringUtils.isBlank(loadAtStartupPath)) {
+			as.saveGlobalProperty(new GlobalProperty(gpName, loadAtStartupDir.getAbsolutePath()));
+		}
+		else {
+			loadAtStartupDir = new File(loadAtStartupPath);
+		}
+		if (!loadAtStartupDir.exists()) {
+			loadAtStartupDir.mkdirs();
+		}
+		return loadAtStartupDir;
+	}
+
+	public static File getImportDirectory() {
+		File importDir = new File(getOclDirectory(), "imports");
+		if (!importDir.exists()) {
+			importDir.mkdirs();
+		}
+		return importDir;
+	}
 }

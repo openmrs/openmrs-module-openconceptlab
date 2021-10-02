@@ -22,7 +22,7 @@ class HomeController {
      * Upload button params
      */
     vm.endpoint = '/openmrs/ws/rest/v1/openconceptlab/import';
-    vm.allowedFormat = '.zip,application/zip,application/x-zip,application/x-zip-compressed,application/octet-stream';
+    vm.allowedFormat = '.zip,application/zip,application/x-zip,application/x-zip-compressed,application/octet-stream,.json,application/json';
 
     activate();
     
@@ -35,15 +35,15 @@ class HomeController {
     }
     
     function isFileCorrect(fileName) {
-      return fileName.endsWith(".zip");
+      return fileName.endsWith(".zip") || fileName.endsWith(".json")
     }
 
-    function uploadZip(file) {
+    function uploadZip(file, importType) {
       vm.showLoading = true;
 
       let upload = Upload.upload({
         url: vm.endpoint,
-        data: {file: file},
+        data: {file: file, importType: importType},
       });
 
       upload.then(function(response) {

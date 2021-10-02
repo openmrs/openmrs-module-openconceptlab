@@ -126,4 +126,19 @@ public class CacheService {
 			return concept;
 		}
     }
+
+	public Concept getConceptByMapping(String source, String code) {
+		String cacheKey = source + ":" + code;
+		Concept concept = concepts.get(cacheKey);
+		if (concept != null) {
+			return concept;
+		}
+		else {
+			concept = conceptService.getConceptByMapping(code, source);
+			if (concept != null) {
+				concepts.put(cacheKey, concept);
+			}
+			return concept;
+		}
+	}
 }

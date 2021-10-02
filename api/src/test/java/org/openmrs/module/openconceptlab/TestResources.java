@@ -40,13 +40,11 @@ public class TestResources {
 		return TestResources.class.getClassLoader().getResource("response.zip");
 	}
 
-	public static ZipFile getSimpleZipFile() throws IOException, URISyntaxException {
+	public static File getSimpleZipFile() throws IOException, URISyntaxException {
 		File zipFile = new File(getSimpleResponseZipFileUrl().toURI());
 		File newZipFile = new File(getSimpleResponseZipFileUrl().getPath() + "new_file.zip");
-
 		IOUtils.copy(new FileInputStream(zipFile), new FileOutputStream(newZipFile));
-
-		return new ZipFile(newZipFile);
+		return newZipFile;
 	}
 
 	public static InputStream getSimpleResponseAsJsonStream() {

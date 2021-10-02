@@ -10,35 +10,41 @@
         <button class="btn btn-warning" type="button" ng-click="confirm(true)">{{"ignoreErrors.button" | translate}}</button>
     </div>
 </script>
-<div ng-show="!vm.subscription" xmlns:top="http://www.w3.org/1999/xhtml" xmlns:top="http://www.w3.org/1999/xhtml">
-    <div>
-        <p>{{"nosubscriptionmessage.info" | translate}}</p><br/>
-    </div>
-    <div>
-       <p></p><a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a></p>
-    </div>
-</div>
-<div ng-show="vm.subscription">
-    <div>
+
+<div>
+    <div ng-show="vm.subscription">
         <a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"editsubscription.button" | translate}}</a><br><br>
     </div>
     <div ng-show="!vm.runningImport" >
         <fieldset>
             <legend>{{"newimport.text" | translate}}</legend>
             <div ng-hide="vm.showLoading">
+                <p> </p>
                 <p>{{"avoidUpdatesInfo.text" | translate}}</p>
                 <p>&nbsp;</p>
                 <div>
-                    <p><button ng-click="vm.startImportIfNoErrors()">{{"importFromServer.button" | translate}}</button><br/></p>
-                    <p ng-show="vm.hasErrorsInPreviousImport()">
-                        <i>{{"fixAllErrorsWarning.text" | translate}}</i></p>
+                    <div ng-show="!vm.subscription" xmlns:top="http://www.w3.org/1999/xhtml" xmlns:top="http://www.w3.org/1999/xhtml">
+                        <div>
+                            <p>{{"nosubscriptionmessage.info" | translate}}</p><br/>
+                        </div>
+                        <div>
+                            <p></p><a class="button" href="#/subscription"><i class="icon-plus"></i>&nbsp;{{"configuresubscription.button" | translate}}</a></p>
+                        </div>
+                    </div>
+                    <div ng-show="vm.subscription">
+                        <p><button ng-click="vm.startImportIfNoErrors()">{{"importFromServer.button" | translate}}</button><br/></p>
+                        <p ng-show="vm.hasErrorsInPreviousImport()">
+                            <i>{{"fixAllErrorsWarning.text" | translate}}</i>
+                        </p>
+                    </div>
+                </div>
+                <div>
                     <p>&nbsp;</p>
                     <p>- OR -</p>
                     <p>&nbsp;</p>
                 </div>
-
                 <form name="fileUpload">
-                    <p>Import off-line from a zip file</p>
+                    <p>Import off-line from an OCL collection export file (zip or json)</p>
                     <p><input type="file"
                            style="border: none"
                            ngf-select
@@ -47,7 +53,24 @@
                            accept="{{vm.allowedFormat}}"
                            required></p>
                     <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
-                            ng-click="vm.uploadZip(zipFile)">{{"importFromFile.button" | translate}}</button></p>
+                            ng-click="vm.uploadZip(zipFile, 'collection')">{{"importFromFile.button" | translate}}</button></p>
+                </form>
+                <div>
+                    <p>&nbsp;</p>
+                    <p>- OR -</p>
+                    <p>&nbsp;</p>
+                </div>
+                <form name="fileUpload">
+                    <p>Import off-line from an OCL single concept export file (zip or json)</p>
+                    <p><input type="file"
+                              style="border: none"
+                              ngf-select
+                              ng-model="zipFile"
+                              name="file"
+                              accept="{{vm.allowedFormat}}"
+                              required></p>
+                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
+                               ng-click="vm.uploadZip(zipFile, 'concept')">{{"importFromFile.button" | translate}}</button></p>
                 </form>
             </div>
             <div class="loader" ng-show="vm.showLoading"></div>
