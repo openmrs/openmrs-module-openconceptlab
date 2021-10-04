@@ -63,6 +63,8 @@ public class Saver {
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
 
+	private static final Object CREATE_MAP_TYPE_LOCK = new Object();
+
 	private ConceptService conceptService;
 
 	private ImportService importService;
@@ -382,11 +384,13 @@ public class Saver {
 					String mapTypeName = oclMapping.getMapType().replace("-", "_");
 					ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 					if (mapType == null) {
-						mapType = new ConceptMapType();
-						mapType.setName(mapTypeName);
-						mapType.setDescription("Imported from " + oclMapping.getUrl());
-						mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
-						conceptService.saveConceptMapType(mapType);
+						synchronized (CREATE_MAP_TYPE_LOCK) {
+							mapType = new ConceptMapType();
+							mapType.setName(mapTypeName);
+							mapType.setDescription("Imported from " + oclMapping.getUrl());
+							mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
+							conceptService.saveConceptMapType(mapType);
+						}
 					}
 
 					if (fromConcept != null) {
