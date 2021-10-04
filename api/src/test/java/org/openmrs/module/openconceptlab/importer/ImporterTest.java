@@ -162,7 +162,7 @@ public class ImporterTest extends BaseContextMockTest {
 		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastUpdate);
 
 		Date updatedTo = new Date();
-		OclResponse oclResponse = new OclClient().unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
+		OclResponse oclResponse = OclClient.unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
 
 		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
 		        .thenReturn(oclResponse);
