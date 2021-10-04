@@ -9,14 +9,22 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import static org.openmrs.module.openconceptlab.OpenConceptLabConstants.OPEN_CONCEPT_LAB_NAMESPACE_UUID;
+
 import org.apache.commons.lang3.time.DateUtils;
+import org.openmrs.api.APIException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
@@ -27,6 +35,7 @@ public class Utils {
 
 	private static final DateFormat timeFormatter = new SimpleDateFormat("HH:mm");
 	private static final DateFormat dateFormatter = new SimpleDateFormat("dd-MMM-yyyy");
+	private static final int UUID_BYTE_LENGTH = 16;
 
 	/**
 	 * Add days to an existing date
@@ -119,6 +128,53 @@ public class Utils {
 		}
 
 		return in;
+	}
+
+	/**
+	 * Implements a version 5 UUID from RFC 4122 using the {@link OpenConceptLabConstants#OPEN_CONCEPT_LAB_NAMESPACE_UUID}
+	 * as the namespace.
+	 *
+	 * This ensures that user-visible UUIDs for imported data will remain consistent across imports
+	 *
+	 * @param name name to use to construct uuid; should be as unique as possible but predictable
+	 * @return a {@link UUID} representing the intended UUID
+	 */
+	public static UUID version5Uuid(String name) {
+		byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+		ByteBuffer buffer = ByteBuffer.allocate(UUID_BYTE_LENGTH + nameBytes.length);
+		buffer.putLong(OPEN_CONCEPT_LAB_NAMESPACE_UUID.getMostSignificantBits());
+		buffer.putLong(OPEN_CONCEPT_LAB_NAMESPACE_UUID.getLeastSignificantBits());
+		buffer.put(nameBytes);
+
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-1");
+		}
+		catch (NoSuchAlgorithmException e) {
+			throw new APIException("Could not find an implementation of the SHA-1 algorithm", e);
+		}
+
+		byte[] digest = md.digest(buffer.array());
+
+		byte[] uuidBytes = new byte[UUID_BYTE_LENGTH];
+		// truncate the digest to 16 bytes
+		System.arraycopy(digest, 0, uuidBytes, 0, UUID_BYTE_LENGTH);
+
+		uuidBytes[6] &= 0x0f;   // clear the version
+		uuidBytes[6] |= 5 << 4; // set the version to 5
+		uuidBytes[8] &= 0x3f;   // clear the variant
+		uuidBytes[8] |= 0x80;   // set the variant to IETF
+
+		// convert byte array to UUID
+		long msb = 0L;
+		long lsb = 0L;
+
+		for (int i = 0; i < UUID_BYTE_LENGTH / 2; i++) {
+			msb = (msb << 8) | uuidBytes[i] & 0xff;
+			lsb = (lsb << 8) | uuidBytes[i + 8] & 0xff;
+		}
+
+		return new UUID(msb, lsb);
 	}
 
 }

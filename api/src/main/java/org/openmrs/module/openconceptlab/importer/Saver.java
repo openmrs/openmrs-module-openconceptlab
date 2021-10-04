@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
@@ -371,7 +373,7 @@ public class Saver {
 								toSource = new ConceptSource();
 								toSource.setName(oclMapping.getToSourceName());
 								toSource.setDescription("Imported from " + oclMapping.getUrl());
-								toSource.setUuid(UUID.randomUUID().toString());
+								toSource.setUuid(version5Uuid("source/" + oclMapping.getToSourceName()).toString());
 								conceptService.saveConceptSource(toSource);
 							}
 						}
@@ -383,7 +385,7 @@ public class Saver {
 						mapType = new ConceptMapType();
 						mapType.setName(mapTypeName);
 						mapType.setDescription("Imported from " + oclMapping.getUrl());
-						mapType.setUuid(UUID.randomUUID().toString());
+						mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
 						conceptService.saveConceptMapType(mapType);
 					}
 
