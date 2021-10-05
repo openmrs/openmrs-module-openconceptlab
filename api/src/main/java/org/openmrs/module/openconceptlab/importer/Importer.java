@@ -115,7 +115,8 @@ public class Importer implements Runnable {
 			else {
 				throw new IllegalStateException("Import file " + importFile.getName() + " must be either a zip or json file");
 			}
-			String subscriptionUrl = importFile.getAbsolutePath();
+			String subscriptionUrl = importFile.toUri().toString();
+
 			importService.updateSubscriptionUrl(anImport, subscriptionUrl);
 		}
 		else {
