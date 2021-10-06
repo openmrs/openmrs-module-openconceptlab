@@ -51,7 +51,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 public class Saver {
 
@@ -421,7 +420,7 @@ public class Saver {
 							if (oclMapping.getExternalId() != null) {
 								conceptMap.setUuid(oclMapping.getExternalId());
 							} else {
-								conceptMap.setUuid(UUID.randomUUID().toString());
+								conceptMap.setUuid(version5Uuid(oclMapping.getUrl()).toString());
 							}
 							conceptMap.setConceptReferenceTerm(term);
 							conceptMap.setConceptMapType(mapType);
