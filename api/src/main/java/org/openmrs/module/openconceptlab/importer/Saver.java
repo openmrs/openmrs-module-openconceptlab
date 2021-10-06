@@ -51,6 +51,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 public class Saver {
 
@@ -249,15 +250,21 @@ public class Saver {
 
 	private void convertConceptNameTypes(OclConcept oclConcept) {
 		for (OclConcept.Name oclName: oclConcept.getNames()) {
-			if (StringUtils.equalsIgnoreCase("Fully Specified", oclName.getNameType())) {
-				oclName.setNameType("FULLY_SPECIFIED");
-			} else if (StringUtils.equalsIgnoreCase("Index Term", oclName.getNameType())) {
-				oclName.setNameType("INDEX_TERM");
-			} else if (StringUtils.equalsIgnoreCase("Short", oclName.getNameType())) {
-				oclName.setNameType("SHORT");
-			} else if (StringUtils.equalsIgnoreCase("SYNONYM", oclName.getNameType()) ||
-					StringUtils.equalsIgnoreCase("Synonym", oclName.getNameType())) {
-				oclName.setNameType(null);
+			if (oclName.getNameType() != null) {
+				switch (oclName.getNameType().toUpperCase(Locale.ENGLISH)) {
+					case "FULLY SPECIFIED":
+						oclName.setNameType("FULLY_SPECIFIED");
+						break;
+					case "INDEX TERM":
+						oclName.setNameType("INDEX_TERM");
+						break;
+					case "SHORT":
+						oclName.setNameType("SHORT");
+						break;
+					case "SYNONYM":
+						oclName.setNameType(null);
+						break;
+				}
 			}
 		}
 	}
