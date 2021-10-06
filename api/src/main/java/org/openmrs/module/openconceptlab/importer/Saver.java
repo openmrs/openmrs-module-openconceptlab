@@ -614,7 +614,11 @@ public class Saver {
 
 			if (!nameFound) {
 				ConceptName name = new ConceptName(oclName.getName(), oclName.getLocale());
-				name.setUuid(oclName.getExternalId());
+				if (oclName.getExternalId() != null) {
+					name.setUuid(oclName.getExternalId());
+				} else {
+					name.setUuid(version5Uuid(oclConcept.getUrl() + "/names/" + oclName.getUuid()).toString());
+				}
 				name.setConceptNameType(oclNameType);
 				name.setLocalePreferred(oclName.isLocalePreferred());
 
