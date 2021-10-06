@@ -585,8 +585,13 @@ public class Saver {
 	private void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
 
 		for (OclConcept.Name oclName : sortedNames(oclConcept.getNames())) {
-			ConceptNameType oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ? ConceptNameType.valueOf(oclName.getNameType())
-			        : null;
+			ConceptNameType oclNameType;
+			try {
+				oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ?
+						ConceptNameType.valueOf(oclName.getNameType()) : null;
+			} catch (IllegalArgumentException e) {
+				oclNameType = null;
+			}
 
 			boolean nameFound = false;
 			for (ConceptName name : concept.getNames(true)) {
