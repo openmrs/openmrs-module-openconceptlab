@@ -12,7 +12,6 @@ package org.openmrs.module.openconceptlab.importer;
 import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
@@ -718,10 +717,51 @@ public class Saver {
 	}
 
 	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
-		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals();
+		if (oclName == null) {
+			return false;
+		}
+
+		if (name == null) {
+			return false;
+		}
+
+		if (oclName.getExternalId() == null) {
+			if (name.getUuid() == null) {
+				return name.getLocale().equals(oclName.getLocale()) &&
+						name.getName().equals(oclName.getName()) &&
+						name.getConceptNameType().toString().equals(oclName.getNameType());
+			}
+
+			return false;
+		}
+
+		if (name.getUuid() == null) {
+			return name.getLocale().equals(oclName.getLocale()) &&
+					name.getName().equals(oclName.getName()) &&
+					name.getConceptNameType().toString().equals(oclName.getNameType());
+		}
+
+		return name.getUuid().equals(oclName.getExternalId());
 	}
 
 	public boolean isMatch(OclConcept.Description oclDescription, ConceptDescription description) {
-		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals();
+		if (oclDescription == null) {
+			return false;
+		}
+
+		if (description == null) {
+			return false;
+		}
+
+		if (oclDescription.getExternalId() == null) {
+			if (description.getUuid() == null) {
+				return description.getLocale().equals(oclDescription.getLocale()) &&
+						description.getDescription().equals(oclDescription.getDescription());
+			}
+
+			return false;
+		}
+
+		return description.getUuid().equals(oclDescription.getExternalId());
 	}
 }
