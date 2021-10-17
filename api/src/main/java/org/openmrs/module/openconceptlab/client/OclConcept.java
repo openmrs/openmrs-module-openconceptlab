@@ -46,7 +46,7 @@ public class OclConcept {
 	private List<Description> descriptions = new ArrayList<>();
 
 	@JsonProperty
-	private Boolean retired;
+	private boolean retired;
 
 	private String url;
 
@@ -130,12 +130,12 @@ public class OclConcept {
 		this.descriptions = descriptions;
 	}
 
-	public Boolean isRetired() {
+	public boolean isRetired() {
 		return retired;
 	}
 
 	@JsonDeserialize(using = StringBooleanDeserializer.class)
-	public void setRetired(Boolean retired) {
+	public void setRetired(boolean retired) {
 		this.retired = retired;
 	}
 
