@@ -9,8 +9,9 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
+
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
@@ -49,7 +50,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
+import java.util.Locale;
 
 public class Saver {
 
@@ -60,6 +61,8 @@ public class Saver {
 	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
 
 	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
+
+	private static final Object CREATE_MAP_TYPE_LOCK = new Object();
 
 	private ConceptService conceptService;
 
@@ -246,15 +249,21 @@ public class Saver {
 
 	private void convertConceptNameTypes(OclConcept oclConcept) {
 		for (OclConcept.Name oclName: oclConcept.getNames()) {
-			if (StringUtils.equalsIgnoreCase("Fully Specified", oclName.getNameType())) {
-				oclName.setNameType("FULLY_SPECIFIED");
-			} else if (StringUtils.equalsIgnoreCase("Index Term", oclName.getNameType())) {
-				oclName.setNameType("INDEX_TERM");
-			} else if (StringUtils.equalsIgnoreCase("Short", oclName.getNameType())) {
-				oclName.setNameType("SHORT");
-			} else if (StringUtils.equalsIgnoreCase("SYNONYM", oclName.getNameType()) ||
-					StringUtils.equalsIgnoreCase("Synonym", oclName.getNameType())) {
-				oclName.setNameType(null);
+			if (oclName.getNameType() != null) {
+				switch (oclName.getNameType().toUpperCase(Locale.ENGLISH)) {
+					case "FULLY SPECIFIED":
+						oclName.setNameType("FULLY_SPECIFIED");
+						break;
+					case "INDEX TERM":
+						oclName.setNameType("INDEX_TERM");
+						break;
+					case "SHORT":
+						oclName.setNameType("SHORT");
+						break;
+					case "SYNONYM":
+						oclName.setNameType(null);
+						break;
+				}
 			}
 		}
 	}
@@ -380,7 +389,7 @@ public class Saver {
 								toSource = new ConceptSource();
 								toSource.setName(oclMapping.getToSourceName());
 								toSource.setDescription("Imported from " + oclMapping.getUrl());
-								toSource.setUuid(UUID.randomUUID().toString());
+								toSource.setUuid(version5Uuid("source/" + oclMapping.getToSourceName()).toString());
 								conceptService.saveConceptSource(toSource);
 							}
 						}
@@ -389,11 +398,13 @@ public class Saver {
 					String mapTypeName = oclMapping.getMapType().replace("-", "_");
 					ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 					if (mapType == null) {
-						mapType = new ConceptMapType();
-						mapType.setName(mapTypeName);
-						mapType.setDescription("Imported from " + oclMapping.getUrl());
-						mapType.setUuid(UUID.randomUUID().toString());
-						conceptService.saveConceptMapType(mapType);
+						synchronized (CREATE_MAP_TYPE_LOCK) {
+							mapType = new ConceptMapType();
+							mapType.setName(mapTypeName);
+							mapType.setDescription("Imported from " + oclMapping.getUrl());
+							mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
+							conceptService.saveConceptMapType(mapType);
+						}
 					}
 
 					if (fromConcept != null) {
@@ -424,7 +435,7 @@ public class Saver {
 							if (oclMapping.getExternalId() != null) {
 								conceptMap.setUuid(oclMapping.getExternalId());
 							} else {
-								conceptMap.setUuid(UUID.randomUUID().toString());
+								conceptMap.setUuid(version5Uuid(oclMapping.getUrl()).toString());
 							}
 							conceptMap.setConceptReferenceTerm(term);
 							conceptMap.setConceptMapType(mapType);
@@ -582,8 +593,13 @@ public class Saver {
 	private void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
 
 		for (OclConcept.Name oclName : sortedNames(oclConcept.getNames())) {
-			ConceptNameType oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ? ConceptNameType.valueOf(oclName.getNameType())
-			        : null;
+			ConceptNameType oclNameType;
+			try {
+				oclNameType = StringUtils.isNotBlank(oclName.getNameType()) ?
+						ConceptNameType.valueOf(oclName.getNameType()) : null;
+			} catch (IllegalArgumentException e) {
+				oclNameType = null;
+			}
 
 			boolean nameFound = false;
 			for (ConceptName name : concept.getNames(true)) {
@@ -606,7 +622,11 @@ public class Saver {
 
 			if (!nameFound) {
 				ConceptName name = new ConceptName(oclName.getName(), oclName.getLocale());
-				name.setUuid(oclName.getExternalId());
+				if (oclName.getExternalId() != null) {
+					name.setUuid(oclName.getExternalId());
+				} else {
+					name.setUuid(version5Uuid(oclConcept.getUrl() + "/names/" + oclName.getUuid()).toString());
+				}
 				name.setConceptNameType(oclNameType);
 				name.setLocalePreferred(oclName.isLocalePreferred());
 
@@ -706,10 +726,51 @@ public class Saver {
 	}
 
 	public boolean isMatch(OclConcept.Name oclName, ConceptName name) {
-		return new EqualsBuilder().append(name.getUuid(), oclName.getExternalId()).isEquals();
+		if (oclName == null) {
+			return false;
+		}
+
+		if (name == null) {
+			return false;
+		}
+
+		if (oclName.getExternalId() == null) {
+			if (name.getUuid() == null) {
+				return name.getLocale().equals(oclName.getLocale()) &&
+						name.getName().equals(oclName.getName()) &&
+						name.getConceptNameType().toString().equals(oclName.getNameType());
+			}
+
+			return false;
+		}
+
+		if (name.getUuid() == null) {
+			return name.getLocale().equals(oclName.getLocale()) &&
+					name.getName().equals(oclName.getName()) &&
+					name.getConceptNameType().toString().equals(oclName.getNameType());
+		}
+
+		return name.getUuid().equals(oclName.getExternalId());
 	}
 
 	public boolean isMatch(OclConcept.Description oclDescription, ConceptDescription description) {
-		return new EqualsBuilder().append(description.getUuid(), oclDescription.getExternalId()).isEquals();
+		if (oclDescription == null) {
+			return false;
+		}
+
+		if (description == null) {
+			return false;
+		}
+
+		if (oclDescription.getExternalId() == null) {
+			if (description.getUuid() == null) {
+				return description.getLocale().equals(oclDescription.getLocale()) &&
+						description.getDescription().equals(oclDescription.getDescription());
+			}
+
+			return false;
+		}
+
+		return description.getUuid().equals(oclDescription.getExternalId());
 	}
 }

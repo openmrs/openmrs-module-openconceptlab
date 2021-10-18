@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
+
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
@@ -25,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public class ImportTask implements Runnable {
 	
@@ -92,8 +93,9 @@ public class ImportTask implements Runnable {
 							}
 
 							OclMapping sourceMapping = new OclMapping();
-							sourceMapping.setUrl(oclConcept.getSourceUrl() + "mappings/custom/" + oclConcept.getExternalId());
-							sourceMapping.setExternalId(UUID.randomUUID().toString());
+							String mappingUrl = oclConcept.getSourceUrl() + "mappings/custom/" + oclConcept.getExternalId();
+							sourceMapping.setUrl(mappingUrl);
+							sourceMapping.setExternalId(version5Uuid(mappingUrl).toString());
 							sourceMapping.setFromConceptUrl(oclConcept.getUrl());
 							sourceMapping.setToSourceName(oclConcept.getSource());
 							sourceMapping.setToConceptCode(oclConcept.getId());

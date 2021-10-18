@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import java.util.UUID;
+
 /**
  * Contains OpenConceptLab Constants
  */
@@ -34,4 +36,6 @@ public class OpenConceptLabConstants {
 	public static final String GP_SUBSCRIBED_TO_SNAPSHOT = MODULE_ID + ".subscribedToSnapshot";
 	public static final String GP_VALIDATION_TYPE = MODULE_ID + ".validationType";
 	public static final String GP_OCL_LOAD_AT_STARTUP_PATH = MODULE_ID + ".oclLoadAtStartupPath";
+
+	public static final UUID OPEN_CONCEPT_LAB_NAMESPACE_UUID = UUID.fromString("672c6cb2-4f47-4cb0-9fca-b5f6116cd33a");
 }
