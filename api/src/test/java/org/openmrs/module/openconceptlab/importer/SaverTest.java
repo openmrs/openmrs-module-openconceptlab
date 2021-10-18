@@ -39,6 +39,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -686,6 +687,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
+	@Ignore
 	public void importMapping_shouldAddConceptMappingAndTerm() throws Exception {
 		Import update = importService.getLastImport();
 
