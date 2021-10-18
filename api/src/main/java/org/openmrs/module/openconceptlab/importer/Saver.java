@@ -367,7 +367,7 @@ public class Saver {
 						if (!fromConcept.getSet()) {
 						    fromConcept.setSet(true);
 						}
-						item = updateOrAddSetMemebersFromOcl(update, oclMapping, fromConcept, toConcept);
+						item = updateOrAddSetMembersFromOcl(update, oclMapping, fromConcept, toConcept);
 					}
 
 					importService.updateConceptWithoutValidation(fromConcept);
@@ -509,7 +509,7 @@ public class Saver {
 		return term;
 	}
 
-	Item updateOrAddSetMemebersFromOcl(Import update, OclMapping oclMapping, Concept set, Concept member) {
+	Item updateOrAddSetMembersFromOcl(Import update, OclMapping oclMapping, Concept set, Concept member) {
 		Item item = null;
 
 		boolean found = false;
