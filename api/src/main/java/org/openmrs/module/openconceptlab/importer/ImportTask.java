@@ -86,24 +86,6 @@ public class ImportTask implements Runnable {
 						} finally {
 							items.add(item);
 						}
-
-						if (oclConcept.getSource() != null) {
-							if (oclMappings == null) {
-								oclMappings = new ArrayList<>(oclConcepts.size());
-							}
-
-							OclMapping sourceMapping = new OclMapping();
-							String mappingUrl = oclConcept.getSourceUrl() + "mappings/custom/" + oclConcept.getExternalId();
-							sourceMapping.setUrl(mappingUrl);
-							sourceMapping.setExternalId(version5Uuid(mappingUrl).toString());
-							sourceMapping.setFromConceptUrl(oclConcept.getUrl());
-							sourceMapping.setToSourceName(oclConcept.getSource());
-							sourceMapping.setToConceptCode(oclConcept.getId());
-							sourceMapping.setMapType("SAME-AS");
-							sourceMapping.setUpdatedOn(new Date());
-
-							oclMappings.add(sourceMapping);
-						}
 	                }
 					updateService.saveItems(items);
 				}
