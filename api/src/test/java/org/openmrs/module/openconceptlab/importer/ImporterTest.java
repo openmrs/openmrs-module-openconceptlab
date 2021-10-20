@@ -36,6 +36,7 @@ import org.openmrs.util.OpenmrsClassLoader;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -225,10 +226,15 @@ public class ImporterTest extends BaseContextMockTest {
 		// Set up the file we wish to import
 		File tmpFile = File.createTempFile("test", ".json");
 		try (InputStream is = OpenmrsClassLoader.getInstance().getResourceAsStream("concept-159618.json")) {
+			if (is == null) {
+				throw new IOException("could not find resource concept-159618.json");
+			}
+
 			try (FileWriter writer = new FileWriter(tmpFile)) {
 				IOUtils.copy(is, writer);
 			}
 		}
+
 		importer.setImportFile(tmpFile);
 
 		final List<String> conceptsSaved = new ArrayList<>();

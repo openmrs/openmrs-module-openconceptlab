@@ -48,12 +48,12 @@
                     <p><input type="file"
                            style="border: none"
                            ngf-select
-                           ng-model="zipFile"
+                           ng-model="uploadCollectionFile"
                            name="file"
                            accept="{{vm.allowedFormat}}"
                            required></p>
-                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
-                            ng-click="vm.uploadZip(zipFile, 'collection')">{{"importFromFile.button" | translate}}</button></p>
+                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(uploadCollectionFile.name)"
+                            ng-click="vm.uploadFile(uploadCollectionFile, 'collection')">{{"importFromFile.button" | translate}}</button></p>
                 </form>
                 <div>
                     <p>&nbsp;</p>
@@ -65,12 +65,12 @@
                     <p><input type="file"
                               style="border: none"
                               ngf-select
-                              ng-model="zipFile"
+                              ng-model="uploadConceptFile"
                               name="file"
                               accept="{{vm.allowedFormat}}"
                               required></p>
-                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(zipFile.name)"
-                               ng-click="vm.uploadZip(zipFile, 'concept')">{{"importFromFile.button" | translate}}</button></p>
+                    <p><button ng-disabled="!fileUpload.$valid || !vm.isFileCorrect(uploadConceptFile.name)"
+                               ng-click="vm.uploadFile(uploadConceptFile, 'concept')">{{"importFromFile.button" | translate}}</button></p>
                 </form>
             </div>
             <div class="loader" ng-show="vm.showLoading"></div>

@@ -220,6 +220,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestException("File uploaded cannot be empty");
         }
+
         String originalFilename = multipartFile.getOriginalFilename();
         String fileBaseName = FilenameUtils.getBaseName(originalFilename);
         String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
@@ -237,7 +238,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
         importer.setImportFile(importFile);
 
         String importType = requestContext.getParameter("importType");
-        if ("concept".equals(importType)) {
+        if ("concept".equalsIgnoreCase(importType)) {
             importer.importSingleConcept();
         }
         else {

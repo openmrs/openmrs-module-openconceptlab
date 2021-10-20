@@ -330,11 +330,7 @@ public class Saver {
 					if (fromItem != null) {
 						fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 					}
-					if (fromConcept == null) {
-						String source = oclMapping.getFromSourceName();
-						String code = oclMapping.getFromConceptCode();
-						fromConcept = cacheService.getConceptByMapping(source, code);
-					}
+
 					if (fromConcept == null) {
 						throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
 								+ ", because the concept has not been imported");
@@ -353,11 +349,6 @@ public class Saver {
 						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
-						}
-						if (toConcept == null) {
-							String source = oclMapping.getToSourceName();
-							String code = oclMapping.getToConceptCode();
-							toConcept = cacheService.getConceptByMapping(source, code);
 						}
 
 						if (toConcept == null) {

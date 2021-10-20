@@ -63,6 +63,8 @@ public class OclConcept {
 
 	private Extras extras;
 
+	private List<OclMapping> mappings;
+
 	public String getType() {
 		return type;
 	}
@@ -189,6 +191,14 @@ public class OclConcept {
 
 	public void setExtras(Extras extras) {
 		this.extras = extras;
+	}
+
+	public List<OclMapping> getMappings() {
+		return mappings;
+	}
+
+	public void setMappings(List<OclMapping> mappings) {
+		this.mappings = mappings;
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)

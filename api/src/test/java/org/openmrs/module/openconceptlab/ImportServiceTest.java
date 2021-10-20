@@ -610,7 +610,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void run_shouldSetSubscriptionUrlForLocalFilePath() throws IOException, URISyntaxException {
+	public void run_shouldSetSubscriptionUrlForSingleConcept() throws IOException, URISyntaxException {
 		File zipFile = TestResources.getSimpleZipFile();
 		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
 		try {
@@ -622,10 +622,10 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			importer.setImportFile(zipFile);
 
 			TestResources.setupDaemonToken();
-			importer.run();
+			importer.importSingleConcept();
 
 			Import lastImport = importService.getLastImport();
-			assertEquals(zipFile.getAbsolutePath(), lastImport.getSubscriptionUrl());
+			assertEquals("file://" + zipFile.getAbsolutePath(), lastImport.getSubscriptionUrl());
 		} finally {
 			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
 		}

@@ -9,6 +9,9 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import static org.openmrs.module.openconceptlab.client.OclMapping.MapType.Q_AND_A;
+import static org.openmrs.module.openconceptlab.client.OclMapping.MapType.SET;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
@@ -17,6 +20,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.APIException;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
@@ -40,11 +44,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -106,18 +110,15 @@ public class Importer implements Runnable {
 	 */
 	private void openInputStream() throws IOException {
 		if (importFile != null) {
-			if (importFile.getName().endsWith(".zip")) {
+			if (importFile.getName().toLowerCase(Locale.ROOT).endsWith(".zip")) {
 				ZipFile zipFile = new ZipFile(importFile);
 				in = new CountingInputStream(Utils.extractExportInputStreamFromZip(zipFile));
-			} else if (importFile.getName().endsWith(".json")) {
+			} else if (importFile.getName().toLowerCase(Locale.ROOT).endsWith(".json")) {
 				in = new CountingInputStream(FileUtils.openInputStream(importFile));
 			}
 			else {
-				throw new IllegalStateException("Import file " + importFile.getName() + " must be either a zip or json file");
+				throw new APIException("Import file " + importFile.getName() + " must be either a zip or json file");
 			}
-			String subscriptionUrl = importFile.toUri().toString();
-
-			importService.updateSubscriptionUrl(anImport, subscriptionUrl);
 		}
 		else {
 			Subscription subscription = importService.getSubscription();
@@ -190,61 +191,61 @@ public class Importer implements Runnable {
 				runAndHandleErrors(new Task() {
 					@Override
 					public void run() throws IOException {
-
-						ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
-						ObjectMapper objectMapper = getObjectMapper();
-						String subscriptionUrl = importFile.getAbsolutePath();
-						importService.updateSubscriptionUrl(anImport, subscriptionUrl);
-						String baseUrl = getBaseUrl();
-
-						// First read the file into an OclConcept and add to the import task
-						OclConcept oclConcept;
+						ThreadPoolExecutor runner = newRunner();
 						try {
 							openInputStream();
+
+							String baseUrl = importFile.toPath().toUri().toString();
+							importService.updateSubscriptionUrl(anImport, baseUrl);
+
+							ObjectMapper objectMapper = getObjectMapper();
+
+							// First read the file into an OclConcept and add to the import task
 							JsonParser conceptParser = objectMapper.getJsonFactory().createJsonParser(in);
-							oclConcept = conceptParser.readValueAs(OclConcept.class);
+							OclConcept oclConcept = conceptParser.readValueAs(OclConcept.class);
+
+							String oclConceptUrl = oclConcept.getUrl();
 							oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
 							oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
-							importTask.setOclConcepts(Arrays.asList(oclConcept));
-						}
-						finally {
-							closeInputStream();
-						}
 
-						// Next, read the file into a List of OclMapping and add these to the import task
-						try {
-							openInputStream();
-							JsonParser mappingsParser = objectMapper.getJsonFactory().createJsonParser(in);
-							JsonToken jsonToken = advanceToListOf("mappings", null, mappingsParser);
-							if (jsonToken != JsonToken.END_OBJECT) {
-								List<OclMapping> oclMappings = new ArrayList<>(BATCH_SIZE);
-								while (mappingsParser.nextToken() != JsonToken.END_ARRAY) {
-									OclMapping oclMapping = mappingsParser.readValueAs(OclMapping.class);
-									oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
-									oclMapping.setFromConceptUrl(prependBaseUrl(baseUrl, oclMapping.getFromConceptUrl()));
-									oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
-									oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
-									// We do not import Q-AND-A mappings for which the imported concept is an answer
-									boolean isQuestionAnswer = "Q-AND-A".equals(oclMapping.getMapType());
-									if (isQuestionAnswer && oclMapping.getToConceptUrl().equals(oclConcept.getUrl())) {
-										log.debug("Skipping Q-AND-A mapping for which the imported concept is a mapped answer");
-									}
-									else if (oclMapping.getToSourceName().equals(oclConcept.getSource()) && oclMapping.getToConceptCode().equals(oclConcept.getId())) {
-										log.debug("Skipping SAME-AS Mapping for OCL ID as this is added in the ImportTask, and would result in duplicate mappings");
-									}
-									else {
-										oclMappings.add(oclMapping);
+							{
+								ImportTask importTask = new ImportTask(saver, new CacheService(conceptService),
+										importService, anImport);
+								importTask.setOclConcepts(Collections.singletonList(oclConcept));
+								runner.execute(importTask);
+							}
+
+							// Then parse the mappings from the OclConcept
+							List<OclMapping> oclMappings = new ArrayList<>(BATCH_SIZE);
+							for (OclMapping mapping : oclConcept.getMappings()) {
+								if (oclConceptUrl != null) {
+									if (Q_AND_A.equalsIgnoreCase(mapping.getMapType()) || SET.equalsIgnoreCase(
+											mapping.getMapType())) {
+										if (oclConceptUrl.equals(mapping.getToConceptUrl())) {
+											log.debug("Skipping inverse mapping to single concept [{}]", mapping);
+											continue;
+										}
 									}
 								}
-								importTask.setOclMappings(oclMappings);
+
+								mapping.setUrl(prependBaseUrl(baseUrl, mapping.getUrl()));
+
+								oclMappings.add(mapping);
+
+								if (oclMappings.size() >= BATCH_SIZE) {
+									loadMappingsBatch(runner, oclMappings);
+									oclMappings.clear();
+								}
+							}
+
+							if (oclMappings.size() != 0) {
+								loadMappingsBatch(runner, oclMappings);
 							}
 						}
 						finally {
 							closeInputStream();
 						}
 
-						ThreadPoolExecutor runner = newRunner();
-						runner.execute(importTask);
 						runner.shutdown();
 						try {
 							runner.awaitTermination(5, TimeUnit.MINUTES);
@@ -284,6 +285,7 @@ public class Importer implements Runnable {
 								if (token == JsonToken.END_OBJECT || token == null) {
 									return;
 								}
+
 								ThreadPoolExecutor runner = newRunner();
 								String baseUrl = getBaseUrl();
 								List<OclConcept> oclConcepts = new ArrayList<>(BATCH_SIZE);
@@ -318,28 +320,25 @@ public class Importer implements Runnable {
 									return;
 								}
 								runner = newRunner();
+
 								List<OclMapping> oclMappings = new ArrayList<>(BATCH_SIZE);
 								while (parser.nextToken() != JsonToken.END_ARRAY) {
-									OclMapping oclMapping = parser.readValueAs(OclMapping.class);
-									oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
-									oclMapping.setFromConceptUrl(prependBaseUrl(baseUrl, oclMapping.getFromConceptUrl()));
-									oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
-									oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
-									oclMappings.add(oclMapping);
+									OclMapping newMapping = parseMapping(baseUrl, parser);
+
+									oclMappings.add(newMapping);
+
 									if (oclMappings.size() >= BATCH_SIZE) {
-										CacheService cacheService = new CacheService(conceptService);
-										ImportTask importTask = new ImportTask(saver, cacheService, importService, anImport);
-										importTask.setOclMappings(new ArrayList<>(oclMappings));
+										loadMappingsBatch(runner, oclMappings);
 										oclMappings.clear();
-										runner.execute(importTask);
 									}
 								}
+
 								if (oclMappings.size() != 0) {
-									ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
-									importTask.setOclMappings(oclMappings);
-									runner.execute(importTask);
+									loadMappingsBatch(runner, oclMappings);
 								}
+
 								runner.shutdown();
+
 								try {
 									runner.awaitTermination(5, TimeUnit.MINUTES);
 								} catch (InterruptedException e) {
@@ -509,6 +508,22 @@ public class Importer implements Runnable {
 			url = "/" + url;
 		}
 		return baseUrl + url;
+	}
+
+	private void loadMappingsBatch(ThreadPoolExecutor runner, List<OclMapping> oclMappings) {
+		ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
+		importTask.setOclMappings(new ArrayList<>(oclMappings));
+		runner.execute(importTask);
+	}
+
+	private OclMapping parseMapping(String baseUrl, JsonParser mappingsParser)
+			throws IOException {
+		OclMapping oclMapping = mappingsParser.readValueAs(OclMapping.class);
+		oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
+		oclMapping.setFromConceptUrl(prependBaseUrl(baseUrl, oclMapping.getFromConceptUrl()));
+		oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
+		oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
+		return oclMapping;
 	}
 
 	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException {

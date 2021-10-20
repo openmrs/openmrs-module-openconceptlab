@@ -10,12 +10,14 @@ class HomeController {
     vm.showLoading = false;
     vm.textLength = 30;
     vm.updater = null;
+    vm.uploadCollectionFile = null;
+    vm.uploadConceptFile = null;
 
     vm.startImportIfNoErrors = startImportIfNoErrors;
     vm.getRunningImport = getRunningImport;
     vm.setTextLength = setTextLength;
     vm.isImporting = isImporting;
-    vm.uploadZip = uploadZip;
+    vm.uploadFile = uploadFile;
     vm.isFileCorrect = isFileCorrect;
 
     /*
@@ -38,7 +40,7 @@ class HomeController {
       return fileName.endsWith(".zip") || fileName.endsWith(".json")
     }
 
-    function uploadZip(file, importType) {
+    function uploadFile(file, importType) {
       vm.showLoading = true;
 
       let upload = Upload.upload({
