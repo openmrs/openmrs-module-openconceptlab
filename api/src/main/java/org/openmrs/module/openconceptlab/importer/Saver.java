@@ -526,6 +526,7 @@ public class Saver {
 				} else {
 					item = new Item(update, oclMapping, ItemState.UPDATED);
 					conceptSet.setConcept(member);
+					conceptSet.setSortWeight(getSortWeightForMapping(oclMapping, 1.0));
 				}
 
 				break;
@@ -537,7 +538,7 @@ public class Saver {
 			conceptSet.setConceptSet(set);
 			conceptSet.setConcept(member);
 			conceptSet.setUuid(oclMapping.getExternalId());
-			conceptSet.setSortWeight(1.0);
+			conceptSet.setSortWeight(getSortWeightForMapping(oclMapping, 1.0));
 			set.getConceptSets().add(conceptSet);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
@@ -562,9 +563,7 @@ public class Saver {
 				} else {
 					item = new Item(update, oclMapping, ItemState.UPDATED);
 					conceptAnswer.setAnswerConcept(answer);
-					if (oclMapping.getExtras() != null) {
-						conceptAnswer.setSortWeight(oclMapping.getExtras().getSortWeight());
-					}
+					conceptAnswer.setSortWeight(getSortWeightForMapping(oclMapping, null));
 				}
 
 				break;
@@ -574,11 +573,22 @@ public class Saver {
 		if (!found) {
 			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
 			conceptAnswer.setUuid(oclMapping.getExternalId());
+			conceptAnswer.setSortWeight(getSortWeightForMapping(oclMapping, null));
 			question.addAnswer(conceptAnswer);
 			item = new Item(update, oclMapping, ItemState.ADDED);
 		}
 
 		return item;
+	}
+
+	private Double getSortWeightForMapping(OclMapping oclMapping, Double defaultIfUndefined) {
+		if (oclMapping.getExtras() != null) {
+			Double sortWeight = oclMapping.getExtras().getSortWeight();
+			if (sortWeight != null) {
+				return sortWeight;
+			}
+		}
+		return defaultIfUndefined;
 	}
 
 	private void updateOrAddNamesFromOcl(Concept concept, OclConcept oclConcept) {
