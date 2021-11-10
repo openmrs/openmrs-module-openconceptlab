@@ -19,8 +19,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
+import org.openmrs.module.openconceptlab.client.Deserializer.StringBooleanDeserializer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OclConcept {
@@ -43,6 +45,7 @@ public class OclConcept {
 
 	private List<Description> descriptions = new ArrayList<>();
 
+	@JsonProperty
 	private boolean retired;
 
 	private String url;
@@ -131,6 +134,7 @@ public class OclConcept {
 		return retired;
 	}
 
+	@JsonDeserialize(using = StringBooleanDeserializer.class)
 	public void setRetired(boolean retired) {
 		this.retired = retired;
 	}
@@ -461,6 +465,7 @@ public class OclConcept {
 			return precise;
 		}
 
+		@JsonDeserialize(using = StringBooleanDeserializer.class)
 		public void setPrecise(Boolean precise) {
 			this.precise = precise;
 		}
@@ -471,4 +476,5 @@ public class OclConcept {
 	public String toString() {
 	    return new ToStringBuilder(this).append("externalId", externalId).build();
 	}
+
 }
