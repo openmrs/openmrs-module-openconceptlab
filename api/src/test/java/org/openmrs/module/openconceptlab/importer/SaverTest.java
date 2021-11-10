@@ -52,15 +52,16 @@ import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptName;
 import org.openmrs.ConceptReferenceTerm;
+import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.CacheService;
-import org.openmrs.module.openconceptlab.Item;
-import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.Item;
+import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -82,7 +83,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Qualifier("conceptService")
 	ConceptService conceptService;
 
-	@Autowired
+	@Autowired @Qualifier("openconceptlab.importService")
 	ImportService importService;
 
 	@Rule
@@ -620,6 +621,32 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
+	public void importMapping_shouldAddConceptAnswerWithSortWeight() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept question = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, question));
+
+		OclConcept answer = newOtherOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, answer));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType(MapType.Q_AND_A);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setExtras(newOclMappingExtras(356.0));
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+
+		Concept questionConcept = conceptService.getConceptByUuid(question.getExternalId());
+		Concept answerConcept = conceptService.getConceptByUuid(answer.getExternalId());
+		List<ConceptAnswer> answers = answersForConcept(questionConcept, answerConcept);
+		assertThat(answers.size(), is(1));
+		assertThat(answers.get(0).getSortWeight(), is(356.0));
+	}
+
+	@Test
 	public void importMapping_shouldRemoveConceptAnswer() throws Exception {
 		importMapping_shouldAddConceptAnswer();
 
@@ -641,7 +668,32 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void importMapping_shouldAddConceptSetMemeber() throws Exception {
+	public void importMapping_shouldUpdateConceptAnswer() throws Exception {
+		importMapping_shouldAddConceptAnswer();
+		Import update = importService.getLastImport();
+
+		Concept questionConcept = conceptService.getConceptByUuid(newOclConcept().getExternalId());
+		Concept answerConcept = conceptService.getConceptByUuid(newOtherOclConcept().getExternalId());
+
+		List<ConceptAnswer> answers = answersForConcept(questionConcept, answerConcept);
+		assertThat(answers.size(), is(1));
+		assertThat(answers.get(0).getSortWeight(), is(1.0)); // Concept Answers are given a sort weight in core if null
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType(MapType.Q_AND_A);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setExtras(newOclMappingExtras(15.0));
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+		answers = answersForConcept(questionConcept, answerConcept);
+		assertThat(answers.size(), is(1));
+		assertThat(answers.get(0).getSortWeight(), is(15.0));
+	}
+
+	@Test
+	public void importMapping_shouldAddConceptSetMember() throws Exception {
 		Import update = importService.getLastImport();
 
 		OclConcept set = newOclConcept();
@@ -666,8 +718,35 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void importMapping_shouldRemoveConceptSetMemeber() throws Exception {
-		importMapping_shouldAddConceptSetMemeber();
+	public void importMapping_shouldAddConceptSetMemberWithSortWeight() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept set = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, set));
+
+		OclConcept member = newOtherOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService), update, member));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType(MapType.SET);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setExtras(newOclMappingExtras(11.0));
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+
+		Concept setConcept = conceptService.getConceptByUuid(set.getExternalId());
+		Concept memberConcept = conceptService.getConceptByUuid(member.getExternalId());
+		List<ConceptSet> members = membersForConceptSet(setConcept, memberConcept);
+		assertThat(members.size(), is(1));
+		assertThat(members.get(0).getSortWeight(), is(11.0));
+	}
+
+	@Test
+	public void importMapping_shouldRemoveConceptSetMember() throws Exception {
+		importMapping_shouldAddConceptSetMember();
 
 		Import update = importService.getLastImport();
 
@@ -684,6 +763,34 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept setConcept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
 
 		assertThat(setConcept.getSetMembers(), is(empty()));
+	}
+
+	@Test
+	public void importMapping_shouldUpdateConceptSetMember() throws Exception {
+
+		importMapping_shouldAddConceptSetMember();
+		Import update = importService.getLastImport();
+
+		Concept setConcept = conceptService.getConceptByUuid(newOclConcept().getExternalId());
+		Concept memberConcept = conceptService.getConceptByUuid(newOtherOclConcept().getExternalId());
+
+		List<ConceptSet> members = membersForConceptSet(setConcept, memberConcept);
+		assertThat(members.size(), is(1));
+		assertThat(members.get(0).getSortWeight(), is(1.0));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType(MapType.SET);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setExtras(new OclMapping.Extras());
+		oclMapping.getExtras().setSortWeight(5.0);
+
+		saver.saveMapping(new CacheService(conceptService), update, oclMapping);
+
+		members = membersForConceptSet(setConcept, memberConcept);
+		assertThat(members.size(), is(1));
+		assertThat(members.get(0).getSortWeight(), is(5.0));
 	}
 
 	@Test
@@ -969,6 +1076,32 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		oclConcept.setNames(names);
 
 		return oclConcept;
+	}
+
+	private List<ConceptAnswer> answersForConcept(Concept question, Concept answer) {
+		List<ConceptAnswer> l = new ArrayList<>();
+		for (ConceptAnswer ca : question.getAnswers()) {
+			if (ca.getConcept().equals(question) && ca.getAnswerConcept().equals(answer)) {
+				l.add(ca);
+			}
+		}
+		return l;
+	}
+
+	private List<ConceptSet> membersForConceptSet(Concept set, Concept member) {
+		List<ConceptSet> l = new ArrayList<>();
+		for (ConceptSet cs : set.getConceptSets()) {
+			if (cs.getConceptSet().equals(set) && cs.getConcept().equals(member)) {
+				l.add(cs);
+			}
+		}
+		return l;
+	}
+
+	private OclMapping.Extras newOclMappingExtras(Double sortWeight) {
+		OclMapping.Extras extras = new OclMapping.Extras();
+		extras.setSortWeight(sortWeight);
+		return extras;
 	}
 
 	private Concept assertImported(OclConcept oclConcept) {
