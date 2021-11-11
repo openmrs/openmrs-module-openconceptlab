@@ -399,7 +399,11 @@ public class OclConcept {
 
 		private String units;
 
-		private Boolean precise = false;
+		@Deprecated
+		private Boolean precise;
+
+		@JsonProperty("allow_decimal")
+		private Boolean allowDecimal;
 
 		public Double getHiAbsolute() {
 			return hiAbsolute;
@@ -457,14 +461,23 @@ public class OclConcept {
 			this.units = units;
 		}
 
+		@Deprecated
 		public Boolean getPrecise() {
 			return precise;
 		}
 
+		@Deprecated
 		public void setPrecise(Boolean precise) {
 			this.precise = precise;
 		}
 
+		public Boolean getAllowDecimal() {
+			return allowDecimal;
+		}
+
+		public void setAllowDecimal(Boolean allowDecimal) {
+			this.allowDecimal = allowDecimal;
+		}
 	}
 
 	@Override
