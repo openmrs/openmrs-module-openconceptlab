@@ -1,15 +1,16 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
-import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
@@ -31,10 +32,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.zip.ZipFile;
 
 @Resource(name = RestConstants.VERSION_1  + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import", supportedClass = Import.class, supportedOpenmrsVersions = { "1.8.*",
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*" })
@@ -217,21 +219,31 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestException("File uploaded cannot be empty");
-        } else if (!StringUtils.equalsIgnoreCase(multipartFile.getContentType(), "application/zip")) {
-            throw new IllegalRequestException("Supplied file must be a zip file");
         }
+
+        String originalFilename = multipartFile.getOriginalFilename();
+        String fileBaseName = FilenameUtils.getBaseName(originalFilename);
+        String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String fileExtension = FilenameUtils.getExtension(originalFilename);
+        if (!fileExtension.equalsIgnoreCase("zip") && !fileExtension.equalsIgnoreCase("json")) {
+            throw new IllegalRequestException("Supplied file must be a zip file or a json file");
+        }
+        String importFilename = fileBaseName + "_" + timestamp + "." + fileExtension;
 
         ImportService importService = getImportService();
         Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
 
-        File tempFile = File.createTempFile("ocl", "zip");
-        multipartFile.transferTo(tempFile);
+        File importFile = new File(Utils.getImportDirectory(), importFilename);
+        multipartFile.transferTo(importFile);
+        importer.setImportFile(importFile);
 
-        importer.setZipFile(new ZipFile(tempFile));
-
-        UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
-        updateScheduler.scheduleNow();
-
+        String importType = requestContext.getParameter("importType");
+        if ("concept".equalsIgnoreCase(importType)) {
+            importer.importSingleConcept();
+        }
+        else {
+            importer.importCollection();
+        }
         return importService.getLastImport();
     }
 }

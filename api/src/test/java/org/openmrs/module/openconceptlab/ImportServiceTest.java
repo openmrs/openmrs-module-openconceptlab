@@ -12,7 +12,6 @@ package org.openmrs.module.openconceptlab;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.RootLogger;
 import org.hamcrest.Matcher;
@@ -25,13 +24,12 @@ import org.openmrs.Concept;
 import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
-import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.importer.Saver;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.annotation.NotTransactional;
 
 import java.io.File;
@@ -44,20 +42,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.zip.ZipFile;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.openconceptlab.client.OclClient.FILE_NAME_FORMAT;
 
 public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
-	@Autowired
+	@Autowired @Qualifier("openconceptlab.importService")
 	private ImportService importService;
 
     @Mock
@@ -111,7 +109,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	/**
-	 * @see ImportServiceImpl#getUpdatesInOrder()
+	 * @see ImportService#getImportsInOrder(int, int)
 	 * @verifies return all updates ordered descending by ids
 	 */
 	@Test
@@ -231,7 +229,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         importer.setOclClient(oclClient);
         importer.setImportService(importService);
 
-        importer.runTask();
+        importer.run();
 	}
 
     @Ignore("This test is used for update simulation")
@@ -260,7 +258,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         importer.setOclClient(oclClient);
         importer.setImportService(mockedUpdateService);
 
-        importer.runTask();
+        importer.run();
     }
 
 	@Ignore("This test is used for update simulation")
@@ -289,7 +287,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         updater.setOclClient(oclClient);
         updater.setImportService(mockedUpdateService);
 
-        updater.runTask();
+        updater.run();
     }
 
     @Test
@@ -351,7 +349,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 				conceptService.purgeConcept(conceptService.getConceptByUuid(conceptUuid));
 			}
 
-			importer.runTask();
+			importer.run();
 
 			concept = conceptService.getConceptByUuid(conceptUuid);
 			assertThat(concept, is(notNullValue()));
@@ -425,7 +423,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 				conceptService.purgeConcept(conceptService.getConceptByUuid(initialConceptUuid));
 			}
 
-			importer.runTask();
+			importer.run();
 
 			initialConcept = conceptService.getConceptByUuid(initialConceptUuid);
 			assertThat(initialConcept, is(notNullValue()));
@@ -450,7 +448,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 				conceptService.purgeConcept(conceptService.getConceptByUuid(followupConceptUuid));
 			}
 
-			importer.runTask();
+			importer.run();
 
 			followupConcept = conceptService.getConceptByUuid(followupConceptUuid);
 			assertThat(followupConcept, is(notNullValue()));
@@ -523,14 +521,14 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 				conceptService.purgeConcept(conceptService.getConceptByUuid(conceptUuid));
 			}
 
-			importer.runTask();
+			importer.run();
 
 			initialConcept = conceptService.getConceptByUuid(conceptUuid);
 			assertThat(initialConcept, is(notNullValue()));
 
 			conceptService.purgeConcept(initialConcept);
 
-			importer.runTask();
+			importer.run();
 
 			initialConcept = conceptService.getConceptByUuid(conceptUuid);
 			assertThat(initialConcept, is(nullValue()));
@@ -612,8 +610,8 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void run_shouldSetSubscriptionUrlForLocalFilePath() throws IOException, URISyntaxException {
-		ZipFile zipFile = TestResources.getSimpleZipFile();
+	public void run_shouldSetSubscriptionUrlForSingleConcept() throws IOException, URISyntaxException {
+		File zipFile = TestResources.getSimpleZipFile();
 		Level rootLoggerLevel = RootLogger.getRootLogger().getLevel();
 		try {
 			RootLogger.getRootLogger().setLevel(Level.OFF);
@@ -621,15 +619,13 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			importer.setImportService(importService);
 			importer.setConceptService(conceptService);
 			importer.setSaver(saver);
+			importer.setImportFile(zipFile);
 
 			TestResources.setupDaemonToken();
-			importer.run(zipFile);
+			importer.importSingleConcept();
 
 			Import lastImport = importService.getLastImport();
-
-			assertEquals(Context.getAdministrationService()
-							.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH),
-					lastImport.getSubscriptionUrl());
+			assertEquals("file://" + zipFile.getAbsolutePath(), lastImport.getSubscriptionUrl());
 		} finally {
 			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
 		}

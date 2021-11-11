@@ -9,16 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Date;
-
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
@@ -31,17 +21,36 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.api.db.ContextDAO;
 import org.openmrs.module.openconceptlab.CacheService;
+import org.openmrs.module.openconceptlab.Import;
+import org.openmrs.module.openconceptlab.ImportServiceImpl;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.TestResources;
-import org.openmrs.module.openconceptlab.Import;
-import org.openmrs.module.openconceptlab.ImportServiceImpl;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.test.BaseContextMockTest;
+import org.openmrs.util.OpenmrsClassLoader;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ImporterTest extends BaseContextMockTest {
 
@@ -201,10 +210,75 @@ public class ImporterTest extends BaseContextMockTest {
 		        hasUuid("def16c32-0635-3afd-8a56-a080830e2bff"), hasUuid("b705416c-ad04-356f-9d43-8945ee382722"))));
 	}
 
-	public Matcher<Item> hasUuid(String uuid) {
-		return new FeatureMatcher<Item, String>(
-		                                        is(uuid), "uuid", "uuid") {
+	/**
+	 * @see Importer#run()
+	 * @verifies create item for each concept and mapping
+	 */
+	@Test
+	public void runUpdate_shouldSuccessfullyImportSingleConceptFromJson() throws Exception {
 
+		// Set up the file we wish to import
+		File tmpFile = File.createTempFile("test", ".json");
+		try (InputStream is = OpenmrsClassLoader.getInstance().getResourceAsStream("concept-159618.json")) {
+			if (is == null) {
+				throw new IOException("could not find resource concept-159618.json");
+			}
+
+			try (FileWriter writer = new FileWriter(tmpFile)) {
+				IOUtils.copy(is, writer);
+			}
+		}
+
+		importer.setImportFile(tmpFile);
+
+		final List<String> conceptsSaved = new ArrayList<>();
+		doAnswer(new Answer<Item>() {
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Import update = (Import) invocation.getArguments()[1];
+				OclConcept oclConcept = (OclConcept) invocation.getArguments()[2];
+				conceptsSaved.add(oclConcept.getExternalId());
+				return new Item(update, oclConcept, ItemState.ADDED);
+			}
+		}).when(saver).saveConcept(any(CacheService.class), any(Import.class), any(OclConcept.class));
+
+		final List<String> mappingsSaved = new ArrayList<>();
+		doAnswer(new Answer<Item>() {
+
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Import update = (Import) invocation.getArguments()[1];
+				OclMapping oclMapping = (OclMapping) invocation.getArguments()[2];
+				mappingsSaved.add(oclMapping.getMapType() + " - " + oclMapping.getToSourceName() + ":" + oclMapping.getToConceptCode());
+				return new Item(update, oclMapping, ItemState.ADDED);
+			}
+
+		}).when(saver).saveMapping(any(CacheService.class), any(Import.class), any(OclMapping.class));
+
+		importer.importSingleConcept();
+
+		assertThat(conceptsSaved.size(), is(1));
+		assertThat(conceptsSaved.get(0), is("159618AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
+
+		// Mappings should contain concept identifier from OCL itself (refers to CIEL SAME-AS)
+		// Mappings should contain 2 Q-AND-A answers to this concept
+		// Mappings should contain 2 SAME-AS and 2 NARROWER-THAN mappings
+		// Mappings should not contain 1 mapping for which this Concept is an answer
+
+		assertThat(mappingsSaved.size(), is(7));
+		assertThat(mappingsSaved, containsInAnyOrder(
+				"SAME-AS - CIEL:159618",
+				"Q-AND-A - CIEL:1115",
+				"Q-AND-A - CIEL:1116",
+				"SAME-AS - IMO-ProcedureIT:555068",
+				"SAME-AS - SNOMED-CT:268445003",
+				"NARROWER-THAN - SNOMED-CT:169225001",
+				"NARROWER-THAN - AMPATH:6221"
+		));
+	}
+
+	public Matcher<Item> hasUuid(String uuid) {
+		return new FeatureMatcher<Item, String>(is(uuid), "uuid", "uuid") {
 			@Override
 			protected String featureValueOf(Item actual) {
 				return actual.getUuid();
@@ -214,7 +288,6 @@ public class ImporterTest extends BaseContextMockTest {
 
 	public Matcher<Item> hasUrl(String url) {
 		return new FeatureMatcher<Item, String>(is(url), "url", "url") {
-
 			@Override
 			protected String featureValueOf(Item actual) {
 				return actual.getUrl();
