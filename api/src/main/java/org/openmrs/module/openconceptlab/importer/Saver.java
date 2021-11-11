@@ -285,8 +285,6 @@ public class Saver {
 			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
 				throw new ImportException(e1);
 			}
-		}  catch (IllegalAccessException | InvocationTargetException e1) {
-			throw new ImportException(e1);
 		}
 	}
 
