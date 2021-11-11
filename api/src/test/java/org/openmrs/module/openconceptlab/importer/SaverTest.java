@@ -51,6 +51,7 @@ import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.ConceptSet;
 import org.openmrs.ConceptSource;
@@ -122,6 +123,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
 		assertImported(oclConcept);
+	}
+
+	@Test
+	public void importConcept_shouldSaveNewNumericConcept() throws Exception {
+		OclConcept oclConcept = newOclNumericConcept();
+		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+		assertImportedConceptNumeric(oclConcept);
 	}
 
 	/**
@@ -1078,6 +1086,43 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		return oclConcept;
 	}
 
+	public OclConcept newOclNumericConcept() {
+		OclConcept oclConcept = new OclConcept();
+
+		oclConcept.setExternalId("c2faa33d-427d-11ec-986b-0242ac110002");
+
+		oclConcept.setConceptClass("Question");
+		oclConcept.setDatatype("Numeric");
+		oclConcept.setDateCreated(new Date());
+		oclConcept.setDateUpdated(new Date());
+
+		oclConcept.setUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1003/");
+		oclConcept.setVersionUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1003/54ea96d28a86f20421474a3a/");
+
+		List<Name> names = new ArrayList<OclConcept.Name>();
+		Name name = new Name();
+		name.setExternalId("051ba9d7-755a-4301-87b3-8e6466f3d3fd");
+		name.setName("Test Numeric");
+		name.setLocale(Context.getLocale());
+		name.setLocalePreferred(true);
+		name.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+		names.add(name);
+		oclConcept.setNames(names);
+
+		OclConcept.Extras extras = new OclConcept.Extras();
+		extras.setLowAbsolute(0.0);
+		extras.setLowCritical(2.0);
+		extras.setLowNormal(5.0);
+		extras.setHiNormal(8.0);
+		extras.setHiCritical(10.0);
+		extras.setHiAbsolute(12.0);
+		extras.setAllowDecimal(true);
+		extras.setUnits("units");
+		oclConcept.setExtras(extras);
+
+		return oclConcept;
+	}
+
 	private List<ConceptAnswer> answersForConcept(Concept question, Concept answer) {
 		List<ConceptAnswer> l = new ArrayList<>();
 		for (ConceptAnswer ca : question.getAnswers()) {
@@ -1117,6 +1162,21 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(concept.getDescriptions(), containsDescriptionsInAnyOrder(oclConcept.getDescriptions()));
 
 		return concept;
+	}
+
+	private ConceptNumeric assertImportedConceptNumeric(OclConcept oclConcept) {
+		Concept concept = assertImported(oclConcept);
+		assertTrue(concept instanceof ConceptNumeric);
+		ConceptNumeric cn = (ConceptNumeric) concept;
+		assertThat(cn.getPrecise(), is(oclConcept.getExtras().getAllowDecimal()));
+		assertThat(cn.getHiAbsolute(), is(oclConcept.getExtras().getHiAbsolute()));
+		assertThat(cn.getHiCritical(), is(oclConcept.getExtras().getHiCritical()));
+		assertThat(cn.getHiNormal(), is(oclConcept.getExtras().getHiNormal()));
+		assertThat(cn.getLowAbsolute(), is(oclConcept.getExtras().getLowAbsolute()));
+		assertThat(cn.getLowCritical(), is(oclConcept.getExtras().getLowCritical()));
+		assertThat(cn.getLowNormal(), is(oclConcept.getExtras().getLowNormal()));
+		assertThat(cn.getUnits(), is(oclConcept.getExtras().getUnits()));
+		return cn;
 	}
 
 	private Matcher<? super ConceptName> hasName(final OclConcept.Name name) {

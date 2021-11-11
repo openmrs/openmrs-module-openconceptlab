@@ -213,11 +213,8 @@ public class Saver {
 
 			numeric.setUnits(extras.getUnits());
 
-			try {
-				numeric.setPrecise(extras.getPrecise());
-			} catch (NoSuchMethodError e) {
-				setAllowDecimalUsingReflection(numeric, extras);
-			}
+			setAllowDecimal(numeric, extras);
+
 		}
 
 		concept.setRetired(oclConcept.isRetired());
@@ -268,12 +265,26 @@ public class Saver {
 		}
 	}
 
-	private void setAllowDecimalUsingReflection(ConceptNumeric numeric, Extras extras) {
+	private void setAllowDecimal(ConceptNumeric numeric, Extras extras) {
+		Boolean allowDecimal = extras.getAllowDecimal();
+		if (allowDecimal == null) {
+			allowDecimal = extras.getPrecise();
+			if (allowDecimal != null) {
+				log.warn("precise is deprecated, use allow_decimal instead");
+			}
+		}
+		if (allowDecimal == null) {
+			allowDecimal = false;
+		}
 		try {
-            Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
-            setAllowDecimal.invoke(numeric, extras.getPrecise());
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
-			throw new ImportException(e1);
+			numeric.setPrecise(allowDecimal);
+		} catch (NoSuchMethodError e) {
+			try {
+				Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
+				setAllowDecimal.invoke(numeric, allowDecimal);
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
+				throw new ImportException(e1);
+			}
 		}
 	}
 
