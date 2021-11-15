@@ -23,9 +23,12 @@ import org.openmrs.api.ConceptService;
 public class CacheService {
 
 	ConceptService conceptService;
+	
+	OclConceptService oclConceptService;
 
-	public CacheService(ConceptService conceptService) {
+	public CacheService(ConceptService conceptService, OclConceptService oclConceptService) {
 		this.conceptService = conceptService;
+		this.oclConceptService = oclConceptService;
 	}
 
 	Map<String, ConceptDatatype> conceptDatatypes = new ConcurrentHashMap<String, ConceptDatatype>();
@@ -126,4 +129,17 @@ public class CacheService {
 			return concept;
 		}
     }
+	
+	public Concept getConceptByMapping(String source, String code) {
+		String cacheKey = source + ":" + code;
+		Concept concept = concepts.get(cacheKey);
+		if (concept == null) {
+			concept = oclConceptService.getDuplicateConceptByMapping(code, source);
+			if (concept != null) {
+				concepts.put(cacheKey, concept);
+			}
+		}
+		
+		return concept;
+	}
 }

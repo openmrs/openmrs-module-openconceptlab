@@ -88,6 +88,12 @@ public class Saver {
 		if (item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())) {
 			return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
 		}
+		
+		if (oclConcept.getSource() != null && oclConcept.getId() != null) {
+			if (cacheService.getConceptByMapping(oclConcept.getSource(), oclConcept.getId()) != null) {
+				return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
+			}
+		}
 
 		Concept concept;
 		try {
@@ -169,6 +175,7 @@ public class Saver {
 		if (oclConcept.getExternalId() != null) {
 			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		}
+		
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
@@ -341,6 +348,12 @@ public class Saver {
 					if (fromItem != null) {
 						fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 					}
+					
+					if (fromConcept == null) {
+						String source = oclMapping.getFromSourceName();
+						String code = oclMapping.getFromConceptCode();
+						fromConcept = cacheService.getConceptByMapping(source, code);
+					}
 
 					if (fromConcept == null) {
 						throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
@@ -360,6 +373,12 @@ public class Saver {
 						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
+						}
+						
+						if (toConcept == null) {
+							String source = oclMapping.getToSourceName();
+							String code = oclMapping.getToConceptCode();
+							toConcept = cacheService.getConceptByMapping(source, code);
 						}
 
 						if (toConcept == null) {
