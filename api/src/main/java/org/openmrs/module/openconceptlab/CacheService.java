@@ -130,11 +130,11 @@ public class CacheService {
 		}
     }
 	
-	public Concept getConceptByMapping(String source, String code) {
+	public Concept getConceptWithSameAsMapping(String source, String code) {
 		String cacheKey = source + ":" + code;
 		Concept concept = concepts.get(cacheKey);
 		if (concept == null) {
-			concept = oclConceptService.getDuplicateConceptByMapping(code, source);
+			concept = oclConceptService.getConceptWithSameAsMapping(code, source);
 			if (concept != null) {
 				concepts.put(cacheKey, concept);
 			}

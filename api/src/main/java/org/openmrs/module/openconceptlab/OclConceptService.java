@@ -12,12 +12,12 @@ public interface OclConceptService {
 	 * which returns concepts that are marked as the "SAME-AS" an existing concept
 	 *
 	 * @param source the name of the source to check
-	 * @param conceptId the identifier of the concept
+	 * @param code the identifier of the concept
 	 * @return the concept that is semantically the same as the requested concept or null if
 	 *  one couldn't be found.
 	 */
 	@Transactional(readOnly = true)
 	@Authorized(PrivilegeConstants.VIEW_CONCEPTS)
-	Concept getDuplicateConceptByMapping(String conceptId, String source);
+	Concept getConceptWithSameAsMapping(String code, String source);
 	
 }

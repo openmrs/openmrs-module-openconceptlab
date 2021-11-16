@@ -610,7 +610,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	@Test
-	public void saveConcept_shouldNotSaveConceptIfDuplicateMappingAlreadyExists() {
+	public void saveConcept_shouldNotSaveConceptIfSameAsMappingAlreadyExists() {
 		Import update = importService.getLastImport();
 		
 		OclConcept oclConcept = newOclConcept();
@@ -634,6 +634,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		
 		String newUuid = UUID.randomUUID().toString();
 		OclConcept duplicateConcept = newOclConcept();
+		duplicateConcept.setUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/concepts/1066/");
 		duplicateConcept.setExternalId(newUuid);
 		duplicateConcept.setSource("CIEL");
 		duplicateConcept.setSourceUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/");
@@ -642,7 +643,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		
 		Item result = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, duplicateConcept);
 		
-		assertThat(result.getState(), is(ItemState.UP_TO_DATE));
+		assertThat(result.getState(), is(ItemState.DUPLICATE));
 		assertThat(conceptService.getConceptByUuid(newUuid), nullValue());
 	}
 

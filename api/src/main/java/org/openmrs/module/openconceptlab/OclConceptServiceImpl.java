@@ -12,7 +12,7 @@ public class OclConceptServiceImpl extends BaseOpenmrsService implements OclConc
 	private DbSessionFactory dbSessionFactory;
 	
 	@Override
-	public Concept getDuplicateConceptByMapping(String conceptId, String source) {
+	public Concept getConceptWithSameAsMapping(String code, String source) {
 		@SuppressWarnings("unchecked")
 		List<Concept> concepts = dbSessionFactory.getCurrentSession().createQuery(
 						"select c "
@@ -24,7 +24,7 @@ public class OclConceptServiceImpl extends BaseOpenmrsService implements OclConc
 								+ "and upper(cm.conceptMapType.name) = 'SAME-AS' "
 								+ "and c.retired = false "
 								+ "and crt.retired = false")
-				.setParameter("code", conceptId)
+				.setParameter("code", code)
 				.setParameter("source", source)
 				.list();
 		
@@ -39,7 +39,7 @@ public class OclConceptServiceImpl extends BaseOpenmrsService implements OclConc
 		}
 		
 		if (concepts.size() > 1) {
-			throw new APIException("Multiple non-retired concepts found for mapping " + conceptId + " from source " + source);
+			throw new APIException("Multiple non-retired concepts found for mapping " + code + " from source " + source);
 		}
 		
 		return concepts.get(0);

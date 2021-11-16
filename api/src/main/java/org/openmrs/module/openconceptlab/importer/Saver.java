@@ -89,9 +89,10 @@ public class Saver {
 			return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
 		}
 		
-		if (oclConcept.getSource() != null && oclConcept.getId() != null) {
-			if (cacheService.getConceptByMapping(oclConcept.getSource(), oclConcept.getId()) != null) {
-				return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
+		// if a mapping for this concept already exists and it is not
+		if (item == null && oclConcept.getSource() != null && oclConcept.getId() != null) {
+			if (cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId()) != null) {
+				return new Item(thisImport, oclConcept, ItemState.DUPLICATE);
 			}
 		}
 
@@ -352,7 +353,7 @@ public class Saver {
 					if (fromConcept == null) {
 						String source = oclMapping.getFromSourceName();
 						String code = oclMapping.getFromConceptCode();
-						fromConcept = cacheService.getConceptByMapping(source, code);
+						fromConcept = cacheService.getConceptWithSameAsMapping(source, code);
 					}
 
 					if (fromConcept == null) {
@@ -378,7 +379,7 @@ public class Saver {
 						if (toConcept == null) {
 							String source = oclMapping.getToSourceName();
 							String code = oclMapping.getToConceptCode();
-							toConcept = cacheService.getConceptByMapping(source, code);
+							toConcept = cacheService.getConceptWithSameAsMapping(source, code);
 						}
 
 						if (toConcept == null) {
