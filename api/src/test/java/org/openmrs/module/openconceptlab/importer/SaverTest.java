@@ -134,7 +134,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldSaveNewNumericConcept() throws Exception {
 		OclConcept oclConcept = newOclNumericConcept();
-		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImportedConceptNumeric(oclConcept);
 	}
 
