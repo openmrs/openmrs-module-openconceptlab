@@ -21,6 +21,7 @@
     <p ng-show="vm.anImport.errorItemsCount > 0"><span class="formatFieldsErrors">{{vm.anImport.errorItemsCount}}</span> errors</p>
     <p ng-show="vm.anImport.ignoredErrorsCount > 0"><span class="formatFields">{{vm.anImport.ignoredErrorsCount}}</span> ignored errors</p>
     <p ng-show="vm.anImport.upToDateItemsCount > 0"><span class="formatFields">{{vm.anImport.upToDateItemsCount}}</span> up to date</p>
+    <p ng-show="vm.anImport.duplicateItems > 0"><span class="formatFields">{{vm.anImport.duplicateItems}}</span> duplicates</p>
     <p ng-show="vm.anImport.addedItemsCount > 0"><span class="formatFields">{{vm.anImport.addedItemsCount}}</span> added</p>
     <p ng-show="vm.anImport.updatedItemsCount > 0"><span class="formatFields">{{vm.anImport.updatedItemsCount}}</span> updated</p>
     <p ng-show="vm.anImport.retiredItemsCount > 0"><span class="formatFields">{{vm.anImport.retiredItemsCount}}</span> retired</p>
@@ -40,6 +41,28 @@
         <tbody>
         <tr ng-repeat="item in vm.items">
             <td class="small" ng-if="item.state === 'ERROR'">{{ item.type }}
+                ({{item.uuid }})<br>
+                <a href="{{item.versionUrl }}">View in OCL</a>
+                {{ item.status}}
+            </td>
+            <td>
+                {{item.errorMessage}}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div>
+    <table id="mainDuplicateDetails" ng-if="vm.anImport.duplicateItems > 0">
+        <thead>
+        <tr>
+            <th>Duplicates (listing limited to first 50 duplicate)</th>
+            <th>Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="item in vm.items">
+            <td class="small" ng-if="item.state === 'DUPLICATE'">{{ item.type }}
                 ({{item.uuid }})<br>
                 <a href="{{item.versionUrl }}">View in OCL</a>
                 {{ item.status}}

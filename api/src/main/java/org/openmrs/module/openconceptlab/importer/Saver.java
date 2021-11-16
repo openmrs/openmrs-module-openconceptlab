@@ -91,8 +91,13 @@ public class Saver {
 		
 		// if a mapping for this concept already exists and it is not
 		if (item == null && oclConcept.getSource() != null && oclConcept.getId() != null) {
-			if (cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId()) != null) {
-				return new Item(thisImport, oclConcept, ItemState.DUPLICATE);
+			Concept sameAsConcept = cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId());
+			if (sameAsConcept != null) {
+				Item result = new Item(thisImport, oclConcept, ItemState.DUPLICATE);
+				result.setErrorMessage(String.format(
+						"Concept %s:%s was skipped as concept %s is mapped SAME-AS %1$s:%2$s",
+						oclConcept.getSource(), oclConcept.getId(), sameAsConcept.getName(Context.getLocale())));
+				return result;
 			}
 		}
 
