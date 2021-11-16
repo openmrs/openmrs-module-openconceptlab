@@ -24,6 +24,7 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.OclConceptService;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
 import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -64,6 +65,8 @@ public class Importer implements Runnable {
 	private ImportService importService;
 
 	private ConceptService conceptService;
+	
+	private OclConceptService oclConceptService;
 
 	private OclClient oclClient;
 
@@ -87,6 +90,10 @@ public class Importer implements Runnable {
 
     public void setConceptService(ConceptService conceptService) {
 	    this.conceptService = conceptService;
+    }
+    
+    public void setOclConceptService(OclConceptService oclConceptService) {
+		this.oclConceptService = oclConceptService;
     }
 
     public void setOclClient(OclClient oclClient) {
@@ -345,7 +352,7 @@ public class Importer implements Runnable {
 			oclConcepts.add(oclConcept);
 
 			if (oclConcepts.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService,
 						anImport);
 				importTask.setOclConcepts(new ArrayList<>(oclConcepts));
 
@@ -356,7 +363,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclConcepts.size() != 0) {
-			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService, anImport);
 			importTask.setOclConcepts(oclConcepts);
 
 			runner.execute(importTask);
@@ -388,7 +395,7 @@ public class Importer implements Runnable {
 			oclMappings.add(oclMapping);
 
 			if (oclMappings.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService,
+				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService,
 						anImport);
 				importTask.setOclMappings(new ArrayList<>(oclMappings));
 
@@ -399,7 +406,7 @@ public class Importer implements Runnable {
 		}
 
 		if (oclMappings.size() != 0) {
-			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService), importService, anImport);
+			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService, anImport);
 			importTask.setOclMappings(oclMappings);
 
 			runner.execute(importTask);

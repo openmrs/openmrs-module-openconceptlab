@@ -35,8 +35,14 @@ public class OclMapping {
 	@JsonProperty("from_source_url")
 	private String fromSourceUrl;
 	
+	@JsonProperty("from_source_name")
+	private String fromSourceName;
+	
 	@JsonProperty("from_concept_url")
 	private String fromConceptUrl;
+	
+	@JsonProperty("from_concept_code")
+	private String fromConceptCode;
 	
 	@JsonProperty("to_concept_url")
 	private String toConceptUrl;
@@ -116,12 +122,28 @@ public class OclMapping {
 		this.fromSourceUrl = fromSourceUrl;
 	}
 	
+	public String getFromSourceName() {
+		return fromSourceName;
+	}
+	
+	public void setFromSourceName(String fromSourceName) {
+		this.fromSourceName = fromSourceName;
+	}
+	
 	public String getFromConceptUrl() {
 		return fromConceptUrl;
 	}
 	
 	public void setFromConceptUrl(String fromConceptUrl) {
 		this.fromConceptUrl = fromConceptUrl;
+	}
+	
+	public String getFromConceptCode() {
+		return fromConceptCode;
+	}
+	
+	public void setFromConceptCode(String fromConceptCode) {
+		this.fromConceptCode = fromConceptCode;
 	}
 	
 	public String getToSourceName() {
