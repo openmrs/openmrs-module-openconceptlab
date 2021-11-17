@@ -172,6 +172,11 @@ public class Saver {
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
 		convertConceptDatatypes(oclConcept);
 
+		Extras extras = oclConcept.getExtras();
+		if (extras == null) {
+			extras = new Extras();
+		}
+
 		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
@@ -209,25 +214,18 @@ public class Saver {
 
 		if (concept instanceof ConceptNumeric) {
 			ConceptNumeric numeric = (ConceptNumeric) concept;
-
-			Extras extras = oclConcept.getExtras();
-
 			numeric.setHiAbsolute(extras.getHiAbsolute());
-
 			numeric.setHiCritical(extras.getHiCritical());
-
 			numeric.setHiNormal(extras.getHiNormal());
-
 			numeric.setLowAbsolute(extras.getLowAbsolute());
-
 			numeric.setLowCritical(extras.getLowCritical());
-
 			numeric.setLowNormal(extras.getLowNormal());
-
 			numeric.setUnits(extras.getUnits());
-
 			setAllowDecimal(numeric, extras);
+		}
 
+		if (extras.getIsSet() != null) {
+			concept.setSet(extras.getIsSet() == 1);
 		}
 
 		concept.setRetired(oclConcept.isRetired());
