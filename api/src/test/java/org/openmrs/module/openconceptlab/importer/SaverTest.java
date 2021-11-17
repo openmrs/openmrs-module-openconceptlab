@@ -72,6 +72,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -174,37 +175,59 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void importConcept_shouldAddNewPreferredNamesInDifferentLocales() throws Exception {
 		OclConcept oclConcept = newOclConcept();
-		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
-
 		{
-			Name plName = new Name();
-			plName.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
-			plName.setName("pl name");
-			plName.setLocale(new Locale("pl"));
-			plName.setLocalePreferred(true);
-			plName.setNameType(null);
-			oclConcept.getNames().add(plName);
+			Name cn = new Name();
+			cn.setExternalId("6b15158f-47ae-11ec-8b80-0242ac110002");
+			cn.setName("Non-preferred french");
+			cn.setLocale(Locale.FRENCH);
+			cn.setLocalePreferred(false);
+			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			oclConcept.getNames().add(cn);
 		}
 		{
-			Name plPLName = new Name();
-			plPLName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
-			plPLName.setName("pl_PL name");
-			plPLName.setLocale(new Locale("pl", "PL"));
-			plPLName.setLocalePreferred(true);
-			plPLName.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
-			oclConcept.getNames().add(plPLName);
+			Name cn = new Name();
+			cn.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+			cn.setName("Preferred france");
+			cn.setLocale(Locale.FRANCE);
+			cn.setLocalePreferred(true);
+			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			oclConcept.getNames().add(cn);
+		}
+		{
+			Name cn = new Name();
+			cn.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
+			cn.setName("Preferred french");
+			cn.setLocale(Locale.FRENCH);
+			cn.setLocalePreferred(true);
+			cn.setNameType(null);
+			oclConcept.getNames().add(cn);
 		}
 
 		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
-		assertImported(oclConcept);
 
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
-		ConceptName plPlName = concept.getName(new Locale("pl", "PL"), true);
-		ConceptName plName = concept.getName(new Locale("pl"), true);
-		assertThat(plPlName.getUuid(), is("9040fc62-fc52-4b54-a10b-3dfcdfa588e3"));
-		assertTrue(plPlName.getLocalePreferred());
-		assertThat(plName.getUuid(), is("278432ec-470f-11ec-97cd-0242ac110002"));
-		assertTrue(plName.getLocalePreferred());
+		int numFound = 0;
+		for (ConceptName cn : concept.getNames()) {
+			if (cn.getUuid().equals("6b15158f-47ae-11ec-8b80-0242ac110002")) {
+				numFound++;
+				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+				assertThat(cn.getLocale(), is(Locale.FRENCH));
+				assertFalse(cn.getLocalePreferred());
+			}
+			else if (cn.getUuid().equals("9040fc62-fc52-4b54-a10b-3dfcdfa588e3")) {
+				numFound++;
+				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+				assertThat(cn.getLocale(), is(Locale.FRANCE));
+				assertTrue(cn.getLocalePreferred());
+			}
+			else if (cn.getUuid().equals("278432ec-470f-11ec-97cd-0242ac110002")) {
+				numFound++;
+				assertNull(cn.getConceptNameType());
+				assertThat(cn.getLocale(), is(Locale.FRENCH));
+				assertTrue(cn.getLocalePreferred());
+			}
+		}
+		assertThat(numFound, is(3));
 	}
 
 	/**
