@@ -27,6 +27,13 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.java-version }}
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Run Maven Build
         run: mvn clean install --batch-mode --show-version --file pom.xml
       - name: Test against 2.2 Profile
