@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
+import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
@@ -172,6 +173,11 @@ public class Saver {
 	public Concept toConcept(CacheService cacheService, OclConcept oclConcept) throws ImportException {
 		convertConceptDatatypes(oclConcept);
 
+		Extras extras = oclConcept.getExtras();
+		if (extras == null) {
+			extras = new Extras();
+		}
+
 		ConceptDatatype datatype = cacheService.getConceptDatatypeByName(oclConcept.getDatatype());
 		if (datatype == null) {
 			throw new ImportException("Datatype '" + oclConcept.getDatatype() + "' is not supported by OpenMRS");
@@ -185,6 +191,8 @@ public class Saver {
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
+			} else if (datatype.getUuid().equals(ConceptDatatype.COMPLEX_UUID)) {
+				concept = new ConceptComplex();
 			} else {
 				concept = new Concept();
 			}
@@ -207,10 +215,13 @@ public class Saver {
 
 		concept.setDatatype(datatype);
 
+		if (concept instanceof ConceptComplex) {
+			ConceptComplex conceptComplex = (ConceptComplex) concept;
+			conceptComplex.setHandler(extras.getHandler());
+		}
+
 		if (concept instanceof ConceptNumeric) {
 			ConceptNumeric numeric = (ConceptNumeric) concept;
-
-			Extras extras = oclConcept.getExtras();
 
 			numeric.setHiAbsolute(extras.getHiAbsolute());
 

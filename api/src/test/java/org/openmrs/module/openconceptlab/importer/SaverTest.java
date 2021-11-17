@@ -22,6 +22,7 @@ import org.junit.rules.ExpectedException;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
+import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
@@ -48,6 +49,7 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Name;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
+import org.openmrs.obs.handler.BinaryDataHandler;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -138,6 +140,19 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclNumericConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImportedConceptNumeric(oclConcept);
+	}
+
+	@Test
+	public void importConcept_shouldSaveNewComplexConcept() {
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setDatatype("Complex");
+		oclConcept.setExtras(new OclConcept.Extras());
+		oclConcept.getExtras().setHandler(BinaryDataHandler.class.getSimpleName());
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		Concept concept = assertImported(oclConcept);
+		assertTrue(concept instanceof ConceptComplex);
+		ConceptComplex cc = (ConceptComplex) concept;
+		assertThat(cc.getHandler(), is(oclConcept.getExtras().getHandler()));
 	}
 
 	/**
