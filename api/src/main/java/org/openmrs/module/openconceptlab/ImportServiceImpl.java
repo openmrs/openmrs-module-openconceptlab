@@ -45,6 +45,8 @@ public class ImportServiceImpl implements ImportService {
 	AdministrationService adminService;
 
 	ConceptService conceptService;
+	
+	OclConceptService oclConceptService;
 
 	public void setSessionFactory(DbSessionFactory sessionFactory) {
 	    this.sessionFactory = sessionFactory;
@@ -56,6 +58,10 @@ public class ImportServiceImpl implements ImportService {
 
 	public void setConceptService(ConceptService conceptService) {
 		this.conceptService = conceptService;
+	}
+	
+	public void setOclConceptService(OclConceptService oclConceptService) {
+		this.oclConceptService = oclConceptService;
 	}
 
 	/**
@@ -281,7 +287,7 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Item getLastSuccessfulItemByUrl(String url) {
-		return getLastSuccessfulItemByUrl(url, new CacheService(conceptService));
+		return getLastSuccessfulItemByUrl(url, new CacheService(conceptService, oclConceptService));
 	}
 
 	@Override

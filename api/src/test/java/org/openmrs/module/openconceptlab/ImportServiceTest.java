@@ -52,10 +52,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.openconceptlab.client.OclClient.FILE_NAME_FORMAT;
 
@@ -636,34 +633,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 					lastImport.getSubscriptionUrl());
 		} finally {
 			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
-		}
-	}
-
-	@Test
-	public void shouldImportSickleCell() throws IOException, URISyntaxException {
-		ZipFile zipFile = TestResources.getZipFileFromResource("sicklecell.zip");
-		Importer importer = new Importer();
-		importer.setImportService(importService);
-		importer.setConceptService(conceptService);
-		importer.setSaver(saver);
-
-		TestResources.setupDaemonToken();
-		importer.run(zipFile);
-
-		Concept sickleCellConcept = conceptService.getConceptByUuid("117642AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-		assertNotNull(sickleCellConcept);
-		assertThat(sickleCellConcept.getNames().size(), is(10));
-		for (ConceptName cn : sickleCellConcept.getNames()) {
-			if (cn.getUuid().equals("77a4bad9-2ab1-48eb-888c-5a16b72e3154")) {
-				assertThat(cn.getLocale().toString(), is("en_GB"));
-				assertTrue(cn.getLocalePreferred());
-				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
-			}
-			else if (cn.getUuid().equals("d8832d16-8f9c-45b5-ad4b-3cc25fcff003")) {
-				assertThat(cn.getLocale().toString(), is("en"));
-				assertTrue(cn.getLocalePreferred());
-				assertNull(cn.getConceptNameType());
-			}
 		}
 	}
 }

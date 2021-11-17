@@ -88,6 +88,18 @@ public class Saver {
 		if (item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())) {
 			return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
 		}
+		
+		// if a mapping for this concept already exists and it is not
+		if (item == null && oclConcept.getSource() != null && oclConcept.getId() != null) {
+			Concept sameAsConcept = cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId());
+			if (sameAsConcept != null) {
+				Item result = new Item(thisImport, oclConcept, ItemState.DUPLICATE);
+				result.setErrorMessage(String.format(
+						"Concept %s:%s was skipped as concept %s is mapped SAME-AS %1$s:%2$s",
+						oclConcept.getSource(), oclConcept.getId(), sameAsConcept.getName(Context.getLocale())));
+				return result;
+			}
+		}
 
 		Concept concept;
 		try {
@@ -169,6 +181,7 @@ public class Saver {
 		if (oclConcept.getExternalId() != null) {
 			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		}
+		
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
@@ -332,6 +345,12 @@ public class Saver {
 					if (fromItem != null) {
 						fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 					}
+					
+					if (fromConcept == null) {
+						String source = oclMapping.getFromSourceName();
+						String code = oclMapping.getFromConceptCode();
+						fromConcept = cacheService.getConceptWithSameAsMapping(source, code);
+					}
 
 					if (fromConcept == null) {
 						throw new SavingException("Cannot create mapping from concept with URL " + oclMapping.getFromConceptUrl()
@@ -351,6 +370,12 @@ public class Saver {
 						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
+						}
+						
+						if (toConcept == null) {
+							String source = oclMapping.getToSourceName();
+							String code = oclMapping.getToConceptCode();
+							toConcept = cacheService.getConceptWithSameAsMapping(source, code);
 						}
 
 						if (toConcept == null) {
