@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
@@ -630,11 +631,27 @@ public class Saver {
 					name.setUuid(version5Uuid(oclConcept.getUrl() + "/names/" + oclName.getUuid()).toString());
 				}
 				name.setConceptNameType(oclNameType);
-				name.setLocalePreferred(oclName.isLocalePreferred());
+
+				// If this concept does not yet have any names preferred in the given locale, make it preferred
+				// This is needed in order to match expected state in the Concept.addName method
+				boolean preferred = oclName.isLocalePreferred();
+				if (!preferred) {
+					preferred = !hasExistingPreferredNameInExactLocale(concept, oclName.getLocale());
+				}
+				name.setLocalePreferred(preferred);
 
 				concept.addName(name);
 			}
 		}
+	}
+
+	private boolean hasExistingPreferredNameInExactLocale(Concept concept, Locale locale) {
+		for (ConceptName cn : concept.getNames()) {
+			if (BooleanUtils.isTrue(cn.getLocalePreferred()) && cn.getLocale().equals(locale)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private List<OclConcept.Name> sortedNames(List<OclConcept.Name> names) {
