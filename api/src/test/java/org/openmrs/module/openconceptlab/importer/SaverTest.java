@@ -9,31 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -96,6 +71,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -203,7 +179,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	 * @verifies add new names to concept
 	 */
 	@Test
-	public void importConcept_shouldAddNewPreferredNamesInDifferentLocales() throws Exception {
+	public void saveConcept_shouldAddNewPreferredNamesInDifferentLocales() {
 		OclConcept oclConcept = newOclConcept();
 		{
 			Name cn = new Name();
