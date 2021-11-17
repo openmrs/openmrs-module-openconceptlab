@@ -12,7 +12,6 @@ package org.openmrs.module.openconceptlab;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.RootLogger;
 import org.hamcrest.Matcher;
@@ -31,8 +30,9 @@ import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.importer.Saver;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.annotation.NotTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,15 +49,16 @@ import java.util.zip.ZipFile;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.openconceptlab.client.OclClient.FILE_NAME_FORMAT;
 
 public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
-	@Autowired
+	@Autowired @Qualifier("openconceptlab.importService")
 	private ImportService importService;
 
     @Mock
@@ -111,7 +112,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	/**
-	 * @see ImportServiceImpl#getUpdatesInOrder()
+	 * @see ImportServiceImpl#getImportsInOrder(int, int)
 	 * @verifies return all updates ordered descending by ids
 	 */
 	@Test
@@ -302,7 +303,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
     }
 
 	@Ignore("This test passes locally, but fails on Travis-CI")
-	@NotTransactional
+	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldDoInitialUpdate() throws Exception {
 		final String conceptUuid = "159947AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -369,7 +370,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Ignore("This test passes locally, but fails on Travis-CI")
-	@NotTransactional
+	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldDoFollowupUpdate() throws Exception {
     	final String initialConceptUuid = "159947AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -473,7 +474,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Ignore("This test passes locally, but fails on Travis-CI")
-	@NotTransactional
+	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldNotRunFollowupUpdateWhenVersionDidNotChange() throws Exception {
 		final String conceptUuid = "159947AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -547,7 +548,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
     //ONLINE INTEGRATION TEST
 	@Ignore("This test passes locally, but fails on Travis-CI")
-	@NotTransactional
+	@Transactional(propagation = Propagation.NEVER)
     @Test
 	public void update_shouldFetchLatestReferenceApplicationCollectionConcepts() throws Exception {
 		Concept concept = null;
@@ -634,5 +635,4 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
 		}
 	}
-
 }

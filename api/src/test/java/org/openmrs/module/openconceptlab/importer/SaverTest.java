@@ -9,31 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -66,6 +41,7 @@ import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OclConceptService;
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
@@ -76,6 +52,32 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 
 public class SaverTest extends BaseModuleContextSensitiveTest {
 
@@ -85,7 +87,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Autowired
 	@Qualifier("conceptService")
 	ConceptService conceptService;
-	
+
 	@Autowired
 	@Qualifier("openconceptlab.conceptService")
 	OclConceptService oclConceptService;
@@ -170,6 +172,68 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		fourthName.setLocalePreferred(false);
 		fourthName.setNameType(ConceptNameType.INDEX_TERM.toString());
 		return fourthName;
+	}
+
+	/**
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 * @verifies add new names to concept
+	 */
+	@Test
+	public void saveConcept_shouldAddNewPreferredNamesInDifferentLocales() {
+		OclConcept oclConcept = newOclConcept();
+		{
+			Name cn = new Name();
+			cn.setExternalId("6b15158f-47ae-11ec-8b80-0242ac110002");
+			cn.setName("Non-preferred french");
+			cn.setLocale(Locale.FRENCH);
+			cn.setLocalePreferred(false);
+			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			oclConcept.getNames().add(cn);
+		}
+		{
+			Name cn = new Name();
+			cn.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+			cn.setName("Preferred france");
+			cn.setLocale(Locale.FRANCE);
+			cn.setLocalePreferred(true);
+			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			oclConcept.getNames().add(cn);
+		}
+		{
+			Name cn = new Name();
+			cn.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
+			cn.setName("Preferred french");
+			cn.setLocale(Locale.FRENCH);
+			cn.setLocalePreferred(true);
+			cn.setNameType(null);
+			oclConcept.getNames().add(cn);
+		}
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		int numFound = 0;
+		for (ConceptName cn : concept.getNames()) {
+			if (cn.getUuid().equals("6b15158f-47ae-11ec-8b80-0242ac110002")) {
+				numFound++;
+				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+				assertThat(cn.getLocale(), is(Locale.FRENCH));
+				assertFalse(cn.getLocalePreferred());
+			}
+			else if (cn.getUuid().equals("9040fc62-fc52-4b54-a10b-3dfcdfa588e3")) {
+				numFound++;
+				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+				assertThat(cn.getLocale(), is(Locale.FRANCE));
+				assertTrue(cn.getLocalePreferred());
+			}
+			else if (cn.getUuid().equals("278432ec-470f-11ec-97cd-0242ac110002")) {
+				numFound++;
+				assertNull(cn.getConceptNameType());
+				assertThat(cn.getLocale(), is(Locale.FRENCH));
+				assertTrue(cn.getLocalePreferred());
+			}
+		}
+		assertThat(numFound, is(3));
 	}
 
 	/**
@@ -608,30 +672,30 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
 			hasProperty("name", equalTo("Nazwa")))));
 	}
-	
+
 	@Test
 	public void saveConcept_shouldNotSaveConceptIfSameAsMappingAlreadyExists() {
 		Import update = importService.getLastImport();
-		
+
 		OclConcept oclConcept = newOclConcept();
 		oclConcept.setSource("CIEL");
 		oclConcept.setSourceUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/");
 		oclConcept.setId("1066");
-		
+
 		Item initialConcept = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
-		
+
 		importService.saveItem(initialConcept);
-		
+
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
-		
+
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToSourceName("CIEL");
 		oclMapping.setToConceptCode("1066");
-		
+
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
-		
+
 		String newUuid = UUID.randomUUID().toString();
 		OclConcept duplicateConcept = newOclConcept();
 		duplicateConcept.setUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/concepts/1066/");
@@ -640,9 +704,9 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		duplicateConcept.setSourceUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/");
 		duplicateConcept.setId("1066");
 		duplicateConcept.setVersionUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/e87c48fd962fe4583f3efd/");
-		
+
 		Item result = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, duplicateConcept);
-		
+
 		assertThat(result.getState(), is(ItemState.DUPLICATE));
 		assertThat(conceptService.getConceptByUuid(newUuid), nullValue());
 	}
@@ -1212,7 +1276,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept concept = assertImported(oclConcept);
 		assertTrue(concept instanceof ConceptNumeric);
 		ConceptNumeric cn = (ConceptNumeric) concept;
-		assertThat(cn.getPrecise(), is(oclConcept.getExtras().getAllowDecimal()));
+		assertThat(Utils.getAllowDecimal(cn), is(oclConcept.getExtras().getAllowDecimal()));
 		assertThat(cn.getHiAbsolute(), is(oclConcept.getExtras().getHiAbsolute()));
 		assertThat(cn.getHiCritical(), is(oclConcept.getExtras().getHiCritical()));
 		assertThat(cn.getHiNormal(), is(oclConcept.getExtras().getHiNormal()));

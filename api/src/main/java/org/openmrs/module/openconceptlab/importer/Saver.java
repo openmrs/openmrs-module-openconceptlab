@@ -9,8 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
-
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
@@ -33,6 +32,7 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
@@ -42,8 +42,6 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,6 +49,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+
+import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
 public class Saver {
 
@@ -289,16 +289,7 @@ public class Saver {
 		if (allowDecimal == null) {
 			allowDecimal = false;
 		}
-		try {
-			numeric.setPrecise(allowDecimal);
-		} catch (NoSuchMethodError e) {
-			try {
-				Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
-				setAllowDecimal.invoke(numeric, allowDecimal);
-			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
-				throw new ImportException(e1);
-			}
-		}
+		Utils.setAllowDecimal(numeric, allowDecimal);
 	}
 
 	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {
@@ -665,11 +656,27 @@ public class Saver {
 					name.setUuid(version5Uuid(oclConcept.getUrl() + "/names/" + oclName.getUuid()).toString());
 				}
 				name.setConceptNameType(oclNameType);
-				name.setLocalePreferred(oclName.isLocalePreferred());
+
+				// If this concept does not yet have any names preferred in the given locale, make it preferred
+				// This is needed in order to match expected state in the Concept.addName method
+				boolean preferred = oclName.isLocalePreferred();
+				if (!preferred) {
+					preferred = !hasExistingPreferredNameInExactLocale(concept, oclName.getLocale());
+				}
+				name.setLocalePreferred(preferred);
 
 				concept.addName(name);
 			}
 		}
+	}
+
+	private boolean hasExistingPreferredNameInExactLocale(Concept concept, Locale locale) {
+		for (ConceptName cn : concept.getNames()) {
+			if (BooleanUtils.isTrue(cn.getLocalePreferred()) && cn.getLocale().equals(locale)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private List<OclConcept.Name> sortedNames(List<OclConcept.Name> names) {

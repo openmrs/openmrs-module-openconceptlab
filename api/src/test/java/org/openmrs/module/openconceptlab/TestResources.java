@@ -49,6 +49,12 @@ public class TestResources {
 		return new ZipFile(newZipFile);
 	}
 
+	public static ZipFile getZipFileFromResource(String resource) throws IOException, URISyntaxException {
+		URL zipFileUrl = TestResources.class.getClassLoader().getResource(resource);
+		File zipFile = new File(zipFileUrl.toURI());
+		return new ZipFile(zipFile);
+	}
+
 	public static InputStream getSimpleResponseAsJsonStream() {
 		InputStream inputStream = getSimpleResponseAsStream();
 		OclClient oclClient = new OclClient();
