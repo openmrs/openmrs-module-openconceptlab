@@ -32,7 +32,7 @@ public class ItemsByStateSearchHandler implements SubResourceSearchHandler {
     private static final String ITEM_STATE = "state";
 
     private final SearchConfig searchConfig = new SearchConfig("default", RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import/item",
-            Arrays.asList("1.8.*", "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*"),
+            Arrays.asList("1.8.*", "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*"),
             Arrays.asList(new SearchQuery.Builder("Allows you to get items by state")
                     .withRequiredParameters(ITEM_STATE)
                     .build()));

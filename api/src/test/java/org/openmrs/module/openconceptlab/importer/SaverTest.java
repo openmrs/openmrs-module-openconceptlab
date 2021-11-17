@@ -9,30 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -64,6 +40,7 @@ import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
@@ -73,6 +50,30 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 
 public class SaverTest extends BaseModuleContextSensitiveTest {
@@ -164,6 +165,46 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		fourthName.setLocalePreferred(false);
 		fourthName.setNameType(ConceptNameType.INDEX_TERM.toString());
 		return fourthName;
+	}
+
+	/**
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 * @verifies add new names to concept
+	 */
+	@Test
+	public void importConcept_shouldAddNewPreferredNamesInDifferentLocales() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+
+		{
+			Name plName = new Name();
+			plName.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
+			plName.setName("pl name");
+			plName.setLocale(new Locale("pl"));
+			plName.setLocalePreferred(true);
+			plName.setNameType(null);
+			oclConcept.getNames().add(plName);
+		}
+		{
+			Name plPLName = new Name();
+			plPLName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+			plPLName.setName("pl_PL name");
+			plPLName.setLocale(new Locale("pl", "PL"));
+			plPLName.setLocalePreferred(true);
+			plPLName.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+			oclConcept.getNames().add(plPLName);
+		}
+
+		saver.saveConcept(new CacheService(conceptService), anImport, oclConcept);
+		assertImported(oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		ConceptName plPlName = concept.getName(new Locale("pl", "PL"), true);
+		ConceptName plName = concept.getName(new Locale("pl"), true);
+		assertThat(plPlName.getUuid(), is("9040fc62-fc52-4b54-a10b-3dfcdfa588e3"));
+		assertTrue(plPlName.getLocalePreferred());
+		assertThat(plName.getUuid(), is("278432ec-470f-11ec-97cd-0242ac110002"));
+		assertTrue(plName.getLocalePreferred());
 	}
 
 	/**
@@ -1168,7 +1209,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept concept = assertImported(oclConcept);
 		assertTrue(concept instanceof ConceptNumeric);
 		ConceptNumeric cn = (ConceptNumeric) concept;
-		assertThat(cn.getPrecise(), is(oclConcept.getExtras().getAllowDecimal()));
+		assertThat(Utils.getAllowDecimal(cn), is(oclConcept.getExtras().getAllowDecimal()));
 		assertThat(cn.getHiAbsolute(), is(oclConcept.getExtras().getHiAbsolute()));
 		assertThat(cn.getHiCritical(), is(oclConcept.getExtras().getHiCritical()));
 		assertThat(cn.getHiNormal(), is(oclConcept.getExtras().getHiNormal()));

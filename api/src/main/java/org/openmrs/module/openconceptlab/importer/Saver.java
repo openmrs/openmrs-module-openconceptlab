@@ -9,8 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
-
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
@@ -33,6 +31,7 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclConcept.Description;
@@ -42,8 +41,6 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,6 +48,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+
+import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
 public class Saver {
 
@@ -276,16 +275,7 @@ public class Saver {
 		if (allowDecimal == null) {
 			allowDecimal = false;
 		}
-		try {
-			numeric.setPrecise(allowDecimal);
-		} catch (NoSuchMethodError e) {
-			try {
-				Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
-				setAllowDecimal.invoke(numeric, allowDecimal);
-			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
-				throw new ImportException(e1);
-			}
-		}
+		Utils.setAllowDecimal(numeric, allowDecimal);
 	}
 
 	private void changeDuplicateNamesToIndexTerms(Concept concept, List<String> resolutionLog) {

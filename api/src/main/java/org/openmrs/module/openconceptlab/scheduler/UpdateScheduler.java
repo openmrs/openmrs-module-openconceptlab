@@ -9,13 +9,13 @@
  */
 package org.openmrs.module.openconceptlab.scheduler;
 
-import java.util.Calendar;
-import java.util.concurrent.ScheduledFuture;
-
-import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+import java.util.Calendar;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * It is used to run {@link Importer#run()} either as a scheduled task or on request.
@@ -26,7 +26,7 @@ public class UpdateScheduler {
 	
 	ThreadPoolTaskScheduler scheduler;
 	
-	ScheduledFuture<Importer> scheduledUpdate;
+	ScheduledFuture<?> scheduledUpdate;
 	
 	Importer importer;
 	

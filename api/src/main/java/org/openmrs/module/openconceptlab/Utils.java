@@ -9,13 +9,15 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import static org.openmrs.module.openconceptlab.OpenConceptLabConstants.OPEN_CONCEPT_LAB_NAMESPACE_UUID;
-
 import org.apache.commons.lang3.time.DateUtils;
+import org.openmrs.ConceptNumeric;
 import org.openmrs.api.APIException;
+import org.openmrs.module.openconceptlab.importer.ImportException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -27,6 +29,8 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
+
+import static org.openmrs.module.openconceptlab.OpenConceptLabConstants.OPEN_CONCEPT_LAB_NAMESPACE_UUID;
 
 /**
  * Contains most of the utility methods for Open Concept lab
@@ -177,4 +181,31 @@ public class Utils {
 		return new UUID(msb, lsb);
 	}
 
+	public static void setAllowDecimal(ConceptNumeric numeric, Boolean allowDecimal) {
+		try {
+			Method setPrecise = numeric.getClass().getDeclaredMethod("setPrecise", Boolean.class);
+			setPrecise.invoke(numeric, allowDecimal);
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			try {
+				Method setAllowDecimal = numeric.getClass().getDeclaredMethod("setAllowDecimal", Boolean.class);
+				setAllowDecimal.invoke(numeric, allowDecimal);
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
+				throw new ImportException(e1);
+			}
+		}
+	}
+
+	public static Boolean getAllowDecimal(ConceptNumeric numeric) {
+		try {
+			Method getPrecise = numeric.getClass().getDeclaredMethod("getPrecise");
+			return (Boolean) getPrecise.invoke(numeric);
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			try {
+				Method getAllowDecimal = numeric.getClass().getDeclaredMethod("getAllowDecimal");
+				return (Boolean) getAllowDecimal.invoke(numeric);
+			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e1) {
+				throw new ImportException(e1);
+			}
+		}
+	}
 }
