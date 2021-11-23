@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
+import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
@@ -190,6 +191,8 @@ public class Saver {
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
+			} else if (datatype.getUuid().equals(ConceptDatatype.COMPLEX_UUID)) {
+				concept = new ConceptComplex();
 			} else {
 				concept = new Concept();
 			}
@@ -212,8 +215,14 @@ public class Saver {
 
 		concept.setDatatype(datatype);
 
+		if (concept instanceof ConceptComplex) {
+			ConceptComplex conceptComplex = (ConceptComplex) concept;
+			conceptComplex.setHandler(extras.getHandler());
+		}
+
 		if (concept instanceof ConceptNumeric) {
 			ConceptNumeric numeric = (ConceptNumeric) concept;
+
 			numeric.setHiAbsolute(extras.getHiAbsolute());
 			numeric.setHiCritical(extras.getHiCritical());
 			numeric.setHiNormal(extras.getHiNormal());

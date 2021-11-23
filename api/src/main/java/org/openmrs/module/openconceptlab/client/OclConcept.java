@@ -9,11 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.client;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -21,6 +16,11 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OclConcept {
@@ -408,6 +408,9 @@ public class OclConcept {
 		@JsonProperty("allow_decimal")
 		private Boolean allowDecimal;
 
+		@JsonProperty("handler")
+		private String handler;
+
 		public Integer getIsSet() {
 			return isSet;
 		}
@@ -470,6 +473,14 @@ public class OclConcept {
 
 		public void setUnits(String units) {
 			this.units = units;
+		}
+
+		public String getHandler() {
+			return handler;
+		}
+
+		public void setHandler(String handler) {
+			this.handler = handler;
 		}
 
 		@Deprecated
