@@ -379,6 +379,9 @@ public class OclConcept {
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Extras {
 
+		@JsonProperty("is_set")
+		private Integer isSet;
+
 		@JsonProperty("hi_absolute")
 		private Double hiAbsolute;
 
@@ -407,6 +410,14 @@ public class OclConcept {
 
 		@JsonProperty("handler")
 		private String handler;
+
+		public Integer getIsSet() {
+			return isSet;
+		}
+
+		public void setIsSet(Integer isSet) {
+			this.isSet = isSet;
+		}
 
 		public Double getHiAbsolute() {
 			return hiAbsolute;

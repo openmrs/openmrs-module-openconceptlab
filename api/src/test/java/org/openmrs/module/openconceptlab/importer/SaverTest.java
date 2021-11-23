@@ -370,6 +370,34 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 * @verifies anImport datatype
+	 */
+	@Test
+	public void saveConcept_shouldUpdateIsSet() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setExtras(new OclConcept.Extras());
+		oclConcept.getExtras().setIsSet(null);
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		{
+			Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+			assertThat(concept.isSet(), is(Boolean.FALSE));
+		}
+		oclConcept.getExtras().setIsSet(0);
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		{
+			Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+			assertThat(concept.isSet(), is(Boolean.FALSE));
+		}
+		oclConcept.getExtras().setIsSet(1);
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		{
+			Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+			assertThat(concept.isSet(), is(Boolean.TRUE));
+		}
+	}
+
+	/**
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 * @verifies void names from concept
 	 */
 	@Test

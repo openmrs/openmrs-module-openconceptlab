@@ -224,21 +224,17 @@ public class Saver {
 			ConceptNumeric numeric = (ConceptNumeric) concept;
 
 			numeric.setHiAbsolute(extras.getHiAbsolute());
-
 			numeric.setHiCritical(extras.getHiCritical());
-
 			numeric.setHiNormal(extras.getHiNormal());
-
 			numeric.setLowAbsolute(extras.getLowAbsolute());
-
 			numeric.setLowCritical(extras.getLowCritical());
-
 			numeric.setLowNormal(extras.getLowNormal());
-
 			numeric.setUnits(extras.getUnits());
-
 			setAllowDecimal(numeric, extras);
+		}
 
+		if (extras.getIsSet() != null) {
+			concept.setSet(extras.getIsSet() == 1);
 		}
 
 		concept.setRetired(oclConcept.isRetired());
