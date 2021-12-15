@@ -667,7 +667,8 @@ public class Saver {
 				// If this concept does not yet have any names preferred in the given locale, make it preferred
 				// This is needed in order to match expected state in the Concept.addName method
 				boolean preferred = oclName.isLocalePreferred();
-				if (!preferred) {
+				boolean canBecomePreferred = (oclNameType == null || oclNameType == ConceptNameType.FULLY_SPECIFIED);
+				if (!preferred && canBecomePreferred) {
 					preferred = !hasExistingPreferredNameInExactLocale(concept, oclName.getLocale());
 				}
 				name.setLocalePreferred(preferred);
