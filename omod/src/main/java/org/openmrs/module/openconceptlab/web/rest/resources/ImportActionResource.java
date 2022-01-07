@@ -24,8 +24,11 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceD
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
-@Resource(name = RestConstants.VERSION_1  + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/importaction", supportedClass = ImportAction.class, supportedOpenmrsVersions = { "1.8.*",
-        "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*" })
+@Resource(
+        name = RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/importaction",
+        supportedClass = ImportAction.class,
+        supportedOpenmrsVersions = { "1.8.* - 2.*" }
+)
 public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
     @Override
     public ImportAction getByUniqueId(String s) {
