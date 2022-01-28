@@ -4,7 +4,7 @@
 
     <groupId>org.openmrs.module</groupId>
     <artifactId>openconceptlab</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Open Concept Lab Module</name>
     <description>Sustainable solution for using the CIEL dictionary and applying changes over time</description>
@@ -31,7 +31,7 @@
         <connection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</connection>
         <developerConnection>scm:git:git@github.com:openmrs/openmrs-module-openconceptlab</developerConnection>
         <url>https://github.com/openmrs/openmrs-module-openconceptlab</url>
-        <tag>1.3.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
