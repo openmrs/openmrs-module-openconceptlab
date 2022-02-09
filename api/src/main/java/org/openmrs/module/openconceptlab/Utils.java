@@ -208,4 +208,11 @@ public class Utils {
 			}
 		}
 	}
+
+	public static String normalizeConceptSourceName(String name) {
+		return name.toUpperCase()
+				.replace(" ", "")
+				.replace("-", "")
+				.replace("_", "");
+	}
 }

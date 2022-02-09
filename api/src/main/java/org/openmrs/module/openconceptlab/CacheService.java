@@ -9,9 +9,6 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.openmrs.Concept;
 import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
@@ -19,6 +16,11 @@ import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheService {
 
@@ -78,16 +80,38 @@ public class CacheService {
 		}
 	}
 
+	/**
+	 * If a concept name exists with an exact matching name (case-insensitive), then return it
+	 * Else, do a normalized comparison, ignoring spaces, dashes, and underscores.  If exactly one match is found,
+	 * then return it.  If more than one match is found, throw an Exception.
+	 */
 	public ConceptSource getConceptSourceByName(String name) {
 		ConceptSource conceptSource = conceptSources.get(name);
 		if (conceptSource != null) {
 			return conceptSource;
 		} else {
-			conceptSource = conceptService.getConceptSourceByName(name);
-			if (conceptSource != null) {
-				conceptSources.put(name, conceptSource);
+			String normalizedName = Utils.normalizeConceptSourceName(name);
+			ConceptSource match = null;
+			List<ConceptSource> fuzzyMatches = new ArrayList<>();
+			for (ConceptSource possibleMatch : conceptService.getAllConceptSources(true)) {
+				if (possibleMatch.getName().equalsIgnoreCase(name)) {
+					match = possibleMatch;
+				}
+				else if (Utils.normalizeConceptSourceName(possibleMatch.getName()).equals(normalizedName)) {
+					fuzzyMatches.add(possibleMatch);
+				}
 			}
-			return conceptSource;
+			if (match == null && !fuzzyMatches.isEmpty()) {
+				if (fuzzyMatches.size() > 1) {
+					String msg = "There are " + fuzzyMatches.size() + " possible matching sources for " + name;
+					throw new IllegalStateException(msg);
+				}
+				match = fuzzyMatches.get(0);
+			}
+			if (match != null) {
+				conceptSources.put(name, match);
+			}
+			return match;
 		}
 	}
 
