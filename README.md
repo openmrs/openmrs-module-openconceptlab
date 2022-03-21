@@ -56,7 +56,7 @@ Run the server:
 $ mvn openmrs-sdk:run -DserverId=refapp
 ````
 
-Once you run the command you need to wait for Jetty Started message, open up a browser ang go to:
+Once you run the command you need to wait for Jetty Started message, open up a browser and go to:
 
 [http://localhost:8080/openmrs](http://localhost:8080/openmrs)
 
