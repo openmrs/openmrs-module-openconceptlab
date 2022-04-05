@@ -82,7 +82,7 @@ public class ImportTask implements Runnable {
 							cacheService.clearCache();
 
 							item = new Item(anImport, oclConcept, ItemState.ERROR);
-							item.setErrorMessage(Importer.getErrorMessage(e));
+							item.setErrorMessage(Importer.getUserFriendlyErrorMessage(e));
 						} finally {
 							items.add(item);
 						}
@@ -110,7 +110,7 @@ public class ImportTask implements Runnable {
 							cacheService.clearCache();
 														
 							item = new Item(anImport, oclMapping, ItemState.ERROR);
-							item.setErrorMessage(Importer.getErrorMessage(e));
+							item.setErrorMessage(Importer.getUserFriendlyErrorMessage(e));
 						} finally {
 							items.add(item);
 						}

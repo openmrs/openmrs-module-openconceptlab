@@ -266,6 +266,16 @@ public class Importer implements Runnable {
 			return message;
 		}
 	}
+	
+	public static String getUserFriendlyErrorMessage(Throwable e) {
+		String message = e.getMessage();
+		Throwable rootCause = ExceptionUtils.getRootCause(e);
+		if (rootCause != null) {
+			message += " [CAUSE]: " + rootCause.getMessage();
+		}
+
+		return message;
+	}
 
 	public long getBytesDownloaded() {
 		return oclClient.getBytesDownloaded();
