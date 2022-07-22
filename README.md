@@ -2,13 +2,10 @@
 
 [![Build Status](https://github.com/openmrs/openmrs-module-openconceptlab/actions/workflows/maven.yml/badge.svg)](https://github.com/openmrs/openmrs-module-openconceptlab/actions/workflows/maven.yml)[![Codacy Badge](https://api.codacy.com/project/badge/grade/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab) [![Codacy Badge](https://api.codacy.com/project/badge/coverage/5653fb10f19049db9864a447c399ce76)](https://www.codacy.com/app/openmrs/openmrs-module-openconceptlab)
 
-### Project page
 
-[OCL Subscription Module (Design Page)](https://wiki.openmrs.org/pages/viewpage.action?pageId=70877277)
-
-### Development board
-
-[Development board](https://issues.openmrs.org/secure/RapidBoard.jspa?rapidView=93)
+The Open Concept Lab module is a module to import concepts to OpenMRS.
+The concepts from Open Concept Lab and Dictionary Manager can be imported either using a subscription url and unique token or offline from file.
+The module fetches all the items from the subscription URL updating the existing concepts, and can store subscription URL in global properties.
 
 ### Development environment
 
@@ -67,3 +64,12 @@ Every time you make changes in code in the api directory, you need to build and 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
 OCL Module is now available from the Advanced System Administration or at `/openmrs/openconceptlab/status.page`
+
+### Setup Subscription
+
+You need to set up the subscription before using the module (except for 'Import at server startup').
+You will need an account on the Open Concept Lab server, which you can create at https://app.openconceptlab.org/#/accounts/signup/
+Login and go to  your profile page by clicking your username in the page header and copy your API token, which can be found on the bottom left.
+Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL
+Enter URL and token at `/openmrs/owa/openconceptlab/index.html#/subscription` page and save changes.
+Click Subscribe and follow the next section then <b>Import from subscription server</b>.
