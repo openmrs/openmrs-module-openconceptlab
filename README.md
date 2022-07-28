@@ -73,3 +73,24 @@ Login and go to  your profile page by clicking your username in the page header 
 Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL
 Enter URL and token at `/openmrs/owa/openconceptlab/index.html#/subscription` page and save changes.
 Click Subscribe and follow the next section then <b>Import from subscription server</b>.
+
+### OpenMRS Custom Validation Schema
+
+OCL provides a “custom validation schema” feature for OpenMRS that allows the OCL API to perform extra validation checks on concepts. The OpenMRS concept validator rule includes:
+
+For any concept…
+1. Must not have more than one preferred name per locale
+2. All names (except short names) must be unique within the concept
+3. Must not have more than one short name per locale
+4. Short name must not be marked as locale preferred
+5. Only one fully specified name per locale
+6. At least one fully specified name (across all locales)
+7. Valid values for class, data type, name type, and locale
+8. All concepts should have a UUID (currently OCL’s external ID)
+9. Concept UUID should not exceed 38 characters in length
+10. Concept UUID must be unique (ideally universally… but certainly within any source/collection)
+
+For a dictionary…
+1. Fully specified names must be unique across all names (except short names and index terms) in a locale
+2. Multiple concepts cannot share the same preferred name in the same locale
+3. All concepts should have a unique external_id (OpenMRS UUID) not exceeding 38 chars
