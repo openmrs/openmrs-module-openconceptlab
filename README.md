@@ -76,14 +76,14 @@ Click Subscribe and follow the next section then <b>Import from subscription ser
 
 ### OpenMRS Custom Validation Schema
 
-OCL provides a “custom validation schema” feature for OpenMRS that allows the OCL API to perform extra validation checks on concepts. The OpenMRS concept validator rule includes:
+OCL provides a “custom validation schema” feature for OpenMRS that allows the OCL API to perform extra validation checks on concepts. You might get errors while importing concepts to OpenMRS if it is not validated with validator schema. The OpenMRS concept validator rule includes:
 
 For any concept…
+5. Only one fully specified name per locale
 1. Must not have more than one preferred name per locale
 2. All names (except short names) must be unique within the concept
 3. Must not have more than one short name per locale
 4. Short name must not be marked as locale preferred
-5. Only one fully specified name per locale
 6. At least one fully specified name (across all locales)
 7. Valid values for class, data type, name type, and locale
 8. All concepts should have a UUID (currently OCL’s external ID)
