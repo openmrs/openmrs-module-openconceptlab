@@ -58,6 +58,9 @@ public class OclMapping {
 	
 	@JsonProperty("updated_on")
 	private Date updatedOn;
+	
+	@JsonProperty("sort_weight")
+	private Double sortWeight;
 
 	@JsonProperty("extras")
 	private Extras extras;
@@ -184,6 +187,14 @@ public class OclMapping {
 
 	public void setUpdatedOn(Date updatedOn) {
 		this.updatedOn = updatedOn;
+	}
+	
+	public Double getSortWeight() {
+		return sortWeight == null ? (getExtras() != null ? getExtras().getSortWeight() : null) : sortWeight;
+	}
+	
+	public void setSortWeight(Double sortWeight) {
+		this.sortWeight = sortWeight;
 	}
 	
 	public Extras getExtras() {

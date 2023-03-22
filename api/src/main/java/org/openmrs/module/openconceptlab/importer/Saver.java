@@ -616,12 +616,11 @@ public class Saver {
 	}
 
 	private Double getSortWeightForMapping(OclMapping oclMapping, Double defaultIfUndefined) {
-		if (oclMapping.getExtras() != null) {
-			Double sortWeight = oclMapping.getExtras().getSortWeight();
-			if (sortWeight != null) {
-				return sortWeight;
-			}
+		Double sortWeight = oclMapping.getSortWeight();
+		if (sortWeight != null) {
+			return sortWeight;
 		}
+		
 		return defaultIfUndefined;
 	}
 
