@@ -277,6 +277,7 @@ public class Saver {
 					case "SHORT":
 						oclName.setNameType("SHORT");
 						break;
+					case "NONE":
 					case "SYNONYM":
 						oclName.setNameType(null);
 						break;
@@ -488,7 +489,6 @@ public class Saver {
 	 * @should should return false if both updatedOn are null
 	 * @should should return if mapping's updatedOn is after
 	 */
-
 	public boolean isMappingUpToDate(Item oldItem, OclMapping newMapping) {
 		Date oldUpdatedOn = oldItem.getUpdatedOn();
 		Date newUpdatedOn = newMapping.getUpdatedOn();
@@ -736,21 +736,25 @@ public class Saver {
                     continue;
                 }
 
-                boolean nameFound = false;
+                boolean descriptionFound = false;
                 for (ConceptDescription description : concept.getDescriptions()) {
                     if (isMatch(oclDescription, description)) {
                         //Let's make sure all is the same
                         description.setDescription(oclDescription.getDescription());
                         description.setLocale(oclDescription.getLocale());
-                        nameFound = true;
+                        descriptionFound = true;
                         break;
                     }
                 }
 
-                if (!nameFound) {
+                if (!descriptionFound) {
                     ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
                             oclDescription.getLocale());
-                    description.setUuid(oclDescription.getExternalId());
+	                if (oclDescription.getExternalId() != null) {
+		                description.setUuid(oclDescription.getExternalId());
+	                } else {
+		                description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
+	                }
                     concept.addDescription(description);
                 }
             }
