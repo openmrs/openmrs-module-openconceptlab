@@ -269,9 +269,11 @@ public class Saver {
 			if (oclName.getNameType() != null) {
 				switch (oclName.getNameType().toUpperCase(Locale.ENGLISH)) {
 					case "FULLY SPECIFIED":
+					case "FULLY-SPECIFIED":
 						oclName.setNameType("FULLY_SPECIFIED");
 						break;
 					case "INDEX TERM":
+					case "INDEX-TERM":
 						oclName.setNameType("INDEX_TERM");
 						break;
 					case "SHORT":
@@ -279,6 +281,11 @@ public class Saver {
 						break;
 					case "NONE":
 					case "SYNONYM":
+						oclName.setNameType(null);
+						break;
+					default:
+						log.warn("Found unknown name type {} for concept {}. Treating as synonym.",
+								oclName.getNameType(), oclConcept.getVersionUrl());
 						oclName.setNameType(null);
 						break;
 				}

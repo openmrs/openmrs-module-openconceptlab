@@ -194,6 +194,41 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 * @verifies add new names to concept
+	 */
+	@Test
+	public void importConcept_shouldHandleNameTypesWithDashesCorrectly() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		
+		Name thirdName = new Name();
+		thirdName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+		thirdName.setName("Third name");
+		thirdName.setLocale(new Locale("pl", "PL"));
+		thirdName.setLocalePreferred(true);
+		thirdName.setNameType("Fully-Specified");
+		oclConcept.getNames().add(thirdName);
+		
+		Name fourthName = new Name();
+		fourthName.setExternalId("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
+		fourthName.setName("Fourth name");
+		fourthName.setLocale(Context.getLocale());
+		fourthName.setLocalePreferred(false);
+		fourthName.setNameType("Index-Term");
+		oclConcept.getNames().add(fourthName);
+		
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		assertImported(oclConcept);
+		
+		ConceptName thirdConceptName = conceptService.getConceptNameByUuid("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+		assertThat(thirdConceptName.getConceptNameType(), equalTo(ConceptNameType.FULLY_SPECIFIED));
+		
+		ConceptName fourthConceptName = conceptService.getConceptNameByUuid("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
+		assertThat(fourthConceptName.getConceptNameType(), equalTo(ConceptNameType.INDEX_TERM));
+	}
+	
+	/**
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 */
 	@Test
 	public void importConcept_shouldHandleTheNoneNameTypeCorrectly() throws Exception {
