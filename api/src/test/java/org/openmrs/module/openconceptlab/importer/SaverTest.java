@@ -118,7 +118,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void stopUpdate() {
 		importService.stopImport(importService.getLastImport());
 	}
-
+	
 	private Subscription generateSubscription() {
 		Subscription sub = new Subscription();
 		sub.setToken("token");
@@ -370,7 +370,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
-	 * @verifies anImport name type in same name with different uuid
+	 * TODO: Not
 	 */
 	@Test
 	public void importConcept_shouldUpdateNamesWithDifferentUuids() throws Exception {
@@ -1542,9 +1542,11 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	private Matcher<? super ConceptName> hasName(final OclConcept.Name name) {
 		return new TypeSafeMatcher<ConceptName>(
 		                                        ConceptName.class) {
-
+			
 			@Override
 			public void describeTo(org.hamcrest.Description description) {
+				description.appendText("Concept name \"").appendText(name.getName()).appendText("\" of type ")
+						.appendText(name.getNameType());
 			}
 
 			@Override
@@ -1578,11 +1580,12 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	private Matcher<? super ConceptDescription> hasDescription(final Description description) {
 		return new TypeSafeMatcher<ConceptDescription>(
 		                                               ConceptDescription.class) {
-
+			
 			@Override
-			public void describeTo(org.hamcrest.Description description) {
+			public void describeTo(org.hamcrest.Description desc) {
+				desc.appendText("Concept description").appendText("[").appendText(description.getDescription()).appendText("]");
 			}
-
+			
 			@Override
 			protected boolean matchesSafely(ConceptDescription item) {
 				Description actualDescription = new Description();

@@ -267,13 +267,11 @@ public class Saver {
 	private void convertConceptNameTypes(OclConcept oclConcept) {
 		for (OclConcept.Name oclName: oclConcept.getNames()) {
 			if (oclName.getNameType() != null) {
-				switch (oclName.getNameType().toUpperCase(Locale.ENGLISH)) {
+				switch (oclName.getNameType().toUpperCase(Locale.ENGLISH).replaceAll("[\\-_]", " ")) {
 					case "FULLY SPECIFIED":
-					case "FULLY-SPECIFIED":
 						oclName.setNameType("FULLY_SPECIFIED");
 						break;
 					case "INDEX TERM":
-					case "INDEX-TERM":
 						oclName.setNameType("INDEX_TERM");
 						break;
 					case "SHORT":
@@ -729,7 +727,7 @@ public class Saver {
 					break;
 				}
 			}
-			if (!nameFound && !name.isVoided()) {
+			if (!nameFound && !name.getVoided()) {
 				name.setVoided(true);
 				name.setVoidReason("Removed from OCL");
 			}
