@@ -756,7 +756,7 @@ public class Saver {
                 if (!descriptionFound) {
                     ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
                             oclDescription.getLocale());
-	                if (oclDescription.getExternalId() != null) {
+	                if (oclDescription.getExternalId() != null && !oclDescription.getExternalId().isEmpty()) {
 		                description.setUuid(oclDescription.getExternalId());
 	                } else {
 		                description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
