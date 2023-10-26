@@ -27,8 +27,8 @@
                         </goals>
                         <phase>validate</phase>
                         <configuration>
-                            <nodeVersion>v12.16.0</nodeVersion>
-                            <npmVersion>6.13.4</npmVersion>
+                            <nodeVersion>v14.17.0</nodeVersion>
+                            <npmVersion>7.6.2</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
