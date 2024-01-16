@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -1187,7 +1188,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void importMapping_shouldRemoveConceptMappingAndRetireTerm() throws Exception {
+	public void importMapping_shouldRemoveConceptMapping() throws Exception {
 		importMapping_shouldAddConceptMappingAndTerm();
 
 		Import update = importService.getLastImport();
@@ -1208,33 +1209,44 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
 
 		assertThat(concept.getConceptMappings(), is(empty()));
-		assertThat(term.isRetired(), is(true));
+		assertThat(BooleanUtils.isTrue(term.getRetired()), is(false));
 	}
 
 	@Test
-	public void importMapping_addConceptMappingAndUnretireTerm() throws Exception {
+	public void importMapping_shouldNotDuplicateMapping() throws Exception {
 		importMapping_shouldAddConceptMappingAndTerm();
-		importMapping_shouldRemoveConceptMappingAndRetireTerm();
 
 		Import update = importService.getLastImport();
 
+		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
+		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
+		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
+		ConceptMapType mapType = conceptService.getConceptMapTypeByName("SAME_AS");
+
+		assertThat(concept.getConceptMappings().size(), is(1));
+		ConceptMap cm = concept.getConceptMappings().iterator().next();
+		assertThat(cm.getConcept(), equalTo(concept));
+		assertThat(cm.getConceptReferenceTerm(), equalTo(term));
+		assertThat(cm.getConceptMapType(), equalTo(mapType));
+
 		OclMapping oclMapping = new OclMapping();
-		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setExternalId(UUID.randomUUID().toString());
 
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToSourceName("SNOMED CT");
 		oclMapping.setToConceptCode("1001");
-		oclMapping.setRetired(false);
 
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 
-		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
-
-		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
-		ConceptMapType mapType = conceptService.getConceptMapTypeByName("SAME_AS");
-		assertThat(concept.getConceptMappings(), contains(hasMapping(source, "1001", mapType)));
+		concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
+		assertThat(concept.getConceptMappings().size(), is(1));
+		cm = concept.getConceptMappings().iterator().next();
+		assertThat(cm.getConcept(), equalTo(concept));
+		assertThat(cm.getConceptReferenceTerm(), equalTo(term));
+		assertThat(cm.getConceptMapType(), equalTo(mapType));
 	}
+
 	
 	@Test
 	public void importMapping_shouldUpdateMappingOnylIfItHasBeenUpdatedSinceLastImport() throws Exception {
