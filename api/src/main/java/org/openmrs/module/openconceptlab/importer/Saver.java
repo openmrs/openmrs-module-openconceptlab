@@ -439,29 +439,70 @@ public class Saver {
 					}
 
 					if (fromConcept != null) {
+
+						// Ensure a concept reference term exists that matches the passed in source/code
+						ConceptReferenceTerm term;
+						synchronized (CREATE_CONCEPT_REFERENCE_TERM_LOCK) {
+							term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
+							if (term == null) {
+								term = new ConceptReferenceTerm();
+								term.setConceptSource(toSource);
+								term.setCode(oclMapping.getToConceptCode());
+								conceptService.saveConceptReferenceTerm(term);
+							}
+							else {
+								// If that term was previously retired, unretire it
+								if (BooleanUtils.isTrue(term.getRetired())) {
+									if (!BooleanUtils.isTrue(oclMapping.getRetired())) {
+										term.setRetired(false);
+										term.setRetiredBy(null);
+										term.setDateRetired(null);
+										term.setRetireReason(null);
+										conceptService.saveConceptReferenceTerm(term);
+									}
+								}
+							}
+						}
+
+						// Track what kind of change the incoming item state represents
+						ItemState state;
+
+						// Get any existing ConceptMap entry by uuid
 						ConceptMap conceptMap = importService.getConceptMapByUuid(oclMapping.getExternalId());
 
-						ConceptReferenceTerm term = createOrUpdateConceptReferenceTerm(oclMapping, conceptMap, toSource);
-
+						// If we find an existing Map by uuid, update it to match the passed in mapping
 						if (conceptMap != null) {
 							if (!conceptMap.getConcept().equals(fromConcept)) {
-								//Concept changed, it would be unusual, but still probable
 								Concept previousConcept = conceptMap.getConcept();
-
 								previousConcept.removeConceptMapping(conceptMap);
 								importService.updateConceptWithoutValidation(previousConcept);
-
 								fromConcept.addConceptMapping(conceptMap);
 							}
+							conceptMap.setConceptReferenceTerm(term);
+							conceptMap.setConceptMapType(mapType);
+						}
+						// If we don't find an existing Map by uuid, look for an exact match on the Concept
+						else {
+							for (ConceptMap existingMap : fromConcept.getConceptMappings()) {
+								if (existingMap.getConceptReferenceTerm().equals(term)) {
+									if (existingMap.getConceptMapType().equals(mapType)) {
+										conceptMap = existingMap;
+									}
+								}
+							}
+						}
 
+						// If we found an existing mapping, determine whether to retire or update
+						if (conceptMap != null) {
 							if (Boolean.TRUE.equals(oclMapping.getRetired())) {
-								item = new Item(update, oclMapping, ItemState.RETIRED);
+								state = ItemState.RETIRED;
 								fromConcept.removeConceptMapping(conceptMap);
 							} else {
-								item = new Item(update, oclMapping, ItemState.UPDATED);
-								conceptMap.setConceptMapType(mapType);
+								state = ItemState.UPDATED;
 							}
-						} else {
+						}
+						// Otherwise, create a new mapping with an appropriate UUID and add to the concept
+						else {
 							conceptMap = new ConceptMap();
 							if (oclMapping.getExternalId() != null) {
 								conceptMap.setUuid(oclMapping.getExternalId());
@@ -471,10 +512,10 @@ public class Saver {
 							conceptMap.setConceptReferenceTerm(term);
 							conceptMap.setConceptMapType(mapType);
 							fromConcept.addConceptMapping(conceptMap);
-
-							item = new Item(update, oclMapping, ItemState.ADDED);
+							state = ItemState.ADDED;
 						}
 
+						item = new Item(update, oclMapping, state);
 						importService.updateConceptWithoutValidation(fromConcept);
 					} else {
 						throw new SavingException("Mapping " + oclMapping.getUrl() + " is not supported");
@@ -507,45 +548,6 @@ public class Saver {
 		}
 		//this is first anImport - old version updatedOn is null
 		else return false;
-	}
-
-
-	ConceptReferenceTerm createOrUpdateConceptReferenceTerm(OclMapping oclMapping, ConceptMap conceptMap,
-	        ConceptSource toSource) {
-		ConceptReferenceTerm term = null;
-		if (conceptMap == null) {
-			term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
-		} else {
-			term = conceptMap.getConceptReferenceTerm();
-		}
-
-		if (term == null) {
-			synchronized (CREATE_CONCEPT_REFERENCE_TERM_LOCK) {
-	            term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
-
-	            if (term == null) {
-	            	term = new ConceptReferenceTerm();
-	            	term.setConceptSource(toSource);
-	        		term.setCode(oclMapping.getToConceptCode());
-
-	        		conceptService.saveConceptReferenceTerm(term);
-	            }
-            }
-		}
-
-		if (term.isRetired() != oclMapping.isRetired()) {
-			term.setRetired(oclMapping.isRetired());
-			if (oclMapping.isRetired()) {
-				term.setRetireReason("OCL subscription");
-			} else {
-				term.setRetireReason(null);
-				term.setRetiredBy(null);
-			}
-
-			importService.updateConceptReferenceTermWithoutValidation(term);
-		}
-
-		return term;
 	}
 
 	Item updateOrAddSetMembersFromOcl(Import update, OclMapping oclMapping, Concept set, Concept member) {
