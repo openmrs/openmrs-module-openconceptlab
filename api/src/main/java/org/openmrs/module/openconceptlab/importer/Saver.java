@@ -40,13 +40,13 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Description;
 import org.openmrs.module.openconceptlab.client.OclConcept.Extras;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
+import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -501,22 +501,30 @@ public class Saver {
 								state = ItemState.UPDATED;
 							}
 						}
-						// Otherwise, create a new mapping with an appropriate UUID and add to the concept
+						// Otherwise, if no existing mapping is found, create if the incoming mapping is not retired
 						else {
-							conceptMap = new ConceptMap();
-							if (oclMapping.getExternalId() != null) {
-								conceptMap.setUuid(oclMapping.getExternalId());
-							} else {
-								conceptMap.setUuid(version5Uuid(oclMapping.getUrl()).toString());
+							if (BooleanUtils.isNotTrue(oclMapping.getRetired())) {
+								conceptMap = new ConceptMap();
+								if (oclMapping.getExternalId() != null) {
+									conceptMap.setUuid(oclMapping.getExternalId());
+								} else {
+									conceptMap.setUuid(version5Uuid(oclMapping.getUrl()).toString());
+								}
+								conceptMap.setConceptReferenceTerm(term);
+								conceptMap.setConceptMapType(mapType);
+								fromConcept.addConceptMapping(conceptMap);
+								state = ItemState.ADDED;
 							}
-							conceptMap.setConceptReferenceTerm(term);
-							conceptMap.setConceptMapType(mapType);
-							fromConcept.addConceptMapping(conceptMap);
-							state = ItemState.ADDED;
+							else {
+								// If the incoming mapping is retired, and no existing mapping is found, up to date
+								state = ItemState.UP_TO_DATE;
+							}
 						}
 
 						item = new Item(update, oclMapping, state);
-						importService.updateConceptWithoutValidation(fromConcept);
+						if (state != ItemState.UP_TO_DATE) {
+							importService.updateConceptWithoutValidation(fromConcept);
+						}
 					} else {
 						throw new SavingException("Mapping " + oclMapping.getUrl() + " is not supported");
 					}
@@ -536,18 +544,9 @@ public class Saver {
 	 * @should should return if mapping's updatedOn is after
 	 */
 	public boolean isMappingUpToDate(Item oldItem, OclMapping newMapping) {
-		Date oldUpdatedOn = oldItem.getUpdatedOn();
-		Date newUpdatedOn = newMapping.getUpdatedOn();
-		//mapping never was updated
-		if(oldUpdatedOn==null&&newUpdatedOn==null){
-			return true;
-		}
-		//mapping was updated at least once
-		else if(oldUpdatedOn!=null&&newUpdatedOn!=null){
-				return newUpdatedOn.equals(oldUpdatedOn);
-		}
-		//this is first anImport - old version updatedOn is null
-		else return false;
+		boolean updateDatesMatch = OpenmrsUtil.nullSafeEquals(oldItem.getUpdatedOn(), newMapping.getUpdatedOn());
+		boolean retiredMatch = newMapping.isRetired() == (oldItem.getState() == ItemState.RETIRED);
+		return updateDatesMatch && retiredMatch;
 	}
 
 	Item updateOrAddSetMembersFromOcl(Import update, OclMapping oclMapping, Concept set, Concept member) {
