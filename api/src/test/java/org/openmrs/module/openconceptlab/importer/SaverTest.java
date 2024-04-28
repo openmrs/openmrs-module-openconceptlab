@@ -849,7 +849,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void saveConcept_shouldNotSaveConceptIfSameAsMappingAlreadyExists() {
+	public void saveConcept_shouldUpdateUsingSameAsMappingIfUuidDoesNotMatch() {
 		Import update = importService.getLastImport();
 
 		OclConcept oclConcept = newOclConcept();
@@ -857,9 +857,10 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		oclConcept.setSourceUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/");
 		oclConcept.setId("1066");
 
-		Item initialConcept = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
-
-		importService.saveItem(initialConcept);
+		Item initialItem = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+		importService.saveItem(initialItem);
+		Concept initialConcept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertThat(initialConcept.getDatatype().getName(), is("N/A"));
 
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
@@ -879,11 +880,15 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		duplicateConcept.setSourceUrl("https://api.openconceptlab.org/orgs/CIEL/sources/CIEL/");
 		duplicateConcept.setId("1066");
 		duplicateConcept.setVersionUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/e87c48fd962fe4583f3efd/");
+		duplicateConcept.setDatatype("Coded");
 
 		Item result = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, duplicateConcept);
 
-		assertThat(result.getState(), is(ItemState.DUPLICATE));
+		assertThat(result.getState(), is(ItemState.UPDATED));
 		assertThat(conceptService.getConceptByUuid(newUuid), nullValue());
+
+		Concept updatedConcept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertThat(updatedConcept.getDatatype().getName(), equalTo("Coded"));
 	}
 
 	@Test
