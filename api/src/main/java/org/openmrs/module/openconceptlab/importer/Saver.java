@@ -89,18 +89,6 @@ public class Saver {
 		if (item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())) {
 			return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
 		}
-		
-		// if a mapping for this concept already exists and it is not
-		if (item == null && oclConcept.getSource() != null && oclConcept.getId() != null) {
-			Concept sameAsConcept = cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId());
-			if (sameAsConcept != null) {
-				Item result = new Item(thisImport, oclConcept, ItemState.DUPLICATE);
-				result.setErrorMessage(String.format(
-						"Concept %s:%s was skipped as concept %s is mapped SAME-AS %1$s:%2$s",
-						oclConcept.getSource(), oclConcept.getId(), sameAsConcept.getName(Context.getLocale())));
-				return result;
-			}
-		}
 
 		Concept concept;
 		try {
@@ -186,6 +174,11 @@ public class Saver {
 		Concept concept = null;
 		if (oclConcept.getExternalId() != null) {
 			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
+		}
+
+		// If a match is not made on UUID, attempt to make a match on SAME-AS mapping
+		if (concept == null) {
+			concept = cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId());
 		}
 		
 		if (concept == null) {
