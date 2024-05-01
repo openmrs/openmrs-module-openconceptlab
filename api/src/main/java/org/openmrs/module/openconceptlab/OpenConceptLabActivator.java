@@ -103,14 +103,14 @@ public class OpenConceptLabActivator extends BaseModuleActivator implements Daem
 	 * In this situation, we want to ensure these imports are marked as failed at the next startup, so that
 	 * subsequent import attempts can succeed without errors that imports are already in progress
 	 */
-	protected void markInProgressImportsAsFailed() {
+	private void markInProgressImportsAsFailed() {
 		ImportService importService = Context.getService(ImportService.class);
 		List<Import> inProgressImports = importService.getInProgressImports();
 		if (!inProgressImports.isEmpty()) {
 			log.warn("Found " + inProgressImports.size() + " in progress imports at startup");
 			for (Import inProgressImport : inProgressImports) {
 				log.warn("Updating Import#" + inProgressImport.getImportId() + " as failed");
-				importService.failImport(inProgressImport, "System restarted during import");
+				importService.failImport(inProgressImport, "System interruption during import");
 				importService.stopImport(inProgressImport);
 			}
 		}
