@@ -20,6 +20,9 @@ public interface ImportService {
     @Transactional(readOnly = true)
 	List<Import> getImportsInOrder(int first, int max);
 
+	@Transactional(readOnly = true)
+	List<Import> getInProgressImports();
+
     @Transactional(readOnly = true)
 	List<Concept> getConceptsByName(String name, Locale locale);
 
