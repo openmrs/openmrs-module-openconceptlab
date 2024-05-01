@@ -13,6 +13,7 @@ package org.openmrs.module.openconceptlab;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.DaemonToken;
 import org.openmrs.module.DaemonTokenAware;
 import org.openmrs.module.ModuleActivator;
@@ -24,12 +25,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.zip.ZipFile;
 
 /**
  * This class contains the logic that is run every time this module is either started or stopped.
  */
-public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAware {
+public class OpenConceptLabActivator extends BaseModuleActivator implements DaemonTokenAware {
 
 	private static final Logger log = LoggerFactory.getLogger(OpenConceptLabActivator.class);
 
@@ -49,6 +51,8 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 		if (!Context.isSessionOpen()) {
 			Context.openSession();
 		}
+
+		markInProgressImportsAsFailed();
 
 		String loadAtStartupPath = Context.getAdministrationService()
 				.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
@@ -91,6 +95,25 @@ public class OpenConceptLabActivator implements ModuleActivator, DaemonTokenAwar
 		}
 		scheduler.scheduleUpdate();
 		log.info("Open Concept Lab Module refreshed");
+	}
+
+	/**
+	 * If OpenMRS is unexpectedly shutdown while an OCL Import is in progress, the import record in the database
+	 * can be left in an "in progress" state, even though the import is no longer actually running.
+	 * In this situation, we want to ensure these imports are marked as failed at the next startup, so that
+	 * subsequent import attempts can succeed without errors that imports are already in progress
+	 */
+	private void markInProgressImportsAsFailed() {
+		ImportService importService = Context.getService(ImportService.class);
+		List<Import> inProgressImports = importService.getInProgressImports();
+		if (!inProgressImports.isEmpty()) {
+			log.warn("Found " + inProgressImports.size() + " in progress imports at startup");
+			for (Import inProgressImport : inProgressImports) {
+				log.warn("Updating Import#" + inProgressImport.getImportId() + " as failed");
+				importService.failImport(inProgressImport, "System interruption during import");
+				importService.stopImport(inProgressImport);
+			}
+		}
 	}
 
 	/**

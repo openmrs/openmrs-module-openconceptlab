@@ -80,6 +80,15 @@ public class ImportServiceImpl implements ImportService {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public List<Import> getInProgressImports() {
+		Criteria c = getSession().createCriteria(Import.class);
+		c.add(Restrictions.isNull("localDateStopped"));
+		c.addOrder(Order.desc("importId"));
+		return c.list();
+	}
+
+	@Override
 	public List<Concept> getConceptsByName(String name, Locale locale) {
 		Criteria criteria = getSession().createCriteria(ConceptName.class);
 		criteria.add(Restrictions.eq("voided", false));
