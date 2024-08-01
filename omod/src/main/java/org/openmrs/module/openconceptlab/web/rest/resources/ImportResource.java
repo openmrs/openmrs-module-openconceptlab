@@ -27,6 +27,7 @@ import org.openmrs.module.webservices.rest.web.response.GenericRestException;
 import org.openmrs.module.webservices.rest.web.response.IllegalRequestException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
+import org.openmrs.util.PrivilegeConstants;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -223,6 +224,8 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
     @Override
     public Object upload(MultipartFile multipartFile, RequestContext requestContext) throws ResponseException, IOException {
+        Context.requirePrivilege(PrivilegeConstants.MANAGE_CONCEPTS);
+
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestException("File uploaded cannot be empty");
         } else if (!StringUtils.equalsIgnoreCase(multipartFile.getContentType(), "application/zip")) {

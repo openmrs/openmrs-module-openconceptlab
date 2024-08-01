@@ -1,6 +1,8 @@
 package org.openmrs.module.openconceptlab;
 
 import org.openmrs.Concept;
+import org.openmrs.annotation.Authorized;
+import org.openmrs.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface OclConceptService {
@@ -15,6 +17,7 @@ public interface OclConceptService {
 	 *  one couldn't be found.
 	 */
 	@Transactional(readOnly = true)
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
 	Concept getConceptWithSameAsMapping(String code, String source);
 	
 }
