@@ -661,16 +661,7 @@ public class Saver {
 					name.setUuid(version5Uuid(oclConcept.getUrl() + "/names/" + oclName.getUuid()).toString());
 				}
 				name.setConceptNameType(oclNameType);
-
-				// If this concept does not yet have any names preferred in the given locale, make it preferred
-				// This is needed in order to match expected state in the Concept.addName method
-				boolean preferred = oclName.isLocalePreferred();
-				boolean canBecomePreferred = (oclNameType == null || oclNameType == ConceptNameType.FULLY_SPECIFIED);
-				if (!preferred && canBecomePreferred) {
-					preferred = !hasExistingPreferredNameInExactLocale(concept, oclName.getLocale());
-				}
-				name.setLocalePreferred(preferred);
-
+				name.setLocalePreferred(oclName.isLocalePreferred());
 				concept.addName(name);
 			}
 		}

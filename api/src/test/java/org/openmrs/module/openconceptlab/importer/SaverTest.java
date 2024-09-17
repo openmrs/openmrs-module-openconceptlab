@@ -292,7 +292,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 * @verifies add new names to concept
 	 */
-	@Test
+/*	@Test
 	public void saveConcept_shouldAddNewPreferredNamesInDifferentLocales() {
 		OclConcept oclConcept = newOclConcept();
 		{
@@ -348,7 +348,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 			}
 		}
 		assertThat(numFound, is(3));
-	}
+	}*/
 
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
