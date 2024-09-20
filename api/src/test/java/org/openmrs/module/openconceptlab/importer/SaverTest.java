@@ -36,6 +36,7 @@ import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.ModuleUtil;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
@@ -52,6 +53,7 @@ import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.obs.handler.BinaryDataHandler;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.openmrs.util.OpenmrsConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -62,9 +64,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -294,60 +294,64 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void saveConcept_shouldAddNewPreferredNamesInDifferentLocales() {
-		OclConcept oclConcept = newOclConcept();
-		{
-			Name cn = new Name();
-			cn.setExternalId("6b15158f-47ae-11ec-8b80-0242ac110002");
-			cn.setName("Non-preferred french");
-			cn.setLocale(Locale.FRENCH);
-			cn.setLocalePreferred(false);
-			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
-			oclConcept.getNames().add(cn);
-		}
-		{
-			Name cn = new Name();
-			cn.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
-			cn.setName("Preferred france");
-			cn.setLocale(Locale.FRANCE);
-			cn.setLocalePreferred(true);
-			cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
-			oclConcept.getNames().add(cn);
-		}
-		{
-			Name cn = new Name();
-			cn.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
-			cn.setName("Preferred french");
-			cn.setLocale(Locale.FRENCH);
-			cn.setLocalePreferred(true);
-			cn.setNameType(null);
-			oclConcept.getNames().add(cn);
-		}
+		// this will only pass against 2.4.6+, 2.5.13+, 2.6.8+, and 2.7.x and above
+		// (due to: https://openmrs.atlassian.net/browse/TRUNK-6265)
 
-		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		if (ModuleUtil.matchRequiredVersions(OpenmrsConstants.OPENMRS_VERSION_SHORT, "2.4.6")) {
 
-		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
-		int numFound = 0;
-		for (ConceptName cn : concept.getNames()) {
-			if (cn.getUuid().equals("6b15158f-47ae-11ec-8b80-0242ac110002")) {
-				numFound++;
-				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
-				assertThat(cn.getLocale(), is(Locale.FRENCH));
-				assertFalse(cn.getLocalePreferred());
+			OclConcept oclConcept = newOclConcept();
+			{
+				Name cn = new Name();
+				cn.setExternalId("6b15158f-47ae-11ec-8b80-0242ac110002");
+				cn.setName("Non-preferred french");
+				cn.setLocale(Locale.FRENCH);
+				cn.setLocalePreferred(false);
+				cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+				oclConcept.getNames().add(cn);
 			}
-			else if (cn.getUuid().equals("9040fc62-fc52-4b54-a10b-3dfcdfa588e3")) {
-				numFound++;
-				assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
-				assertThat(cn.getLocale(), is(Locale.FRANCE));
-				assertTrue(cn.getLocalePreferred());
+			{
+				Name cn = new Name();
+				cn.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
+				cn.setName("Preferred france");
+				cn.setLocale(Locale.FRANCE);
+				cn.setLocalePreferred(true);
+				cn.setNameType(ConceptNameType.FULLY_SPECIFIED.toString());
+				oclConcept.getNames().add(cn);
 			}
-			else if (cn.getUuid().equals("278432ec-470f-11ec-97cd-0242ac110002")) {
-				numFound++;
-				assertNull(cn.getConceptNameType());
-				assertThat(cn.getLocale(), is(Locale.FRENCH));
-				assertTrue(cn.getLocalePreferred());
+			{
+				Name cn = new Name();
+				cn.setExternalId("278432ec-470f-11ec-97cd-0242ac110002");
+				cn.setName("Preferred french");
+				cn.setLocale(Locale.FRENCH);
+				cn.setLocalePreferred(true);
+				cn.setNameType(null);
+				oclConcept.getNames().add(cn);
 			}
+
+			saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+
+			Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+			int numFound = 0;
+			for (ConceptName cn : concept.getNames()) {
+				if (cn.getUuid().equals("6b15158f-47ae-11ec-8b80-0242ac110002")) {
+					numFound++;
+					assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+					assertThat(cn.getLocale(), is(Locale.FRENCH));
+					assertFalse(cn.getLocalePreferred());
+				} else if (cn.getUuid().equals("9040fc62-fc52-4b54-a10b-3dfcdfa588e3")) {
+					numFound++;
+					assertThat(cn.getConceptNameType(), is(ConceptNameType.FULLY_SPECIFIED));
+					assertThat(cn.getLocale(), is(Locale.FRANCE));
+					assertTrue(cn.getLocalePreferred());
+				} else if (cn.getUuid().equals("278432ec-470f-11ec-97cd-0242ac110002")) {
+					numFound++;
+					assertNull(cn.getConceptNameType());
+					assertThat(cn.getLocale(), is(Locale.FRENCH));
+					assertTrue(cn.getLocalePreferred());
+				}
+			}
+			assertThat(numFound, is(3));
 		}
-		assertThat(numFound, is(3));
 	}
 
 	/**
