@@ -295,6 +295,8 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void saveConcept_shouldAddNewPreferredNamesInDifferentLocales() {
 		// this will only pass against 2.4.6+, 2.5.13+, 2.6.8+, and 2.7.x and above
+		// (due to: https://openmrs.atlassian.net/browse/TRUNK-6265)
+
 		if (ModuleUtil.matchRequiredVersions(OpenmrsConstants.OPENMRS_VERSION_SHORT, "2.4.6")) {
 
 			OclConcept oclConcept = newOclConcept();
