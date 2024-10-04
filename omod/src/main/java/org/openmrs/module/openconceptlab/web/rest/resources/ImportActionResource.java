@@ -8,6 +8,10 @@
  */
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import io.swagger.models.Model;
+import io.swagger.models.ModelImpl;
+import io.swagger.models.properties.BooleanProperty;
+import io.swagger.models.properties.RefProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
@@ -74,6 +78,18 @@ public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
         delegatingResourceDescription.addProperty("anImport", Representation.DEFAULT);
         delegatingResourceDescription.addProperty("ignoreAllErrors");
         return delegatingResourceDescription;
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        model.property("anImport", new RefProperty("#/definitions/OpenConceptLabImportGet")).property("ignoreAllErrors", new BooleanProperty());
+        return model;
+    }
+
+    @Override
+    public Model getCREATEModel(Representation rep) {
+        return new ModelImpl().property("anImport", new RefProperty("#/definitions/OpenConceptLabImportCreate")).property("ignoreAllErrors", new BooleanProperty());
     }
 
     @PropertySetter("ignoreAllErrors")

@@ -1,5 +1,10 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import io.swagger.models.Model;
+import io.swagger.models.ModelImpl;
+import io.swagger.models.properties.DateProperty;
+import io.swagger.models.properties.IntegerProperty;
+import io.swagger.models.properties.StringProperty;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
@@ -75,6 +80,11 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     }
 
     @Override
+    public Model getCREATEModel(Representation rep) {
+        return new ModelImpl().property("localDateStarted", new DateProperty()).property("subscriptionUrl", new StringProperty(StringProperty.Format.URL));
+    }
+
+    @Override
     public DelegatingResourceDescription getUpdatableProperties() throws ResourceDoesNotSupportOperationException {
         throw new ResourceDoesNotSupportOperationException();
     }
@@ -124,6 +134,37 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
             return description;
         }
         return null;
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof FullRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("localDateStarted", new DateProperty());
+            model.property("localDateStopped", new DateProperty());
+            model.property("oclDateStarted", new DateProperty());
+            model.property("releaseVersion", new StringProperty());
+            model.property("errorMessage", new StringProperty());
+            model.property("importProgress", new StringProperty());
+            model.property("importTime", new StringProperty());
+            model.property("allItemsCount", new IntegerProperty());
+            model.property("errorItemsCount", new IntegerProperty());
+            model.property("ignoredErrorsCount", new IntegerProperty());
+            model.property("updatedItemsCount", new IntegerProperty());
+            model.property("upToDateItemsCount", new IntegerProperty());
+            model.property("retiredItemsCount", new IntegerProperty());
+            model.property("unretiredItemsCount", new IntegerProperty());
+            model.property("addedItemsCount", new IntegerProperty());
+            model.property("status", new StringProperty());
+        } else if (rep instanceof DefaultRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("localDateStarted", new DateProperty());
+            model.property("localDateStopped", new DateProperty());
+        } else if (rep instanceof RefRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+        }
+        return model;
     }
 
     @Override
