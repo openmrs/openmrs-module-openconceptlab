@@ -1,10 +1,16 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import io.swagger.models.Model;
+import io.swagger.models.ModelImpl;
+import io.swagger.models.properties.DateProperty;
+import io.swagger.models.properties.StringProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.ItemType;
+import org.openmrs.module.webservices.docs.swagger.core.property.EnumProperty;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.SubResource;
@@ -115,6 +121,29 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
             return description;
         }
         return null;
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof DefaultRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("type", new EnumProperty(ItemType.class));
+            model.property("url", new StringProperty(StringProperty.Format.URL));
+        } else if (rep instanceof FullRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("type", new EnumProperty(ItemType.class));
+            model.property("url", new StringProperty(StringProperty.Format.URL));
+            model.property("state", new EnumProperty(ItemState.class));
+            model.property("hashedUrl", new StringProperty(StringProperty.Format.URL));
+            model.property("versionUrl", new StringProperty(StringProperty.Format.URL));
+            model.property("errorMessage", new StringProperty());
+            model.property("updatedOn", new DateProperty());
+        } else if (rep instanceof RefRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("type", new EnumProperty(ItemType.class));
+        }
+        return model;
     }
 
     private ImportService getImportService() {

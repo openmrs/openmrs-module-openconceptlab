@@ -1,10 +1,16 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
+import io.swagger.models.Model;
+import io.swagger.models.ModelImpl;
+import io.swagger.models.properties.BooleanProperty;
+import io.swagger.models.properties.StringProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Subscription;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
+import org.openmrs.module.webservices.docs.swagger.core.property.EnumProperty;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
@@ -81,6 +87,26 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     }
 
     @Override
+    public Model getCREATEModel(Representation rep) {
+        ModelImpl model = new ModelImpl();
+        model.property("url", new StringProperty(StringProperty.Format.URL));
+        model.property("token", new StringProperty());
+        model.property("subscribedToSnapshot", new BooleanProperty());
+        model.property("validationType", new EnumProperty(ValidationType.class)).required("url").required("token");
+        return model;
+    }
+
+    @Override
+    public Model getUPDATEModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getUPDATEModel(rep);
+        model.property("url", new StringProperty(StringProperty.Format.URL));
+        model.property("token", new StringProperty());
+        model.property("subscribedToSnapshot", new BooleanProperty());
+        model.property("validationType", new EnumProperty(ValidationType.class));
+        return model;
+    }
+
+    @Override
     public void purge(Subscription delegate, RequestContext context) throws ResponseException {
         throw new ResourceDoesNotSupportOperationException();
     }
@@ -112,6 +138,30 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
             description.addProperty("url");
             description.addSelfLink();
             return description;
+        }
+        return null;
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof FullRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("url", new StringProperty(StringProperty.Format.URL));
+            model.property("token", new StringProperty());
+            model.property("subscribedToSnapshot", new BooleanProperty());
+            model.property("validationType", new EnumProperty(ValidationType.class));
+            return model;
+        } else if (rep instanceof DefaultRepresentation) {
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("url", new StringProperty(StringProperty.Format.URL));
+            model.property("token", new StringProperty());
+            return model;
+        } else if (rep instanceof RefRepresentation) {
+            DelegatingResourceDescription description = new DelegatingResourceDescription();
+            model.property("uuid", new StringProperty().example("uuid"));
+            model.property("url", new StringProperty(StringProperty.Format.URL));
+            return model;
         }
         return null;
     }
