@@ -83,13 +83,15 @@ public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
     @Override
     public Model getGETModel(Representation rep) {
         ModelImpl model = (ModelImpl) super.getGETModel(rep);
-        model.property("anImport", new RefProperty("#/definitions/OpenConceptLabImportGet")).property("ignoreAllErrors", new BooleanProperty());
+        model
+                .property("anImport", new RefProperty("#/definitions/OpenconceptlabImportGet"))
+                .property("ignoreAllErrors", new BooleanProperty());
         return model;
     }
 
     @Override
     public Model getCREATEModel(Representation rep) {
-        return new ModelImpl().property("anImport", new RefProperty("#/definitions/OpenConceptLabImportCreate")).property("ignoreAllErrors", new BooleanProperty());
+        return new ModelImpl().property("anImport", new RefProperty("#/definitions/OpenconceptlabImportCreate")).property("ignoreAllErrors", new BooleanProperty());
     }
 
     @PropertySetter("ignoreAllErrors")
