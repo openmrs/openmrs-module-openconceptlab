@@ -56,7 +56,7 @@
     <properties>
         <openmrsVersion>2.1.0</openmrsVersion>
         <legacyuiVersion>1.9.0</legacyuiVersion>
-        <webservices.restVersion>2.29.0</webservices.restVersion>
+        <webservices.restVersion>2.46.0-SNAPSHOT</webservices.restVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
