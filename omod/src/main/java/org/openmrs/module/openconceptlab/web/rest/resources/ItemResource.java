@@ -1,16 +1,14 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.properties.DateProperty;
-import io.swagger.models.properties.StringProperty;
+import io.swagger.v3.oas.models.media.DateTimeSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.ItemType;
-import org.openmrs.module.webservices.docs.swagger.core.property.EnumProperty;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.SubResource;
@@ -25,6 +23,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -124,24 +123,24 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
     }
 
     @Override
-    public Model getGETModel(Representation rep) {
-        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+    public Schema<?> getGETSchema(Representation rep) {
+        Schema<?> model = super.getGETSchema(rep);
         if (rep instanceof DefaultRepresentation) {
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("type", new EnumProperty(ItemType.class));
-            model.property("url", new StringProperty(StringProperty.Format.URL));
+            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
+            model.addProperty("url", new Schema<String>().format("uri"));
         } else if (rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("type", new EnumProperty(ItemType.class));
-            model.property("url", new StringProperty(StringProperty.Format.URL));
-            model.property("state", new EnumProperty(ItemState.class));
-            model.property("hashedUrl", new StringProperty(StringProperty.Format.URL));
-            model.property("versionUrl", new StringProperty(StringProperty.Format.URL));
-            model.property("errorMessage", new StringProperty());
-            model.property("updatedOn", new DateProperty());
+            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
+            model.addProperty("url", new Schema<String>().type("string").format("uri"));
+            model.addProperty("type", new Schema<ItemState>()._enum(Arrays.asList(ItemState.values())));
+            model.addProperty("hashedUrl", new Schema<String>().format("uri"));
+            model.addProperty("versionUrl", new Schema<String>().format("uri"));
+            model.addProperty("errorMessage", new StringSchema());
+            model.addProperty("updatedOn", new DateTimeSchema());
         } else if (rep instanceof RefRepresentation) {
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("type", new EnumProperty(ItemType.class));
+            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
         }
         return model;
     }
