@@ -992,7 +992,34 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		assertThat(questionConcept.getAnswers(), is(empty()));
 	}
-	
+
+	@Test
+	public void importMapping_shouldNotAddRetiredConceptAnswer() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept question = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, question));
+
+		OclConcept answer = newOtherOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, answer));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType(MapType.Q_AND_A);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setRetired(true);
+
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		Concept questionConcept = conceptService.getConceptByUuid(question.getExternalId());
+		Concept answerConcept = conceptService.getConceptByUuid(answer.getExternalId());
+
+		assertThat(questionConcept.getAnswers(), not(contains(hasQuestionAndAnswer(questionConcept, answerConcept))));
+	}
+
+
 	@Test
 	public void importMapping_shouldUpdateConceptAnswer() throws Exception {
 		importMapping_shouldAddConceptAnswer();
@@ -1144,6 +1171,32 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
+	public void importMapping_shouldNotAddRetiredConceptSetMember() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept set = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, set));
+
+		OclConcept member = newOtherOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, member));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType(MapType.SET);
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
+		oclMapping.setRetired(true);
+
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		Concept setConcept = conceptService.getConceptByUuid(set.getExternalId());
+		Concept memberConcept = conceptService.getConceptByUuid(member.getExternalId());
+
+		assertThat(setConcept.getSetMembers(), not(contains(memberConcept)));
+	}
+
+	@Test
 	public void importMapping_shouldUpdateConceptSetMember() throws Exception {
 
 		importMapping_shouldAddConceptSetMember();
@@ -1219,6 +1272,31 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		assertThat(concept.getConceptMappings(), is(empty()));
 		assertThat(BooleanUtils.isTrue(term.getRetired()), is(false));
+	}
+
+	@Test
+	public void importMapping_shouldNotAddRetiredConceptMapping() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
+
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToSourceName("SNOMED CT");
+		oclMapping.setToConceptCode("1001");
+		oclMapping.setRetired(true);
+
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		Concept concept = conceptService.getConceptByUuid("6c1bbb30-55f6-11e4-8ed6-0800200c9a66");
+
+		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
+		ConceptMapType mapType = conceptService.getConceptMapTypeByName("SAME_AS");
+		assertThat(concept.getConceptMappings(), not(contains(hasMapping(source, "1001", mapType))));
 	}
 
 	@Test

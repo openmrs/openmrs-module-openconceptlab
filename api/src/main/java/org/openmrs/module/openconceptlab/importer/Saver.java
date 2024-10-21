@@ -43,6 +43,7 @@ import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -566,7 +567,7 @@ public class Saver {
 			}
 		}
 
-		if (!found) {
+		if (!found && BooleanUtils.isNotTrue(oclMapping.getRetired())) {
 			ConceptSet conceptSet = new ConceptSet();
 			conceptSet.setConceptSet(set);
 			conceptSet.setConcept(member);
@@ -574,6 +575,8 @@ public class Saver {
 			conceptSet.setSortWeight(getSortWeightForMapping(oclMapping, 1.0));
 			set.getConceptSets().add(conceptSet);
 			item = new Item(update, oclMapping, ItemState.ADDED);
+		} else {
+			item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
 		}
 
 		return item;
@@ -603,12 +606,14 @@ public class Saver {
 			}
 		}
 
-		if (!found) {
+		if (!found && BooleanUtils.isNotTrue(oclMapping.getRetired())) {
 			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
 			conceptAnswer.setUuid(oclMapping.getExternalId());
 			conceptAnswer.setSortWeight(getSortWeightForMapping(oclMapping, null));
 			question.addAnswer(conceptAnswer);
 			item = new Item(update, oclMapping, ItemState.ADDED);
+		} else {
+			item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
 		}
 
 		return item;
