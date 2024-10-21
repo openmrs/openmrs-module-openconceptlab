@@ -567,16 +567,18 @@ public class Saver {
 			}
 		}
 
-		if (!found && BooleanUtils.isNotTrue(oclMapping.getRetired())) {
-			ConceptSet conceptSet = new ConceptSet();
-			conceptSet.setConceptSet(set);
-			conceptSet.setConcept(member);
-			conceptSet.setUuid(oclMapping.getExternalId());
-			conceptSet.setSortWeight(getSortWeightForMapping(oclMapping, 1.0));
-			set.getConceptSets().add(conceptSet);
-			item = new Item(update, oclMapping, ItemState.ADDED);
-		} else {
-			item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
+		if (!found) {
+			if (BooleanUtils.isNotTrue(oclMapping.getRetired())) {
+				ConceptSet conceptSet = new ConceptSet();
+				conceptSet.setConceptSet(set);
+				conceptSet.setConcept(member);
+				conceptSet.setUuid(oclMapping.getExternalId());
+				conceptSet.setSortWeight(getSortWeightForMapping(oclMapping, 1.0));
+				set.getConceptSets().add(conceptSet);
+				item = new Item(update, oclMapping, ItemState.ADDED);
+			} else {
+				item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
+			}
 		}
 
 		return item;
@@ -606,15 +608,16 @@ public class Saver {
 			}
 		}
 
-		if (!found && BooleanUtils.isNotTrue(oclMapping.getRetired())) {
-			ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
-			conceptAnswer.setUuid(oclMapping.getExternalId());
-			conceptAnswer.setSortWeight(getSortWeightForMapping(oclMapping, null));
-			question.addAnswer(conceptAnswer);
-			item = new Item(update, oclMapping, ItemState.ADDED);
-		} else {
-			item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
-		}
+		if (!found)
+			if(BooleanUtils.isNotTrue(oclMapping.getRetired())) {
+				ConceptAnswer conceptAnswer = new ConceptAnswer(answer);
+				conceptAnswer.setUuid(oclMapping.getExternalId());
+				conceptAnswer.setSortWeight(getSortWeightForMapping(oclMapping, null));
+				question.addAnswer(conceptAnswer);
+				item = new Item(update, oclMapping, ItemState.ADDED);
+			} else {
+				item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
+			}
 
 		return item;
 	}
