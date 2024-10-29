@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 
+import io.swagger.v3.oas.models.media.UUIDSchema;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
@@ -142,7 +143,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
     public Schema<?> getGETSchema(Representation rep) {
         Schema<?> model =  super.getGETSchema(rep);
         if (rep instanceof FullRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("localDateStarted", new DateTimeSchema());
             model.addProperty("localDateStopped", new DateTimeSchema());
             model.addProperty("oclDateStarted", new DateTimeSchema());
@@ -160,7 +161,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
             model.addProperty("addedItemsCount", new IntegerSchema());
             model.addProperty("status", new StringSchema());
         } else if (rep instanceof DefaultRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("localDateStarted", new DateTimeSchema());
             model.addProperty("localDateStopped", new DateTimeSchema());
         } else if (rep instanceof RefRepresentation) {

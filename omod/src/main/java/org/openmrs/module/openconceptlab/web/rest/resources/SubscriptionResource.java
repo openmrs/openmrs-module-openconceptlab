@@ -4,6 +4,7 @@ import io.swagger.v3.oas.models.media.BooleanSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.UUIDSchema;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -147,19 +148,19 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     public Schema<?> getGETSchema(Representation rep) {
         Schema<?> model = super.getGETSchema(rep);
         if (rep instanceof FullRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("url", new Schema<String>().format("uri"));
             model.addProperty("token", new StringSchema());
             model.addProperty("subscribedToSnapshot", new BooleanSchema());
             model.addProperty("validationType", new Schema<ValidationType>()._enum(Arrays.asList(ValidationType.values())));
             return model;
         } else if (rep instanceof DefaultRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("url", new Schema<String>().format("uri"));
             model.addProperty("token", new StringSchema());
             return model;
         } else if (rep instanceof RefRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("url", new Schema<String>().format("uri"));
             return model;
         }

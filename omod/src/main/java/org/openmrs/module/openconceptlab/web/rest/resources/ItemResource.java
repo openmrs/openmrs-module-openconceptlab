@@ -3,6 +3,7 @@ package org.openmrs.module.openconceptlab.web.rest.resources;
 import io.swagger.v3.oas.models.media.DateTimeSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.UUIDSchema;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
@@ -126,11 +127,11 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
     public Schema<?> getGETSchema(Representation rep) {
         Schema<?> model = super.getGETSchema(rep);
         if (rep instanceof DefaultRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
             model.addProperty("url", new Schema<String>().format("uri"));
         } else if (rep instanceof FullRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
             model.addProperty("url", new Schema<String>().type("string").format("uri"));
             model.addProperty("type", new Schema<ItemState>()._enum(Arrays.asList(ItemState.values())));
@@ -139,7 +140,7 @@ public class ItemResource extends DelegatingSubResource<Item, Import, ImportReso
             model.addProperty("errorMessage", new StringSchema());
             model.addProperty("updatedOn", new DateTimeSchema());
         } else if (rep instanceof RefRepresentation) {
-            model.addProperty("uuid", new StringSchema().example("uuid"));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
             model.addProperty("type", new Schema<ItemType>()._enum(Arrays.asList(ItemType.values())));
         }
         return model;
