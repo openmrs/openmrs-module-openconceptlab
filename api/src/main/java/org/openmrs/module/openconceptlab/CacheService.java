@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.Concept;
 import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
@@ -55,17 +56,19 @@ public class CacheService {
 	}
 
 	public ConceptDatatype getConceptDatatypeByName(String name) {
-		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
-		if (conceptDatatype != null) {
-			return conceptDatatype;
-		} else {
-			conceptDatatype = conceptService.getConceptDatatypeByName(name);
-			if (conceptDatatype != null) {
-				conceptDatatypes.put(name, conceptDatatype);
-			}
-			return conceptDatatype;
+		if (name == null || StringUtils.isBlank(name)) {
+			return null;
 		}
-	}
+
+		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
+        if (conceptDatatype == null) {
+            conceptDatatype = conceptService.getConceptDatatypeByName(name);
+            if (conceptDatatype != null) {
+                conceptDatatypes.put(name, conceptDatatype);
+            }
+        }
+        return conceptDatatype;
+    }
 
 	public ConceptClass getConceptClassByName(String name) {
 		ConceptClass conceptClass = conceptClasses.get(name);
@@ -86,6 +89,10 @@ public class CacheService {
 	 * then return it.  If more than one match is found, throw an Exception.
 	 */
 	public ConceptSource getConceptSourceByName(String name) {
+		if (name == null || StringUtils.isBlank(name)) {
+			return null;
+		}
+
 		ConceptSource conceptSource = conceptSources.get(name);
 		if (conceptSource != null) {
 			return conceptSource;
@@ -116,6 +123,10 @@ public class CacheService {
 	}
 
 	public ConceptMapType getConceptMapTypeByName(String name) {
+		if (name == null || StringUtils.isBlank(name)) {
+			return null;
+		}
+
 		ConceptMapType conceptMapType = conceptMapTypes.get(name);
 		if (conceptMapType != null) {
 			return conceptMapType;
@@ -129,6 +140,10 @@ public class CacheService {
     }
 
 	public ConceptMap getConceptMapByUuid(String uuid, ImportService importService) {
+		if (uuid == null || StringUtils.isBlank(uuid)) {
+			return null;
+		}
+
 		ConceptMap conceptMap = conceptMaps.get(uuid);
 		if (conceptMap != null) {
 			return conceptMap;
@@ -142,6 +157,10 @@ public class CacheService {
 	}
 
 	public Concept getConceptByUuid(String uuid) {
+		if (uuid == null || StringUtils.isBlank(uuid)) {
+			return null;
+		}
+
 		Concept concept = concepts.get(uuid);
 		if (concept != null) {
 			return concept;

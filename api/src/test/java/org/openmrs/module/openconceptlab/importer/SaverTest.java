@@ -130,12 +130,24 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
-	 * @verifies save new concept
 	 */
 	@Test
 	public void importConcept_shouldSaveNewConcept() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		assertImported(oclConcept);
+	}
+
+	/**
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 */
+	@Test
+	public void importConcept_shouldAssignUuidToConceptWithoutExternalId() throws Exception {
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setExternalId(null);
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+
 		assertImported(oclConcept);
 	}
 
@@ -1609,7 +1621,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	private Concept assertImported(OclConcept oclConcept) {
-		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		Concept concept;
+		if (oclConcept.getExternalId() != null) {
+			concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		} else {
+			concept = conceptService.getConcept(version5Uuid(oclConcept.getUrl()).toString());
+		}
+
 		assertThat(concept, is(notNullValue()));
 
 		ConceptClass conceptClass = conceptService.getConceptClassByName(oclConcept.getConceptClass());

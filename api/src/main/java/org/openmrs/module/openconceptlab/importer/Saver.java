@@ -181,6 +181,11 @@ public class Saver {
 		if (concept == null) {
 			concept = cacheService.getConceptWithSameAsMapping(oclConcept.getSource(), oclConcept.getId());
 		}
+
+		if (concept == null && oclConcept.getExternalId() == null) {
+			oclConcept.setExternalId(version5Uuid(oclConcept.getUrl()).toString());
+			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
+		}
 		
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {

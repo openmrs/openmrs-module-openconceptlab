@@ -9,8 +9,6 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
-
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
 import org.openmrs.module.openconceptlab.CacheService;
@@ -25,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class ImportTask implements Runnable {
@@ -62,22 +59,22 @@ public class ImportTask implements Runnable {
 	@Override
 	public void run() {
 		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				Import anImport = updateService.getImport(importId);
-				
+
 				if (oclConcepts != null) {
 					List<Item> items = new ArrayList<>(oclConcepts.size());
-					
+
 					for (OclConcept oclConcept : oclConcepts) {
 						Item item = null;
 						try {
 							item = saver.saveConcept(cacheService, anImport, oclConcept);
-							log.info("Imported concept " + oclConcept);
+                            log.info("Imported concept {}", oclConcept);
 						}
 						catch (Throwable e) {
-							log.error("Failed to import concept " + oclConcept, e);
+                            log.error("Failed to import concept {}", oclConcept, e);
 							Context.clearSession();
 							cacheService.clearCache();
 
@@ -89,33 +86,33 @@ public class ImportTask implements Runnable {
 	                }
 					updateService.saveItems(items);
 				}
-				
+
 				if (oclMappings != null) {
 					List<Item> items = new ArrayList<>(oclMappings.size());
-					
+
 					for (OclMapping oclMapping : oclMappings) {
 						Item item = null;
 						try {
 							item = saver.saveMapping(cacheService, anImport, oclMapping);
-							log.info("Imported mapping " + oclMapping);
+                            log.info("Imported mapping {}", oclMapping);
 						} catch (SavingException e) {
-							log.error("Failed to save mapping " + oclMapping, e);
+                            log.error("Failed to save mapping {}", oclMapping, e);
 							Context.clearSession();
 							cacheService.clearCache();
 
 							item = new Item(anImport, oclMapping, ItemState.ERROR, e.getMessage());
 						} catch (Throwable e) {
-							log.error("Failed to import mapping " + oclMapping, e);
+                            log.error("Failed to import mapping {}", oclMapping, e);
 							Context.clearSession();
 							cacheService.clearCache();
-														
+
 							item = new Item(anImport, oclMapping, ItemState.ERROR);
 							item.setErrorMessage(Importer.getUserFriendlyErrorMessage(e));
 						} finally {
 							items.add(item);
 						}
                     }
-					
+
 					updateService.saveItems(items);
 				}
 			}

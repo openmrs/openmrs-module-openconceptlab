@@ -44,7 +44,6 @@ public class UpdateScheduler {
 	    this.importService = importService;
     }
 	
-	@SuppressWarnings("unchecked")
 	public synchronized void schedule(Subscription subscription) {
 		importService.saveSubscription(subscription);
 		
