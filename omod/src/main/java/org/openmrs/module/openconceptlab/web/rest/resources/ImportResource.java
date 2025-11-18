@@ -48,6 +48,7 @@ import java.util.zip.ZipFile;
         supportedOpenmrsVersions = { "1.8.* - 2.*" }
 )
 public class ImportResource extends DelegatingCrudResource<Import> implements Uploadable {
+    private static final String[] ALLOWED_MIME_TYPES = { "application/zip", "application/x-zip-compressed" };
 
     @Override
     public Import getByUniqueId(String uniqueId) {
@@ -269,7 +270,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestException("File uploaded cannot be empty");
-        } else if (!StringUtils.equalsIgnoreCase(multipartFile.getContentType(), "application/zip")) {
+        } else if (!isZipFileType(multipartFile)) {
             throw new IllegalRequestException("Supplied file must be a zip file");
         }
 
@@ -285,5 +286,10 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
         updateScheduler.scheduleNow();
 
         return importService.getLastImport();
+    }
+
+    private static boolean isZipFileType(MultipartFile multipartFile) {
+        String contentType = multipartFile.getContentType();
+        return Arrays.stream(ALLOWED_MIME_TYPES).anyMatch(type -> type.equalsIgnoreCase(contentType));
     }
 }
