@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "angular": "1.5.5",
-    "angular-animate": "1.5.5",
     "angular-ui-router": "^0.3.0",
-    "ng-file-upload": "^12.2.13",
-    "openmrs-contrib-uicommons": "^0.4.3"
+    "angular-animate": "1.5.5",
+    "openmrs-contrib-uicommons": "^0.4.3",
+    "ng-file-upload": "^12.2.13"
   },
   "devDependencies": {
     "archiver": "^1.0.0",
