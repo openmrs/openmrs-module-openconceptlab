@@ -76,11 +76,20 @@ public class TestResources {
 	    try {
 	    	Field field = ModuleFactory.class.getDeclaredField("daemonTokens");
 	    	field.setAccessible(true);
-	    	daemonTokens = (Map<String, DaemonToken>) field.get(null);
+	    	Object daemonTokensObj = field.get(null);
+
+	    	// Handle both Map and Guava Cache types
+	    	if (daemonTokensObj instanceof Map) {
+	    		daemonTokens = (Map<String, DaemonToken>) daemonTokensObj;
+	    	} else if (daemonTokensObj instanceof com.google.common.cache.Cache) {
+	    		daemonTokens = ((com.google.common.cache.Cache<String, DaemonToken>) daemonTokensObj).asMap();
+	    	} else {
+	    		throw new RuntimeException("Unexpected daemonTokens type: " + daemonTokensObj.getClass());
+	    	}
 	    } catch (Exception e) {
 	    	throw new RuntimeException(e);
 	    }
-		
+
 		DaemonToken daemonToken = new DaemonToken("openconceptlab");
 		daemonTokens.put(daemonToken.getId(), daemonToken);
 		new OpenConceptLabActivator().setDaemonToken(daemonToken);

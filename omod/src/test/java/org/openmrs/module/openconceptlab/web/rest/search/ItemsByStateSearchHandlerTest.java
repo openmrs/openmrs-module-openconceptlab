@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.HashSet;
 import java.util.List;
 
-public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest{
+public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest {
 
     private ImportService service;
 
@@ -50,7 +50,7 @@ public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest{
 
     @Override
     public long getAllCount() {
-        return service.getImportItemsCount(getImport(), new HashSet<ItemState>());
+        return service.getImportItemsCount(getImport(), new HashSet<>());
     }
 
     private Import getImport(){
@@ -58,7 +58,7 @@ public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest{
     }
 
     private int getUpdatedItemsCount(){
-        HashSet<ItemState> states = new HashSet<ItemState>();
+        HashSet<ItemState> states = new HashSet<>();
         states.add(ItemState.UPDATED);
         return service.getImportItemsCount(getImport(), states);
     }

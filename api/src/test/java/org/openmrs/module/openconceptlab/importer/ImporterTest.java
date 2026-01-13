@@ -11,11 +11,11 @@ package org.openmrs.module.openconceptlab.importer;
 
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import java.util.Date;
 
@@ -88,7 +88,7 @@ public class ImporterTest extends BaseContextMockTest {
 
 		importer.run();
 
-		verify(importService).updateOclDateStarted(Mockito.any(Import.class), Mockito.eq(updatedTo));
+		verify(importService).updateOclDateStarted(any(Import.class), Mockito.eq(updatedTo));
 	}
 
 	/**
@@ -142,7 +142,7 @@ public class ImporterTest extends BaseContextMockTest {
 
 		importer.run();
 
-		verify(importService).updateOclDateStarted(Mockito.any(Import.class), Mockito.eq(updatedTo));
+		verify(importService).updateOclDateStarted(any(Import.class), Mockito.eq(updatedTo));
 	}
 
 	/**
