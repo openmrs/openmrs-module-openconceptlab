@@ -8,10 +8,10 @@
  */
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.properties.BooleanProperty;
-import io.swagger.models.properties.RefProperty;
+import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
+
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
@@ -81,17 +81,15 @@ public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
     }
 
     @Override
-    public Model getGETModel(Representation rep) {
-        ModelImpl model = (ModelImpl) super.getGETModel(rep);
-        model
-                .property("anImport", new RefProperty("#/definitions/OpenconceptlabImportGet"))
-                .property("ignoreAllErrors", new BooleanProperty());
-        return model;
+    public Schema<?> getGETSchema(Representation rep) {
+        return super.getGETSchema(rep).addProperty("anImport", new Schema<Import>().$ref("#/components/schemas/OpenconceptlabImportGet"))
+        .addProperty("ignoreAllErrors", new BooleanSchema());
     }
 
     @Override
-    public Model getCREATEModel(Representation rep) {
-        return new ModelImpl().property("anImport", new RefProperty("#/definitions/OpenconceptlabImportCreate")).property("ignoreAllErrors", new BooleanProperty());
+    public Schema<?> getCREATESchema(Representation rep) {
+        return new ObjectSchema().addProperty("anImport", new Schema<Import>().$ref("#/components/schemas/OpenconceptlabImportCreate"))
+        .addProperty("ignoreAllErrors", new BooleanSchema());
     }
 
     @PropertySetter("ignoreAllErrors")

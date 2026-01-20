@@ -1,16 +1,16 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.properties.BooleanProperty;
-import io.swagger.models.properties.StringProperty;
+import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.media.UUIDSchema;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.module.openconceptlab.web.rest.controller.OpenConceptLabRestController;
-import org.openmrs.module.webservices.docs.swagger.core.property.EnumProperty;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
@@ -28,6 +28,7 @@ import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 @Resource(
@@ -87,22 +88,23 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     }
 
     @Override
-    public Model getCREATEModel(Representation rep) {
-        ModelImpl model = new ModelImpl();
-        model.property("url", new StringProperty(StringProperty.Format.URL));
-        model.property("token", new StringProperty());
-        model.property("subscribedToSnapshot", new BooleanProperty());
-        model.property("validationType", new EnumProperty(ValidationType.class)).required("url").required("token");
+    public Schema<?> getCREATESchema(Representation rep) {
+        Schema<?> model = new ObjectSchema();
+        model.addProperty("url", new Schema<String>().format("uri"));
+        model.addProperty("token", new StringSchema());
+        model.addProperty("subscribedToSnapshot", new BooleanSchema());
+        model.addProperty("validationType", new Schema<ValidationType>()._enum(Arrays.asList(ValidationType.values())));
+        model.setRequired(Arrays.asList("url", "token"));
         return model;
     }
 
     @Override
-    public Model getUPDATEModel(Representation rep) {
-        ModelImpl model = (ModelImpl) super.getUPDATEModel(rep);
-        model.property("url", new StringProperty(StringProperty.Format.URL));
-        model.property("token", new StringProperty());
-        model.property("subscribedToSnapshot", new BooleanProperty());
-        model.property("validationType", new EnumProperty(ValidationType.class));
+    public Schema<?> getUPDATESchema(Representation rep) {
+        Schema<?> model =  super.getUPDATESchema(rep);
+        model.addProperty("url", new Schema<String>().format("uri"));
+        model.addProperty("token", new StringSchema());
+        model.addProperty("subscribedToSnapshot", new BooleanSchema());
+        model.addProperty("validationType", new Schema<ValidationType>()._enum(Arrays.asList(ValidationType.values())));
         return model;
     }
 
@@ -143,24 +145,23 @@ public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
     }
 
     @Override
-    public Model getGETModel(Representation rep) {
-        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+    public Schema<?> getGETSchema(Representation rep) {
+        Schema<?> model = super.getGETSchema(rep);
         if (rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("url", new StringProperty(StringProperty.Format.URL));
-            model.property("token", new StringProperty());
-            model.property("subscribedToSnapshot", new BooleanProperty());
-            model.property("validationType", new EnumProperty(ValidationType.class));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
+            model.addProperty("url", new Schema<String>().format("uri"));
+            model.addProperty("token", new StringSchema());
+            model.addProperty("subscribedToSnapshot", new BooleanSchema());
+            model.addProperty("validationType", new Schema<ValidationType>()._enum(Arrays.asList(ValidationType.values())));
             return model;
         } else if (rep instanceof DefaultRepresentation) {
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("url", new StringProperty(StringProperty.Format.URL));
-            model.property("token", new StringProperty());
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
+            model.addProperty("url", new Schema<String>().format("uri"));
+            model.addProperty("token", new StringSchema());
             return model;
         } else if (rep instanceof RefRepresentation) {
-            DelegatingResourceDescription description = new DelegatingResourceDescription();
-            model.property("uuid", new StringProperty().example("uuid"));
-            model.property("url", new StringProperty(StringProperty.Format.URL));
+            model.addProperty("uuid", new UUIDSchema().example("uuid"));
+            model.addProperty("url", new Schema<String>().format("uri"));
             return model;
         }
         return null;
