@@ -162,8 +162,6 @@ public class ImporterTest extends BaseContextMockTest {
 
 		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastUpdate);
 
-		// Mock getImport to return a valid Import for ImportTask
-		// In Mockito 3.x, any(Class.class) no longer matches null, so we need nullable() to match null importId
 		Import anImport = new Import();
 		when(importService.getImport(nullable(Long.class))).thenReturn(anImport);
 
