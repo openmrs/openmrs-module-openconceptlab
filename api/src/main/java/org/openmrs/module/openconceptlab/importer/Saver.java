@@ -232,9 +232,7 @@ public class Saver {
 			setAllowDecimal(numeric, extras);
 		}
 
-		if (extras.getIsSet() != null) {
-			concept.setSet(extras.getIsSet() == 1);
-		}
+		concept.setSet(extras.getIsSet() != null && extras.getIsSet() == 1);
 
 		concept.setRetired(oclConcept.isRetired());
 		if (oclConcept.isRetired()) {
@@ -403,9 +401,6 @@ public class Saver {
 					if (oclMapping.getMapType().equals(MapType.Q_AND_A)) {
 						item = updateOrAddAnswersFromOcl(update, oclMapping, fromConcept, toConcept);
 					} else {
-						if (!fromConcept.getSet()) {
-						    fromConcept.setSet(true);
-						}
 						item = updateOrAddSetMembersFromOcl(update, oclMapping, fromConcept, toConcept);
 					}
 
@@ -585,6 +580,8 @@ public class Saver {
 				item = new Item(update, oclMapping, ItemState.UP_TO_DATE);
 			}
 		}
+
+		set.setSet(!set.getSetMembers().isEmpty());
 
 		return item;
 	}
