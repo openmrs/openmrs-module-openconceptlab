@@ -42,7 +42,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.zip.ZipFile;
 
@@ -79,12 +78,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 
-	@Override
-	public Properties getRuntimeProperties() {
-		Properties runtimeProperties = super.getRuntimeProperties();
-		runtimeProperties.setProperty("hibernate.connection.url", "jdbc:h2:mem:openmrs;DB_CLOSE_DELAY=30;MVCC=true");
-		return runtimeProperties;
-	}
 
 	/**
 	 * @see ImportServiceImpl#getImport(Long)
