@@ -229,12 +229,6 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>2.2</id>
-            <properties>
-                <openmrsVersion>2.2.0</openmrsVersion>
-            </properties>
-        </profile>
     </profiles>
 
     <repositories>
