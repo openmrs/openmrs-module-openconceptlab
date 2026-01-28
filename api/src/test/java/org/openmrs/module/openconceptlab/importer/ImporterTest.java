@@ -12,6 +12,7 @@ package org.openmrs.module.openconceptlab.importer;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -160,6 +161,11 @@ public class ImporterTest extends BaseContextMockTest {
 		lastUpdate.setOclDateStarted(updatedSince);
 
 		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastUpdate);
+
+		// Mock getImport to return a valid Import for ImportTask
+		// In Mockito 3.x, any(Class.class) no longer matches null, so we need nullable() to match null importId
+		Import anImport = new Import();
+		when(importService.getImport(nullable(Long.class))).thenReturn(anImport);
 
 		Date updatedTo = new Date();
 		OclResponse oclResponse = OclClient.unzipResponse(TestResources.getSimpleResponseAsStream(), updatedTo);
