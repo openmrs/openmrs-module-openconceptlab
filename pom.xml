@@ -54,7 +54,7 @@
     </modules>
 
     <properties>
-        <openmrsVersion>2.7.8-SNAPSHOT</openmrsVersion>
+        <openmrsVersion>2.7.8</openmrsVersion>
         <legacyuiVersion>2.0.0</legacyuiVersion>
         <webservices.restVersion>3.0.0</webservices.restVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
