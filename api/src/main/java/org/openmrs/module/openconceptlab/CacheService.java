@@ -26,8 +26,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CacheService {
 
 	ConceptService conceptService;
-	
+
 	OclConceptService oclConceptService;
+
+	// Track whether concept sources have been pre-loaded
+	private boolean conceptSourcesPreloaded = false;
 
 	public CacheService(ConceptService conceptService, OclConceptService oclConceptService) {
 		this.conceptService = conceptService;
@@ -40,16 +43,38 @@ public class CacheService {
 
 	Map<String, ConceptSource> conceptSources = new ConcurrentHashMap<String, ConceptSource>();
 
+	// Store normalized name -> source mapping for fuzzy matching
+	Map<String, List<ConceptSource>> normalizedConceptSources = new ConcurrentHashMap<String, List<ConceptSource>>();
+
 	Map<String, ConceptMapType> conceptMapTypes = new ConcurrentHashMap<String, ConceptMapType>();
 
 	Map<String, ConceptMap> conceptMaps = new ConcurrentHashMap<String, ConceptMap>();
 
 	Map<String, Concept> concepts = new ConcurrentHashMap<String, Concept>();
 
+	/**
+	 * Pre-loads all concept sources into the cache to avoid repeated database queries.
+	 */
+	private void preloadConceptSources() {
+		if (conceptSourcesPreloaded) {
+			return;
+		}
+		for (ConceptSource source : conceptService.getAllConceptSources(true)) {
+			// Cache by exact name
+			conceptSources.put(source.getName(), source);
+			// Also cache by normalized name for fuzzy matching
+			String normalizedName = Utils.normalizeConceptSourceName(source.getName());
+			normalizedConceptSources.computeIfAbsent(normalizedName, k -> new ArrayList<>()).add(source);
+		}
+		conceptSourcesPreloaded = true;
+	}
+
 	public void clearCache() {
 		conceptDatatypes.clear();
 		conceptClasses.clear();
 		conceptSources.clear();
+		normalizedConceptSources.clear();
+		conceptSourcesPreloaded = false;
 		conceptMapTypes.clear();
 		conceptMaps.clear();
 		concepts.clear();
@@ -93,33 +118,47 @@ public class CacheService {
 			return null;
 		}
 
+		// Ensure sources are preloaded
+		preloadConceptSources();
+
+		// Check exact match first
 		ConceptSource conceptSource = conceptSources.get(name);
 		if (conceptSource != null) {
 			return conceptSource;
-		} else {
-			String normalizedName = Utils.normalizeConceptSourceName(name);
-			ConceptSource match = null;
-			List<ConceptSource> fuzzyMatches = new ArrayList<>();
-			for (ConceptSource possibleMatch : conceptService.getAllConceptSources(true)) {
-				if (possibleMatch.getName().equalsIgnoreCase(name)) {
-					match = possibleMatch;
-				}
-				else if (Utils.normalizeConceptSourceName(possibleMatch.getName()).equals(normalizedName)) {
-					fuzzyMatches.add(possibleMatch);
-				}
+		}
+
+		// Try case-insensitive exact match
+		for (ConceptSource source : conceptSources.values()) {
+			if (source.getName().equalsIgnoreCase(name)) {
+				conceptSources.put(name, source);
+				return source;
 			}
-			if (match == null && !fuzzyMatches.isEmpty()) {
-				if (fuzzyMatches.size() > 1) {
-					String msg = "There are " + fuzzyMatches.size() + " possible matching sources for " + name;
-					throw new IllegalStateException(msg);
-				}
-				match = fuzzyMatches.get(0);
+		}
+
+		// Try normalized/fuzzy match
+		String normalizedName = Utils.normalizeConceptSourceName(name);
+		List<ConceptSource> fuzzyMatches = normalizedConceptSources.get(normalizedName);
+		if (fuzzyMatches != null && !fuzzyMatches.isEmpty()) {
+			if (fuzzyMatches.size() > 1) {
+				String msg = "There are " + fuzzyMatches.size() + " possible matching sources for " + name;
+				throw new IllegalStateException(msg);
 			}
-			if (match != null) {
-				conceptSources.put(name, match);
-			}
+			ConceptSource match = fuzzyMatches.get(0);
+			conceptSources.put(name, match);
 			return match;
 		}
+
+		return null;
+	}
+
+	/**
+	 * Adds a newly created ConceptSource to the cache.
+	 * Call this after creating and saving a new source to ensure subsequent lookups find it.
+	 */
+	public void addConceptSource(ConceptSource source) {
+		conceptSources.put(source.getName(), source);
+		String normalizedName = Utils.normalizeConceptSourceName(source.getName());
+		normalizedConceptSources.computeIfAbsent(normalizedName, k -> new ArrayList<>()).add(source);
 	}
 
 	public ConceptMapType getConceptMapTypeByName(String name) {

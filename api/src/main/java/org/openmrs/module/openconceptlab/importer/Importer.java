@@ -23,6 +23,7 @@ import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
 import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OclConceptService;
 import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
@@ -47,11 +48,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
 public class Importer implements Runnable {
@@ -59,8 +55,6 @@ public class Importer implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(Importer.class);
 
 	public final static int BATCH_SIZE = 128;
-
-	public final static int THREAD_POOL_SIZE = 16;
 
 	private ImportService importService;
 
@@ -180,27 +174,18 @@ public class Importer implements Runnable {
 	 * This run is used to update sources from zip file
 	 */
 	public void run(final ZipFile zipPackage) {
-		Daemon.runInDaemonThreadAndWait(new Runnable() {
-			@Override
-			public void run() {
-				runAndHandleErrors(new Task() {
-
-					@Override
-					public void run() throws IOException {
-						InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
-						try {
-							in = new CountingInputStream(zipInputStream);
-							String subscriptionUrl = Context.getAdministrationService()
-									.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
-							importService.updateSubscriptionUrl(anImport, subscriptionUrl);
-							processInput();
-						} finally {
-							in.close();
-						}
-					}
-				});
-			}
-		}, OpenConceptLabActivator.getDaemonToken());
+		Daemon.runInDaemonThreadAndWait(() -> runAndHandleErrors(() -> {
+            InputStream zipInputStream = Utils.extractExportInputStreamFromZip(zipPackage);
+            try {
+                in = new CountingInputStream(zipInputStream);
+                String subscriptionUrl = Context.getAdministrationService()
+                        .getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
+                importService.updateSubscriptionUrl(anImport, subscriptionUrl);
+                processInput();
+            } finally {
+                in.close();
+            }
+        }), OpenConceptLabActivator.getDaemonToken());
 	}
 
 	private void runAndHandleErrors(Task task) {
@@ -352,40 +337,44 @@ public class Importer implements Runnable {
 			}
 		}
 
-		ThreadPoolExecutor runner = newRunner();
-		List<OclConcept> oclConcepts = new ArrayList<>(BATCH_SIZE);
+		CacheService cacheService = new CacheService(conceptService, oclConceptService);
+		List<Item> items = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
 			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
 			oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
 
-			oclConcepts.add(oclConcept);
+			Item item;
+			try {
+				item = saver.saveConcept(cacheService, anImport, oclConcept);
+				log.info("Imported concept {}", oclConcept);
+			} catch (Throwable e) {
+				log.error("Failed to import concept {}", oclConcept, e);
+				Context.clearSession();
+				cacheService.clearCache();
 
-			if (oclConcepts.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService,
-						anImport);
-				importTask.setOclConcepts(new ArrayList<>(oclConcepts));
+				item = new Item(anImport, oclConcept, ItemState.ERROR);
+				item.setErrorMessage(getUserFriendlyErrorMessage(e));
+			}
+			items.add(item);
 
-				oclConcepts.clear();
-
-				runner.execute(importTask);
+			if (items.size() >= BATCH_SIZE) {
+				importService.saveItems(items);
+				items = new ArrayList<>(BATCH_SIZE);
+				// Flush and clear session to prevent memory buildup, then clear cache since entities are detached
+				importService.flushAndClearSession();
+				cacheService.clearCache();
 			}
 		}
 
-		if (oclConcepts.size() != 0) {
-			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService, anImport);
-			importTask.setOclConcepts(oclConcepts);
-
-			runner.execute(importTask);
+		if (!items.isEmpty()) {
+			importService.saveItems(items);
+			items = new ArrayList<>(BATCH_SIZE);
 		}
 
-		runner.shutdown();
-		try {
-			runner.awaitTermination(5, TimeUnit.MINUTES);
-		}
-		catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
+		// Flush and clear before processing mappings to start fresh
+		importService.flushAndClearSession();
+		cacheService.clearCache();
 
 		token = advanceToListOf("mappings", null, parser);
 
@@ -393,8 +382,6 @@ public class Importer implements Runnable {
 			return;
 		}
 
-		runner = newRunner();
-		List<OclMapping> oclMappings = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclMapping oclMapping = parser.readValueAs(OclMapping.class);
 			oclMapping.setUrl(prependBaseUrl(baseUrl, oclMapping.getUrl()));
@@ -402,49 +389,38 @@ public class Importer implements Runnable {
 			oclMapping.setFromSourceUrl(prependBaseUrl(baseUrl, oclMapping.getFromSourceUrl()));
 			oclMapping.setToConceptUrl(prependBaseUrl(baseUrl, oclMapping.getToConceptUrl()));
 
-			oclMappings.add(oclMapping);
+			Item item;
+			try {
+				item = saver.saveMapping(cacheService, anImport, oclMapping);
+				log.info("Imported mapping {}", oclMapping);
+			} catch (SavingException e) {
+				log.error("Failed to save mapping {}", oclMapping, e);
+				Context.clearSession();
+				cacheService.clearCache();
 
-			if (oclMappings.size() >= BATCH_SIZE) {
-				ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService,
-						anImport);
-				importTask.setOclMappings(new ArrayList<>(oclMappings));
+				item = new Item(anImport, oclMapping, ItemState.ERROR, e.getMessage());
+			} catch (Throwable e) {
+				log.error("Failed to import mapping {}", oclMapping, e);
+				Context.clearSession();
+				cacheService.clearCache();
 
-				oclMappings.clear();
+				item = new Item(anImport, oclMapping, ItemState.ERROR);
+				item.setErrorMessage(getUserFriendlyErrorMessage(e));
+			}
+			items.add(item);
 
-				runner.execute(importTask);
+			if (items.size() >= BATCH_SIZE) {
+				importService.saveItems(items);
+				items = new ArrayList<>(BATCH_SIZE);
+				// Flush and clear session to prevent memory buildup, then clear cache since entities are detached
+				importService.flushAndClearSession();
+				cacheService.clearCache();
 			}
 		}
 
-		if (oclMappings.size() != 0) {
-			ImportTask importTask = new ImportTask(saver, new CacheService(conceptService, oclConceptService), importService, anImport);
-			importTask.setOclMappings(oclMappings);
-
-			runner.execute(importTask);
+		if (!items.isEmpty()) {
+			importService.saveItems(items);
 		}
-
-		runner.shutdown();
-		try {
-			runner.awaitTermination(5, TimeUnit.MINUTES);
-		}
-		catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private ThreadPoolExecutor newRunner() {
-		return new ThreadPoolExecutor(0, THREAD_POOL_SIZE, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(
-		        THREAD_POOL_SIZE / 2), new RejectedExecutionHandler() {
-
-					@Override
-					public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-						try {
-	                        executor.getQueue().put(r);
-                        }
-                        catch (InterruptedException e) {
-                        	throw new RejectedExecutionException("Work discarded", e);
-                        }
-					}
-				});
 	}
 
 	private String prependBaseUrl(String baseUrl, String url) {

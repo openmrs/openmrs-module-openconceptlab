@@ -337,13 +337,17 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public void saveItems(Iterable<? extends Item> items) {
+		Import attachedImport = null;
 		for (Item item : items) {
-			Import update = getImport(item.getAnImport().getImportId());
-			item.setAnImport(update); //replace with attached object
+			// Fetch the Import once and reuse for all items in the batch
+			if (attachedImport == null) {
+				attachedImport = getImport(item.getAnImport().getImportId());
+			}
+			item.setAnImport(attachedImport);
 
 			saveItem(item);
-        }
-    }
+		}
+	}
 
 	@Override
 	public Item getItem(String uuid) {
@@ -565,6 +569,13 @@ public class ImportServiceImpl implements ImportService {
 	@Override
 	public <T> T runInTransaction(Callable<T> callable) throws Exception {
 		return callable.call();
+	}
+
+	@Override
+	public void flushAndClearSession() {
+		DbSession session = getSession();
+		session.flush();
+		session.clear();
 	}
 
 }

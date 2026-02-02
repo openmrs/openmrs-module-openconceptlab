@@ -58,14 +58,6 @@ public class Saver {
 
 	private static final Logger log = LoggerFactory.getLogger(Saver.class);
 
-	private static final Object CREATE_CONCEPT_REFERENCE_TERM_LOCK = new Object();
-
-	private static final Object CREATE_CONCEPT_CLASS_LOCK = new Object();
-
-	private static final Object CREATE_CONCEPT_SOURCE_LOCK = new Object();
-
-	private static final Object CREATE_MAP_TYPE_LOCK = new Object();
-
 	private ConceptService conceptService;
 
 	private ImportService importService;
@@ -200,15 +192,10 @@ public class Saver {
 
 		ConceptClass conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
 		if (conceptClass == null) {
-			synchronized (CREATE_CONCEPT_CLASS_LOCK) {
-				conceptClass = cacheService.getConceptClassByName(oclConcept.getConceptClass());
-				if (conceptClass == null) {
-					conceptClass = new ConceptClass();
-					conceptClass.setName(oclConcept.getConceptClass());
-					conceptClass.setDescription("Imported from Open Concept Lab");
-					conceptService.saveConceptClass(conceptClass);
-				}
-			}
+			conceptClass = new ConceptClass();
+			conceptClass.setName(oclConcept.getConceptClass());
+			conceptClass.setDescription("Imported from Open Concept Lab");
+			conceptService.saveConceptClass(conceptClass);
 		}
 		concept.setConceptClass(conceptClass);
 
@@ -413,52 +400,42 @@ public class Saver {
 				} else {
 					ConceptSource toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
 					if (toSource == null) {
-						synchronized (CREATE_CONCEPT_SOURCE_LOCK) {
-							toSource = cacheService.getConceptSourceByName(oclMapping.getToSourceName());
-							if (toSource == null) {
-								toSource = new ConceptSource();
-								toSource.setName(oclMapping.getToSourceName());
-								toSource.setDescription("Imported from " + oclMapping.getUrl());
-								toSource.setUuid(version5Uuid("source/" + oclMapping.getToSourceName()).toString());
-								conceptService.saveConceptSource(toSource);
-							}
-						}
+						toSource = new ConceptSource();
+						toSource.setName(oclMapping.getToSourceName());
+						toSource.setDescription("Imported from " + oclMapping.getUrl());
+						toSource.setUuid(version5Uuid("source/" + oclMapping.getToSourceName()).toString());
+						conceptService.saveConceptSource(toSource);
+						cacheService.addConceptSource(toSource);
 					}
 
 					String mapTypeName = oclMapping.getMapType().replace("-", "_");
 					ConceptMapType mapType = cacheService.getConceptMapTypeByName(mapTypeName);
 					if (mapType == null) {
-						synchronized (CREATE_MAP_TYPE_LOCK) {
-							mapType = new ConceptMapType();
-							mapType.setName(mapTypeName);
-							mapType.setDescription("Imported from " + oclMapping.getUrl());
-							mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
-							conceptService.saveConceptMapType(mapType);
-						}
+						mapType = new ConceptMapType();
+						mapType.setName(mapTypeName);
+						mapType.setDescription("Imported from " + oclMapping.getUrl());
+						mapType.setUuid(version5Uuid("mapType/" + mapTypeName).toString());
+						conceptService.saveConceptMapType(mapType);
 					}
 
 					if (fromConcept != null) {
 
 						// Ensure a concept reference term exists that matches the passed in source/code
-						ConceptReferenceTerm term;
-						synchronized (CREATE_CONCEPT_REFERENCE_TERM_LOCK) {
-							term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
-							if (term == null) {
-								term = new ConceptReferenceTerm();
-								term.setConceptSource(toSource);
-								term.setCode(oclMapping.getToConceptCode());
-								conceptService.saveConceptReferenceTerm(term);
-							}
-							else {
-								// If that term was previously retired, unretire it
-								if (BooleanUtils.isTrue(term.getRetired())) {
-									if (!BooleanUtils.isTrue(oclMapping.getRetired())) {
-										term.setRetired(false);
-										term.setRetiredBy(null);
-										term.setDateRetired(null);
-										term.setRetireReason(null);
-										conceptService.saveConceptReferenceTerm(term);
-									}
+						ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
+						if (term == null) {
+							term = new ConceptReferenceTerm();
+							term.setConceptSource(toSource);
+							term.setCode(oclMapping.getToConceptCode());
+							conceptService.saveConceptReferenceTerm(term);
+						} else {
+							// If that term was previously retired, unretire it
+							if (BooleanUtils.isTrue(term.getRetired())) {
+								if (!BooleanUtils.isTrue(oclMapping.getRetired())) {
+									term.setRetired(false);
+									term.setRetiredBy(null);
+									term.setDateRetired(null);
+									term.setRetireReason(null);
+									conceptService.saveConceptReferenceTerm(term);
 								}
 							}
 						}
