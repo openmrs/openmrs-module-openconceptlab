@@ -15,13 +15,14 @@ import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptMapType;
+import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.ConceptSource;
 import org.openmrs.api.ConceptService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheService {
 
@@ -29,28 +30,34 @@ public class CacheService {
 
 	OclConceptService oclConceptService;
 
-	// Track whether concept sources have been pre-loaded
+	// Track whether various caches have been pre-loaded
 	private boolean conceptSourcesPreloaded = false;
+	private boolean conceptDatatypesPreloaded = false;
+	private boolean conceptClassesPreloaded = false;
+	private boolean conceptMapTypesPreloaded = false;
 
 	public CacheService(ConceptService conceptService, OclConceptService oclConceptService) {
 		this.conceptService = conceptService;
 		this.oclConceptService = oclConceptService;
 	}
 
-	Map<String, ConceptDatatype> conceptDatatypes = new ConcurrentHashMap<String, ConceptDatatype>();
+	Map<String, ConceptDatatype> conceptDatatypes = new HashMap<>();
 
-	Map<String, ConceptClass> conceptClasses = new ConcurrentHashMap<String, ConceptClass>();
+	Map<String, ConceptClass> conceptClasses = new HashMap<>();
 
-	Map<String, ConceptSource> conceptSources = new ConcurrentHashMap<String, ConceptSource>();
+	Map<String, ConceptSource> conceptSources = new HashMap<>();
 
 	// Store normalized name -> source mapping for fuzzy matching
-	Map<String, List<ConceptSource>> normalizedConceptSources = new ConcurrentHashMap<String, List<ConceptSource>>();
+	Map<String, List<ConceptSource>> normalizedConceptSources = new HashMap<>();
 
-	Map<String, ConceptMapType> conceptMapTypes = new ConcurrentHashMap<String, ConceptMapType>();
+	Map<String, ConceptMapType> conceptMapTypes = new HashMap<>();
 
-	Map<String, ConceptMap> conceptMaps = new ConcurrentHashMap<String, ConceptMap>();
+	Map<String, ConceptMap> conceptMaps = new HashMap<>();
 
-	Map<String, Concept> concepts = new ConcurrentHashMap<String, Concept>();
+	Map<String, Concept> concepts = new HashMap<>();
+
+	// Cache for ConceptReferenceTerms keyed by "sourceId:code"
+	Map<String, ConceptReferenceTerm> conceptReferenceTerms = new HashMap<>();
 
 	/**
 	 * Pre-loads all concept sources into the cache to avoid repeated database queries.
@@ -69,15 +76,69 @@ public class CacheService {
 		conceptSourcesPreloaded = true;
 	}
 
+	/**
+	 * Pre-loads all concept datatypes into the cache.
+	 */
+	private void preloadConceptDatatypes() {
+		if (conceptDatatypesPreloaded) {
+			return;
+		}
+		for (ConceptDatatype datatype : conceptService.getAllConceptDatatypes()) {
+			conceptDatatypes.put(datatype.getName(), datatype);
+		}
+		conceptDatatypesPreloaded = true;
+	}
+
+	/**
+	 * Pre-loads all concept classes into the cache.
+	 */
+	private void preloadConceptClasses() {
+		if (conceptClassesPreloaded) {
+			return;
+		}
+		for (ConceptClass conceptClass : conceptService.getAllConceptClasses()) {
+			conceptClasses.put(conceptClass.getName(), conceptClass);
+		}
+		conceptClassesPreloaded = true;
+	}
+
+	/**
+	 * Pre-loads all concept map types into the cache.
+	 */
+	private void preloadConceptMapTypes() {
+		if (conceptMapTypesPreloaded) {
+			return;
+		}
+		for (ConceptMapType mapType : conceptService.getConceptMapTypes(true, true)) {
+			conceptMapTypes.put(mapType.getName(), mapType);
+		}
+		conceptMapTypesPreloaded = true;
+	}
+
+	/**
+	 * Gets the last successful item for a given URL by looking up in the database.
+	 * This searches across all previous imports to find if this URL was previously imported.
+	 */
+	public Item getLastSuccessfulItemByUrl(String url, ImportService importService) {
+		if (url == null) {
+			return null;
+		}
+		return importService.getLastSuccessfulItemByUrl(url, this);
+	}
+
 	public void clearCache() {
 		conceptDatatypes.clear();
+		conceptDatatypesPreloaded = false;
 		conceptClasses.clear();
+		conceptClassesPreloaded = false;
 		conceptSources.clear();
 		normalizedConceptSources.clear();
 		conceptSourcesPreloaded = false;
 		conceptMapTypes.clear();
+		conceptMapTypesPreloaded = false;
 		conceptMaps.clear();
 		concepts.clear();
+		conceptReferenceTerms.clear();
 	}
 
 	public ConceptDatatype getConceptDatatypeByName(String name) {
@@ -85,27 +146,37 @@ public class CacheService {
 			return null;
 		}
 
+		// Ensure datatypes are preloaded
+		preloadConceptDatatypes();
+
 		ConceptDatatype conceptDatatype = conceptDatatypes.get(name);
-        if (conceptDatatype == null) {
-            conceptDatatype = conceptService.getConceptDatatypeByName(name);
-            if (conceptDatatype != null) {
-                conceptDatatypes.put(name, conceptDatatype);
-            }
-        }
-        return conceptDatatype;
-    }
+		if (conceptDatatype == null) {
+			// Fallback to database lookup for any missed datatypes
+			conceptDatatype = conceptService.getConceptDatatypeByName(name);
+			if (conceptDatatype != null) {
+				conceptDatatypes.put(name, conceptDatatype);
+			}
+		}
+		return conceptDatatype;
+	}
 
 	public ConceptClass getConceptClassByName(String name) {
+		if (name == null || StringUtils.isBlank(name)) {
+			return null;
+		}
+
+		// Ensure classes are preloaded
+		preloadConceptClasses();
+
 		ConceptClass conceptClass = conceptClasses.get(name);
-		if (conceptClass != null) {
-			return conceptClass;
-		} else {
+		if (conceptClass == null) {
+			// Fallback to database lookup for any missed classes
 			conceptClass = conceptService.getConceptClassByName(name);
 			if (conceptClass != null) {
 				conceptClasses.put(name, conceptClass);
 			}
-			return conceptClass;
 		}
+		return conceptClass;
 	}
 
 	/**
@@ -166,17 +237,19 @@ public class CacheService {
 			return null;
 		}
 
+		// Ensure map types are preloaded
+		preloadConceptMapTypes();
+
 		ConceptMapType conceptMapType = conceptMapTypes.get(name);
-		if (conceptMapType != null) {
-			return conceptMapType;
-		} else {
+		if (conceptMapType == null) {
+			// Fallback to database lookup for any missed map types
 			conceptMapType = conceptService.getConceptMapTypeByName(name);
 			if (conceptMapType != null) {
 				conceptMapTypes.put(name, conceptMapType);
 			}
-			return conceptMapType;
 		}
-    }
+		return conceptMapType;
+	}
 
 	public ConceptMap getConceptMapByUuid(String uuid, ImportService importService) {
 		if (uuid == null || StringUtils.isBlank(uuid)) {
@@ -221,7 +294,38 @@ public class CacheService {
 				concepts.put(cacheKey, concept);
 			}
 		}
-		
+
 		return concept;
+	}
+
+	/**
+	 * Gets a ConceptReferenceTerm by code and source, using the cache.
+	 * The cache key is "sourceId:code" to uniquely identify terms.
+	 */
+	public ConceptReferenceTerm getConceptReferenceTermByCode(String code, ConceptSource source) {
+		if (code == null || source == null || source.getId() == null) {
+			return null;
+		}
+
+		String cacheKey = source.getId() + ":" + code;
+		ConceptReferenceTerm term = conceptReferenceTerms.get(cacheKey);
+		if (term == null) {
+			term = conceptService.getConceptReferenceTermByCode(code, source);
+			if (term != null) {
+				conceptReferenceTerms.put(cacheKey, term);
+			}
+		}
+		return term;
+	}
+
+	/**
+	 * Adds a newly created ConceptReferenceTerm to the cache.
+	 */
+	public void addConceptReferenceTerm(ConceptReferenceTerm term) {
+		if (term != null && term.getCode() != null && term.getConceptSource() != null
+				&& term.getConceptSource().getId() != null) {
+			String cacheKey = term.getConceptSource().getId() + ":" + term.getCode();
+			conceptReferenceTerms.put(cacheKey, term);
+		}
 	}
 }

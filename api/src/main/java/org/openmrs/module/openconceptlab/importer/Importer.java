@@ -54,7 +54,7 @@ public class Importer implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(Importer.class);
 
-	public final static int BATCH_SIZE = 128;
+	public final static int BATCH_SIZE = 256;
 
 	private ImportService importService;
 
@@ -338,6 +338,7 @@ public class Importer implements Runnable {
 		}
 
 		CacheService cacheService = new CacheService(conceptService, oclConceptService);
+
 		List<Item> items = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);

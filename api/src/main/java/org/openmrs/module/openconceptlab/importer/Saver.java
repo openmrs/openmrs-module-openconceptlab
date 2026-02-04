@@ -78,7 +78,7 @@ public class Saver {
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
 		Import thisImport = anImport;
 
-		Item item = importService.getLastSuccessfulItemByUrl(oclConcept.getUrl(), cacheService);
+		Item item = cacheService.getLastSuccessfulItemByUrl(oclConcept.getUrl(), importService);
 		if (item != null && item.getVersionUrl().equals(oclConcept.getVersionUrl())) {
 			return new Item(thisImport, oclConcept, ItemState.UP_TO_DATE);
 		}
@@ -331,7 +331,7 @@ public class Saver {
 	 */
 	public Item saveMapping(final CacheService cacheService, final Import update, final OclMapping oclMapping) throws ImportException {
 		try {
-				Item oldMappingItem = importService.getLastSuccessfulItemByUrl(oclMapping.getUrl());
+				Item oldMappingItem = cacheService.getLastSuccessfulItemByUrl(oclMapping.getUrl(), importService);
 				if (oldMappingItem != null && isMappingUpToDate(oldMappingItem, oclMapping)) {
 					return new Item(update, oclMapping, ItemState.UP_TO_DATE);
 				}
@@ -340,11 +340,11 @@ public class Saver {
 				Item fromItem;
 				Concept fromConcept = null;
 				if (!StringUtils.isBlank(oclMapping.getFromConceptUrl())) {
-					fromItem = importService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl());
+					fromItem = cacheService.getLastSuccessfulItemByUrl(oclMapping.getFromConceptUrl(), importService);
 					if (fromItem != null) {
 						fromConcept = cacheService.getConceptByUuid(fromItem.getUuid());
 					}
-					
+
 					if (fromConcept == null) {
 						String source = oclMapping.getFromSourceName();
 						String code = oclMapping.getFromConceptCode();
@@ -366,7 +366,7 @@ public class Saver {
 					Item toItem;
 					Concept toConcept = null;
 					if (!StringUtils.isBlank(oclMapping.getToConceptUrl())) {
-						toItem = importService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl());
+						toItem = cacheService.getLastSuccessfulItemByUrl(oclMapping.getToConceptUrl(), importService);
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
 						}
@@ -421,12 +421,13 @@ public class Saver {
 					if (fromConcept != null) {
 
 						// Ensure a concept reference term exists that matches the passed in source/code
-						ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
+						ConceptReferenceTerm term = cacheService.getConceptReferenceTermByCode(oclMapping.getToConceptCode(), toSource);
 						if (term == null) {
 							term = new ConceptReferenceTerm();
 							term.setConceptSource(toSource);
 							term.setCode(oclMapping.getToConceptCode());
 							conceptService.saveConceptReferenceTerm(term);
+							cacheService.addConceptReferenceTerm(term);
 						} else {
 							// If that term was previously retired, unretire it
 							if (BooleanUtils.isTrue(term.getRetired())) {
