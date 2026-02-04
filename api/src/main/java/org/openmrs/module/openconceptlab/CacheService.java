@@ -286,6 +286,9 @@ public class CacheService {
     }
 	
 	public Concept getConceptWithSameAsMapping(String source, String code) {
+		if (source == null || code == null) {
+			return null;
+		}
 		String cacheKey = source + ":" + code;
 		Concept concept = concepts.get(cacheKey);
 		if (concept == null) {
