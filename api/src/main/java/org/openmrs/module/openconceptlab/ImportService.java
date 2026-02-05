@@ -176,4 +176,12 @@ public interface ImportService {
 	@Transactional
 	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
 	<T> T runInTransaction(Callable<T> callable) throws Exception;
+
+	/**
+	 * Flushes pending changes to the database and clears the Hibernate session cache.
+	 * This prevents memory buildup during large imports by releasing cached entities.
+	 */
+	@Transactional
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
+	void flushAndClearSession();
 }
