@@ -165,4 +165,56 @@
 		</createIndex>
 	</changeSet>
 
+	<changeSet author="ibacher" id="openconceptlab-2025-02-05-1">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_item" columnNames="import_id, state"/></not>
+		</preConditions>
+		<comment>Add index for querying items by import and state</comment>
+		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_import_state">
+			<column name="import_id" />
+			<column name="state" />
+		</createIndex>
+	</changeSet>
+
+	<changeSet author="ibacher" id="openconceptlab-2025-02-05-2">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_item" columnNames="uuid"/></not>
+		</preConditions>
+		<comment>Add index for querying items by uuid</comment>
+		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_uuid">
+			<column name="uuid" />
+		</createIndex>
+	</changeSet>
+
+	<changeSet author="ibacher" id="openconceptlab-2025-02-05-3">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_item" columnNames="type, uuid"/></not>
+		</preConditions>
+		<comment>Add index for querying items by type and uuid</comment>
+		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_type_uuid">
+			<column name="type" />
+			<column name="uuid" />
+		</createIndex>
+	</changeSet>
+
+	<changeSet author="ibacher" id="openconceptlab-2025-02-05-4">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_import" columnNames="uuid"/></not>
+		</preConditions>
+		<comment>Add index for querying imports by uuid</comment>
+		<createIndex tableName="openconceptlab_import" indexName="openconceptlab_import_uuid">
+			<column name="uuid" />
+		</createIndex>
+	</changeSet>
+
+	<changeSet author="ibacher" id="openconceptlab-2025-02-05-5">
+		<preConditions onFail="MARK_RAN">
+			<not><indexExists tableName="openconceptlab_import" columnNames="local_date_stopped"/></not>
+		</preConditions>
+		<comment>Add index for querying imports by stopped date</comment>
+		<createIndex tableName="openconceptlab_import" indexName="openconceptlab_import_stopped">
+			<column name="local_date_stopped" />
+		</createIndex>
+	</changeSet>
+
 </databaseChangeLog>
