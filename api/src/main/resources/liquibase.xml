@@ -167,7 +167,7 @@
 
 	<changeSet author="ibacher" id="openconceptlab-2025-02-05-1">
 		<preConditions onFail="MARK_RAN">
-			<not><indexExists tableName="openconceptlab_item" columnNames="type, uuid"/></not>
+			<not><indexExists tableName="openconceptlab_item" columnNames="import_id, state"/></not>
 		</preConditions>
 		<comment>Add index for querying items by import and state</comment>
 		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_import_state">
@@ -235,4 +235,5 @@
 	</changeSet>
 
 </databaseChangeLog>
+
 
