@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 @Resource(
@@ -48,6 +49,9 @@ import java.util.zip.ZipFile;
         supportedOpenmrsVersions = { "1.8.* - 2.*" }
 )
 public class ImportResource extends DelegatingCrudResource<Import> implements Uploadable {
+    private static final Set<String> ALLOWED_MIME_TYPES = new HashSet<>(Arrays.asList(
+        "application/zip", "application/x-zip-compressed", "application/x-zip", "application/octet-stream"
+    ));
 
     @Override
     public Import getByUniqueId(String uniqueId) {
@@ -269,7 +273,7 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestException("File uploaded cannot be empty");
-        } else if (!StringUtils.equalsIgnoreCase(multipartFile.getContentType(), "application/zip")) {
+        } else if (!isZipFileType(multipartFile)) {
             throw new IllegalRequestException("Supplied file must be a zip file");
         }
 
@@ -279,11 +283,24 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
         File tempFile = File.createTempFile("ocl", "zip");
         multipartFile.transferTo(tempFile);
 
-        importer.setZipFile(new ZipFile(tempFile));
+        ZipFile zipFile;
+        try {
+            zipFile = new ZipFile(tempFile);
+        } catch (ZipException e) {
+            tempFile.delete();
+            throw new IllegalRequestException("Supplied file is not a valid zip file");
+        }
+
+        importer.setZipFile(zipFile);
 
         UpdateScheduler updateScheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
         updateScheduler.scheduleNow();
 
         return importService.getLastImport();
+    }
+
+    private static boolean isZipFileType(MultipartFile multipartFile) {
+        String contentType = multipartFile.getContentType();
+        return contentType != null && ALLOWED_MIME_TYPES.contains(contentType.toLowerCase());
     }
 }
