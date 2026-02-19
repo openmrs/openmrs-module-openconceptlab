@@ -165,6 +165,11 @@
 		</createIndex>
 	</changeSet>
 
+	<changeSet author="ibacher" id="openconceptlab-2026-02-19-1">
+		<comment>Shrink type column from varchar(512) to varchar(50) since only short enum values are stored</comment>
+		<modifyDataType tableName="openconceptlab_item" columnName="type" newDataType="varchar(50)" />
+	</changeSet>
+
 	<changeSet author="ibacher" id="openconceptlab-2025-02-05-1">
 		<preConditions onFail="MARK_RAN">
 			<not><indexExists tableName="openconceptlab_item" columnNames="import_id, state"/></not>
@@ -233,7 +238,6 @@
 			<column name="local_date_stopped" />
 		</createIndex>
 	</changeSet>
-
 </databaseChangeLog>
 
 
