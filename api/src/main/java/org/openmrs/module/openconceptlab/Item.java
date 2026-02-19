@@ -45,7 +45,7 @@ public class Item {
 	private Import anImport;
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name = "type")
+	@Column(name = "type", length = 50)
 	private ItemType type;
 	
 	@Basic
