@@ -167,7 +167,7 @@
 
 	<changeSet author="ibacher" id="openconceptlab-2025-02-05-1">
 		<preConditions onFail="MARK_RAN">
-			<not><indexExists tableName="openconceptlab_item" columnNames="import_id, state"/></not>
+			<not><indexExists tableName="openconceptlab_item" columnNames="type, uuid"/></not>
 		</preConditions>
 		<comment>Add index for querying items by import and state</comment>
 		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_import_state">
@@ -188,7 +188,24 @@
 
 	<changeSet author="ibacher" id="openconceptlab-2025-02-05-3">
 		<preConditions onFail="MARK_RAN">
-			<not><indexExists tableName="openconceptlab_item" columnNames="type, uuid"/></not>
+			<and>
+				<not>
+					<indexExists tableName="openconceptlab_item" columnNames="import_id, state"/>
+				</not>
+				<or>
+			        <not>
+			            <dbms type="mysql"/>
+			        </not>
+			        <sqlCheck expectedResult="1">
+			            SELECT CASE
+			                WHEN CAST(SUBSTRING_INDEX(VERSION(), '.', 1) AS UNSIGNED) > 5 THEN 1
+			                WHEN CAST(SUBSTRING_INDEX(VERSION(), '.', 1) AS UNSIGNED) = 5
+			                 AND CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(VERSION(), '.', 2), '.', -1) AS UNSIGNED) >= 7 THEN 1
+			                ELSE 0
+			            END
+			        </sqlCheck>
+			    </or>
+			</and>
 		</preConditions>
 		<comment>Add index for querying items by type and uuid</comment>
 		<createIndex tableName="openconceptlab_item" indexName="openconceptlab_item_type_uuid">
@@ -218,3 +235,4 @@
 	</changeSet>
 
 </databaseChangeLog>
+
