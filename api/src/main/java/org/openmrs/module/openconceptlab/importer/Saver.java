@@ -76,6 +76,15 @@ public class Saver {
 	 * @throws ImportException
 	 */
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
+		return saveConcept(cacheService, anImport, oclConcept, null);
+	}
+
+	/**
+	 * Saves a concept with the specified validation type.
+	 * When validationType is non-null, it is used directly instead of looking up the subscription each time.
+	 * This avoids repeated getSubscription() calls for every concept in the import.
+	 */
+	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept, ValidationType validationType) throws ImportException {
 		Import thisImport = anImport;
 
 		Item item = cacheService.getLastSuccessfulItemByUrl(oclConcept.getUrl(), importService);
@@ -98,16 +107,18 @@ public class Saver {
 		while (true) {
 			try {
 				try {
-					ValidationType validationType;
-					if (importService.getSubscription() != null) {
-						validationType = importService.getSubscription().getValidationType();
-					} else {
-						validationType = ValidationType.FULL;
+					ValidationType effectiveValidationType = validationType;
+					if (effectiveValidationType == null) {
+						if (importService.getSubscription() != null) {
+							effectiveValidationType = importService.getSubscription().getValidationType();
+						} else {
+							effectiveValidationType = ValidationType.FULL;
+						}
 					}
 
-					if (ValidationType.FULL.equals(validationType)) {
+					if (ValidationType.FULL.equals(effectiveValidationType)) {
 						conceptService.saveConcept(concept);
-					} else if (ValidationType.NONE.equals(validationType)) {
+					} else if (ValidationType.NONE.equals(effectiveValidationType)) {
 						importService.updateConceptWithoutValidation(concept);
 					}
 
@@ -440,7 +451,7 @@ public class Saver {
 						ItemState state;
 
 						// Get any existing ConceptMap entry by uuid
-						ConceptMap conceptMap = importService.getConceptMapByUuid(oclMapping.getExternalId());
+						ConceptMap conceptMap = cacheService.getConceptMapByUuid(oclMapping.getExternalId(), importService);
 
 						// If we find an existing Map by uuid, update it to match the passed in mapping
 						if (conceptMap != null) {

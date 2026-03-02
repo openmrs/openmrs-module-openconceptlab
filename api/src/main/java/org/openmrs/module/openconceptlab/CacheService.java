@@ -21,9 +21,21 @@ import org.openmrs.api.ConceptService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * In-memory cache layer for the OCL import pipeline. A new instance is created per import run
+ * in Importer.processInput() and is garbage collected when the import completes.
+ * <p>
+ * Most entity caches (concepts, conceptMaps, etc.) are cleared on each flush/clear cycle via
+ * {@link #clearCache()}. The item URL caches ({@code itemsByUrl}, {@code checkedItemUrls}) grow
+ * monotonically for the lifetime of the import since they must persist across batches and phases.
+ * For typical imports (~15K items), this is a few MB. For very large imports (hundreds of thousands
+ * of items), memory usage should be monitored.
+ */
 public class CacheService {
 
 	ConceptService conceptService;
@@ -58,6 +70,11 @@ public class CacheService {
 
 	// Cache for ConceptReferenceTerms keyed by "sourceId:code"
 	Map<String, ConceptReferenceTerm> conceptReferenceTerms = new HashMap<>();
+
+	// Cache for item URL lookups - persists across clearCache() calls since items are used for metadata only
+	private final Map<String, Item> itemsByUrl = new HashMap<>();
+	private final Set<String> checkedItemUrls = new HashSet<>();
+	private boolean skipDbItemLookups = false;
 
 	/**
 	 * Pre-loads all concept sources into the cache to avoid repeated database queries.
@@ -116,14 +133,51 @@ public class CacheService {
 	}
 
 	/**
-	 * Gets the last successful item for a given URL by looking up in the database.
-	 * This searches across all previous imports to find if this URL was previously imported.
+	 * Gets the last successful item for a given URL. Results are cached to avoid
+	 * repeated database queries for the same URL across batches and import phases.
+	 * The cache persists across clearCache() calls since items are used for metadata only.
 	 */
 	public Item getLastSuccessfulItemByUrl(String url, ImportService importService) {
 		if (url == null) {
 			return null;
 		}
-		return importService.getLastSuccessfulItemByUrl(url, this);
+
+		if (checkedItemUrls.contains(url)) {
+			return itemsByUrl.get(url);
+		}
+
+		if (skipDbItemLookups) {
+			return null;
+		}
+
+		Item item = importService.getLastSuccessfulItemByUrl(url, this);
+		checkedItemUrls.add(url);
+		if (item != null) {
+			itemsByUrl.put(url, item);
+		}
+		return item;
+	}
+
+	/**
+	 * Caches an item by its URL for fast lookup during the import.
+	 * Called after successfully saving a concept or mapping to make it
+	 * available for subsequent lookups (e.g., mapping phase looking up concept items)
+	 * without a database query.
+	 */
+	public void cacheItem(Item item) {
+		if (item != null && item.getUrl() != null && item.getState() != ItemState.ERROR) {
+			itemsByUrl.put(item.getUrl(), item);
+			checkedItemUrls.add(item.getUrl());
+		}
+	}
+
+	/**
+	 * When set to true, skips database lookups in getLastSuccessfulItemByUrl() for URLs
+	 * not already in the cache. Used for first-time imports where no previous items exist,
+	 * eliminating thousands of DB queries that would all return null.
+	 */
+	public void setSkipDbItemLookups(boolean skip) {
+		this.skipDbItemLookups = skip;
 	}
 
 	public void clearCache() {
@@ -139,6 +193,12 @@ public class CacheService {
 		conceptMaps.clear();
 		concepts.clear();
 		conceptReferenceTerms.clear();
+
+		// Note: itemsByUrl and checkedItemUrls are intentionally NOT cleared here.
+		// They must persist across flush/clear cycles so the mapping phase can look up
+		// concept items saved earlier without DB queries. For ~15,000 items this retains
+		// ~15K Item objects + String keys in memory, which is acceptable. The entire
+		// CacheService instance is GC'd when the import run completes.
 	}
 
 	public ConceptDatatype getConceptDatatypeByName(String name) {
@@ -259,13 +319,13 @@ public class CacheService {
 		ConceptMap conceptMap = conceptMaps.get(uuid);
 		if (conceptMap != null) {
 			return conceptMap;
-		} else {
-			conceptMap = importService.getConceptMapByUuid(uuid);
-			if (conceptMap != null) {
-				conceptMaps.put(uuid, conceptMap);
-			}
-			return conceptMap;
 		}
+
+		conceptMap = importService.getConceptMapByUuid(uuid);
+		if (conceptMap != null) {
+			conceptMaps.put(uuid, conceptMap);
+		}
+		return conceptMap;
 	}
 
 	public Concept getConceptByUuid(String uuid) {
@@ -276,14 +336,14 @@ public class CacheService {
 		Concept concept = concepts.get(uuid);
 		if (concept != null) {
 			return concept;
-		} else {
-			concept = conceptService.getConceptByUuid(uuid);
-			if (concept != null) {
-				concepts.put(uuid, concept);
-			}
-			return concept;
 		}
-    }
+
+		concept = conceptService.getConceptByUuid(uuid);
+		if (concept != null) {
+			concepts.put(uuid, concept);
+		}
+		return concept;
+	}
 	
 	public Concept getConceptWithSameAsMapping(String source, String code) {
 		if (source == null || code == null) {
@@ -291,11 +351,13 @@ public class CacheService {
 		}
 		String cacheKey = source + ":" + code;
 		Concept concept = concepts.get(cacheKey);
-		if (concept == null) {
-			concept = oclConceptService.getConceptWithSameAsMapping(code, source);
-			if (concept != null) {
-				concepts.put(cacheKey, concept);
-			}
+		if (concept != null) {
+			return concept;
+		}
+
+		concept = oclConceptService.getConceptWithSameAsMapping(code, source);
+		if (concept != null) {
+			concepts.put(cacheKey, concept);
 		}
 
 		return concept;

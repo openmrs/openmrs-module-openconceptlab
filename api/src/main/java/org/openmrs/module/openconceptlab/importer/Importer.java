@@ -30,6 +30,7 @@ import org.openmrs.module.openconceptlab.OpenConceptLabActivator;
 import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Utils;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -54,7 +55,12 @@ public class Importer implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(Importer.class);
 
-	public final static int BATCH_SIZE = 256;
+	// Number of items to process before flushing/clearing the Hibernate session.
+	// Higher values reduce flush/clear cycles but increase session memory usage
+	// (each concept carries names, descriptions, mappings, etc.). The original value
+	// was 256; 512 is a moderate increase that balances fewer cycles with memory
+	// safety across varied OpenMRS deployment environments.
+	public final static int BATCH_SIZE = 512;
 
 	private ImportService importService;
 
@@ -320,9 +326,12 @@ public class Importer implements Runnable {
 			return;
 		}
 
+		// Look up subscription once for the entire import
+		Subscription subscription = importService.getSubscription();
+
 		String baseUrl = "";
-		if (importService.getSubscription() != null) {
-			baseUrl = importService.getSubscription().getUrl();
+		if (subscription != null) {
+			baseUrl = subscription.getUrl();
 			if (baseUrl != null) {
 				try {
 					URI uri = new URI(baseUrl);
@@ -339,6 +348,21 @@ public class Importer implements Runnable {
 
 		CacheService cacheService = new CacheService(conceptService, oclConceptService);
 
+		// Determine validation type once for the entire import to avoid per-concept getSubscription() calls.
+		ValidationType validationType = ValidationType.FULL;
+		if (subscription != null && subscription.getValidationType() != null) {
+			validationType = subscription.getValidationType();
+		}
+
+		// If this is the first-ever import, skip DB lookups for previous items since none exist.
+		// We check <= 1 because the current in-progress import may already be visible in the
+		// query results (Hibernate auto-flushes before Criteria queries). getImportsInOrder()
+		// returns ALL imports (no status filtering), so size 0 or 1 both mean no prior import.
+		List<Import> previousImports = importService.getImportsInOrder(0, 2);
+		if (previousImports.size() <= 1) {
+			cacheService.setSkipDbItemLookups(true);
+		}
+
 		List<Item> items = new ArrayList<>(BATCH_SIZE);
 		while (parser.nextToken() != JsonToken.END_ARRAY) {
 			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
@@ -347,8 +371,9 @@ public class Importer implements Runnable {
 
 			Item item;
 			try {
-				item = saver.saveConcept(cacheService, anImport, oclConcept);
-				log.info("Imported concept {}", oclConcept);
+				item = saver.saveConcept(cacheService, anImport, oclConcept, validationType);
+				cacheService.cacheItem(item);
+				log.debug("Imported concept {}", oclConcept);
 			} catch (Throwable e) {
 				log.error("Failed to import concept {}", oclConcept, e);
 				Context.clearSession();
@@ -393,7 +418,8 @@ public class Importer implements Runnable {
 			Item item;
 			try {
 				item = saver.saveMapping(cacheService, anImport, oclMapping);
-				log.info("Imported mapping {}", oclMapping);
+				cacheService.cacheItem(item);
+				log.debug("Imported mapping {}", oclMapping);
 			} catch (SavingException e) {
 				log.error("Failed to save mapping {}", oclMapping, e);
 				Context.clearSession();
