@@ -34,6 +34,7 @@ import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOp
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.openmrs.util.PrivilegeConstants;
 import org.springframework.web.multipart.MultipartFile;
+import java.io.InputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -298,9 +299,27 @@ public class ImportResource extends DelegatingCrudResource<Import> implements Up
 
         return importService.getLastImport();
     }
-
     private static boolean isZipFileType(MultipartFile multipartFile) {
+    try {
+        InputStream is = multipartFile.getInputStream();
+        byte[] signature = new byte[2];
+        is.read(signature);
+        is.close();
+
+        boolean isZip = signature[0] == 'P' && signature[1] == 'K';
+
         String contentType = multipartFile.getContentType();
-        return contentType != null && ALLOWED_MIME_TYPES.contains(contentType.toLowerCase());
+
+        boolean validMime = contentType != null && (
+                contentType.equalsIgnoreCase("application/zip") ||
+                contentType.equalsIgnoreCase("application/x-zip-compressed") ||
+                contentType.equalsIgnoreCase("multipart/x-zip")
+        );
+
+        return isZip || validMime;
+
+    } catch (Exception e) {
+        return false;
     }
+}
 }
