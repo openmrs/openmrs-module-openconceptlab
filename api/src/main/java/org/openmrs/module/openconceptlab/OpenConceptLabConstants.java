@@ -37,5 +37,10 @@ public class OpenConceptLabConstants {
 	public static final String GP_VALIDATION_TYPE = MODULE_ID + ".validationType";
 	public static final String GP_OCL_LOAD_AT_STARTUP_PATH = MODULE_ID + ".oclLoadAtStartupPath";
 
+	public static final String GP_CLEANUP_RETENTION_TYPE = MODULE_ID + ".cleanupRetentionType";
+	public static final String GP_CLEANUP_RETAIN_IMPORTS = MODULE_ID + ".cleanupRetainImports";
+	public static final String GP_CLEANUP_RETAIN_DAYS = MODULE_ID + ".cleanupRetainDays";
+	public static final String GP_CLEANUP_DELAY_MINUTES = MODULE_ID + ".cleanupDelayMinutes";
+
 	public static final UUID OPEN_CONCEPT_LAB_NAMESPACE_UUID = UUID.fromString("672c6cb2-4f47-4cb0-9fca-b5f6116cd33a");
 }
