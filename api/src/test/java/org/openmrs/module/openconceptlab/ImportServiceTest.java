@@ -200,6 +200,27 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		assertThat(subscription, is(newSubscription));
 	}
 
+	/**
+	 * @see ImportServiceImpl#getSubscription()
+	 * @Verifies unescapes HTML entities in token and URL from global properties
+	 */
+	@Test
+	public void getSubscription_shouldUnescapeHtmlEntitiesInTokenAndUrl() throws Exception {
+		String escapedToken = "abc&amp;def&lt;ghi";
+		String expectedToken = "abc&def<ghi";
+		String escapedUrl = "http://api.openconceptlab.com/orgs/test?a=1&amp;b=2";
+		String expectedUrl = "http://api.openconceptlab.com/orgs/test?a=1&b=2";
+
+		Context.getAdministrationService()
+				.setGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_URL, escapedUrl);
+		Context.getAdministrationService()
+				.setGlobalProperty(OpenConceptLabConstants.GP_TOKEN, escapedToken);
+
+		Subscription subscription = importService.getSubscription();
+		assertThat(subscription.getUrl(), is(expectedUrl));
+		assertThat(subscription.getToken(), is(expectedToken));
+	}
+
     /*
      * These ignored tests are working fine,
      * but it takes too much time to finish them

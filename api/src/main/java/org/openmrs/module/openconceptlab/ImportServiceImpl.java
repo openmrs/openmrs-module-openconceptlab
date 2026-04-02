@@ -10,6 +10,7 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.criterion.Order;
@@ -363,13 +364,13 @@ public class ImportServiceImpl implements ImportService {
 			return null;
 		}
 		Subscription subscription = new Subscription();
-		subscription.setUrl(url);
+		subscription.setUrl(StringEscapeUtils.unescapeHtml4(url));
 
 		String uuid = adminService.getGlobalProperty(OpenConceptLabConstants.GP_SUBSCRIPTION_UUID);
 		subscription.setUuid(uuid);
 
 		String token = adminService.getGlobalProperty(OpenConceptLabConstants.GP_TOKEN);
-		subscription.setToken(token);
+		subscription.setToken(StringEscapeUtils.unescapeHtml4(token));
 
 		String validationType = adminService.getGlobalProperty(OpenConceptLabConstants.GP_VALIDATION_TYPE);
 		if (StringUtils.isNotBlank(validationType)) {
