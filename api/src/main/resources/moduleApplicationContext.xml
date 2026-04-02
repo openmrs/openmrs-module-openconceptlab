@@ -56,6 +56,36 @@
 		</property>
 	</bean>
 
+	<task:scheduler id="openconceptlab.cleanupScheduler.taskScheduler" pool-size="1"/>
+
+	<bean id="openconceptlab.cleanupService"
+		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager"/>
+		<property name="target">
+			<bean class="org.openmrs.module.openconceptlab.ItemCleanupServiceImpl">
+				<property name="sessionFactory" ref="sessionFactory" />
+				<property name="adminService" ref="adminService" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors"/>
+		<property name="transactionAttributeSource" ref="transactionAttributeSource"/>
+	</bean>
+
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list>
+				<value>org.openmrs.module.openconceptlab.ItemCleanupService</value>
+				<ref bean="openconceptlab.cleanupService"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="openconceptlab.cleanupScheduler" class="org.openmrs.module.openconceptlab.scheduler.CleanupScheduler">
+		<property name="scheduler" ref="openconceptlab.cleanupScheduler.taskScheduler"/>
+		<property name="cleanupService" ref="openconceptlab.cleanupService" />
+		<property name="adminService" ref="adminService" />
+	</bean>
+
 	<bean id="openconceptlab.oclClient" class="org.openmrs.module.openconceptlab.client.OclClient" />
 	
 	<bean id="openconceptlab.saver" class="org.openmrs.module.openconceptlab.importer.Saver">
@@ -69,6 +99,7 @@
 		<property name="oclConceptService" ref="openconceptlab.conceptService" />
 		<property name="oclClient" ref="openconceptlab.oclClient" />
 		<property name="saver" ref="openconceptlab.saver" />
+		<property name="cleanupScheduler" ref="openconceptlab.cleanupScheduler" />
 	</bean>
 	
 	<bean id="openconceptlab.updateScheduler" class="org.openmrs.module.openconceptlab.scheduler.UpdateScheduler">
