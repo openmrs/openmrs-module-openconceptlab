@@ -195,6 +195,7 @@ public class Saver {
 			conceptClass = new ConceptClass();
 			conceptClass.setName(oclConcept.getConceptClass());
 			conceptClass.setDescription("Imported from Open Concept Lab");
+			conceptClass.setUuid(version5Uuid("conceptClass/" + oclConcept.getConceptClass()).toString());
 			conceptService.saveConceptClass(conceptClass);
 		}
 		concept.setConceptClass(conceptClass);
