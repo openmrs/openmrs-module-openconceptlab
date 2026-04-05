@@ -710,6 +710,30 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		ConceptClass conceptClass = conceptService.getConceptClassByName(concept.getConceptClass());
 		assertThat(conceptClass, notNullValue());
+		assertThat(conceptClass.getUuid(), is(version5Uuid("conceptClass/" + concept.getConceptClass()).toString()));
+	}
+	
+	/**
+	 * @verifies generate deterministic UUID for new concept class
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 */
+	@Test
+	public void importConcept_shouldGenerateDeterministicUuidForNewConceptClass() throws Exception {
+		Import update = importService.getLastImport();
+		String className = "Drug route";
+		String expectedUuid = version5Uuid("conceptClass/" + className).toString();
+		
+		OclConcept concept = newOclConcept();
+		concept.setConceptClass(className);
+		
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept);
+		
+		ConceptClass conceptClass = conceptService.getConceptClassByName(className);
+		assertThat(conceptClass, notNullValue());
+		assertThat(conceptClass.getUuid(), is(expectedUuid));
+		
+		// Verify determinism: calling version5Uuid again with the same seed produces the same UUID
+		assertThat(version5Uuid("conceptClass/" + className).toString(), is(expectedUuid));
 	}
 
 	/**
