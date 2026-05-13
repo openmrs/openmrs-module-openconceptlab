@@ -56,10 +56,6 @@ public class Importer implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(Importer.class);
 
 	// Number of items to process before flushing/clearing the Hibernate session.
-	// Higher values reduce flush/clear cycles but increase session memory usage
-	// (each concept carries names, descriptions, mappings, etc.). The original value
-	// was 256; 512 is a moderate increase that balances fewer cycles with memory
-	// safety across varied OpenMRS deployment environments.
 	public final static int BATCH_SIZE = 512;
 
 	private ImportService importService;

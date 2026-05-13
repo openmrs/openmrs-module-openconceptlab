@@ -21,20 +21,12 @@ import org.openmrs.api.ConceptService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * In-memory cache layer for the OCL import pipeline. A new instance is created per import run
- * in Importer.processInput() and is garbage collected when the import completes.
- * <p>
- * Most entity caches (concepts, conceptMaps, etc.) are cleared on each flush/clear cycle via
- * {@link #clearCache()}. The item URL caches ({@code itemsByUrl}, {@code checkedItemUrls}) grow
- * monotonically for the lifetime of the import since they must persist across batches and phases.
- * For typical imports (~15K items), this is a few MB. For very large imports (hundreds of thousands
- * of items), memory usage should be monitored.
+ * and is garbage collected when the import completes.
  */
 public class CacheService {
 
@@ -71,9 +63,14 @@ public class CacheService {
 	// Cache for ConceptReferenceTerms keyed by "sourceId:code"
 	Map<String, ConceptReferenceTerm> conceptReferenceTerms = new HashMap<>();
 
-	// Cache for item URL lookups - persists across clearCache() calls since items are used for metadata only
+	// Cache for item URL lookups; persists across clearCache() so the mapping phase can find
+	// concept items saved earlier in the same import without a database hit. A null value means
+	// "we already checked and there is no item for this URL", so containsKey() distinguishes
+	// a cached miss from an unchecked URL.
 	private final Map<String, Item> itemsByUrl = new HashMap<>();
-	private final Set<String> checkedItemUrls = new HashSet<>();
+
+	// When true, getLastSuccessfulItemByUrl() returns null on cache miss instead of querying
+	// the database. Used for first-ever imports where no previous items can exist.
 	private boolean skipDbItemLookups = false;
 
 	/**
@@ -133,16 +130,14 @@ public class CacheService {
 	}
 
 	/**
-	 * Gets the last successful item for a given URL. Results are cached to avoid
-	 * repeated database queries for the same URL across batches and import phases.
-	 * The cache persists across clearCache() calls since items are used for metadata only.
+	 * Gets the last successful item for a given URL, falling back to a database lookup when not cached.
 	 */
 	public Item getLastSuccessfulItemByUrl(String url, ImportService importService) {
 		if (url == null) {
 			return null;
 		}
 
-		if (checkedItemUrls.contains(url)) {
+		if (itemsByUrl.containsKey(url)) {
 			return itemsByUrl.get(url);
 		}
 
@@ -151,30 +146,22 @@ public class CacheService {
 		}
 
 		Item item = importService.getLastSuccessfulItemByUrl(url, this);
-		checkedItemUrls.add(url);
-		if (item != null) {
-			itemsByUrl.put(url, item);
-		}
+		itemsByUrl.put(url, item);
 		return item;
 	}
 
 	/**
 	 * Caches an item by its URL for fast lookup during the import.
-	 * Called after successfully saving a concept or mapping to make it
-	 * available for subsequent lookups (e.g., mapping phase looking up concept items)
-	 * without a database query.
 	 */
 	public void cacheItem(Item item) {
 		if (item != null && item.getUrl() != null && item.getState() != ItemState.ERROR) {
 			itemsByUrl.put(item.getUrl(), item);
-			checkedItemUrls.add(item.getUrl());
 		}
 	}
 
 	/**
 	 * When set to true, skips database lookups in getLastSuccessfulItemByUrl() for URLs
-	 * not already in the cache. Used for first-time imports where no previous items exist,
-	 * eliminating thousands of DB queries that would all return null.
+	 * not already in the cache.
 	 */
 	public void setSkipDbItemLookups(boolean skip) {
 		this.skipDbItemLookups = skip;
@@ -194,11 +181,8 @@ public class CacheService {
 		concepts.clear();
 		conceptReferenceTerms.clear();
 
-		// Note: itemsByUrl and checkedItemUrls are intentionally NOT cleared here.
-		// They must persist across flush/clear cycles so the mapping phase can look up
-		// concept items saved earlier without DB queries. For ~15,000 items this retains
-		// ~15K Item objects + String keys in memory, which is acceptable. The entire
-		// CacheService instance is GC'd when the import run completes.
+		// itemsByUrl is intentionally not cleared so the mapping phase can look up concept
+		// items saved earlier. The entire CacheService instance is GC'd when the import completes.
 	}
 
 	public ConceptDatatype getConceptDatatypeByName(String name) {

@@ -71,18 +71,14 @@ public class Saver {
 	    this.importService = importService;
     }
 
-	/**
-	 * @param oclConcept
-	 * @throws ImportException
-	 */
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
 		return saveConcept(cacheService, anImport, oclConcept, null);
 	}
 
 	/**
-	 * Saves a concept with the specified validation type.
-	 * When validationType is non-null, it is used directly instead of looking up the subscription each time.
-	 * This avoids repeated getSubscription() calls for every concept in the import.
+	 * Saves a concept using the given validation type. When {@code validationType} is {@code null},
+	 * the validation type is resolved from the active subscription (falling back to
+	 * {@link ValidationType#FULL} if no subscription is configured).
 	 */
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept, ValidationType validationType) throws ImportException {
 		Import thisImport = anImport;
