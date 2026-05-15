@@ -41,6 +41,7 @@ import org.openmrs.module.openconceptlab.ImportServiceImpl;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
+import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.test.BaseContextMockTest;
 
@@ -179,7 +180,7 @@ public class ImporterTest extends BaseContextMockTest {
 				OclConcept oclConcept = (OclConcept) invocation.getArguments()[2];
 				return new Item(update, oclConcept, ItemState.ADDED);
 			}
-		}).when(saver).saveConcept(any(CacheService.class), any(Import.class), any(OclConcept.class));
+		}).when(saver).saveConcept(any(CacheService.class), any(Import.class), any(OclConcept.class), any(ValidationType.class));
 
 		doAnswer(new Answer<Item>() {
 
