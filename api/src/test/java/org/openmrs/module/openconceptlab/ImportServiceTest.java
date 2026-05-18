@@ -25,6 +25,8 @@ import org.openmrs.ConceptName;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.Daemon;
+import org.openmrs.module.DaemonToken;
 import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.importer.Saver;
@@ -45,13 +47,13 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.ZipFile;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.openconceptlab.client.OclClient.FILE_NAME_FORMAT;
 
@@ -149,7 +151,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 
 	/**
      * @see ImportServiceImpl#stopImport(Import)
-     * @verifies throw IllegalStateException if trying to stop twice
      */
     @Test
     public void stopUpdate_shouldThrowIllegalStateExceptionIfTryingToStopTwice() throws Exception {
@@ -626,6 +627,17 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 					lastImport.getSubscriptionUrl());
 		} finally {
 			RootLogger.getRootLogger().setLevel(rootLoggerLevel);
+			// importer.run(zipFile) hands work to a daemon thread whose transaction commits
+			// independently of the test's rolled-back transaction, leaving Items/Imports in
+			// the shared H2 instance and polluting later test classes. Run the wipe in
+			// another daemon thread so its DELETEs commit on the same out-of-test path.
+			DaemonToken token = OpenConceptLabActivator.getDaemonToken();
+			if (token != null) {
+				Daemon.runInDaemonThreadAndWait(() -> {
+					Context.getAdministrationService().executeSQL("DELETE FROM openconceptlab_item", false);
+					Context.getAdministrationService().executeSQL("DELETE FROM openconceptlab_import", false);
+				}, token);
+			}
 		}
 	}
 }

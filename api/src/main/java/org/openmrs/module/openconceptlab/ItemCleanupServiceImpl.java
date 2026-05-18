@@ -10,7 +10,7 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.openmrs.api.AdministrationService;
@@ -100,40 +100,57 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 	}
 
 	/**
-	 * Builds the set of import IDs that must not have their items deleted.
-	 * This always includes in-progress imports and the most recent successful import,
-	 * plus imports covered by the retention policy. An import is considered successful
-	 * if it has at least one non-ERROR item (i.e., it actually processed something).
+	 * Builds the set of import IDs whose items must not be deleted. Always includes:
+	 * <ul>
+	 *   <li>in-progress imports (never touched while running)</li>
+	 *   <li>imports covered by the configured retention policy — the N most recent stopped
+	 *       imports under RUNS (regardless of success/failure), or imports stopped within
+	 *       the cutoff under DAYS</li>
+	 *   <li>the most recent successful import (an import with at least one non-ERROR item),
+	 *       pinned so {@code getLastSuccessfulSubscriptionImport()} keeps returning a usable
+	 *       row even if the head of history is all failures</li>
+	 * </ul>
 	 */
-	@SuppressWarnings("unchecked")
 	private Set<Long> getProtectedImportIds(String retentionType, int retentionValue) {
 		Session session = getSession();
-		Set<Long> protectedIds = new HashSet<>();
 
-		// An import is "successful" if it processed at least one item without error.
-		// This distinguishes crashed imports (no items or only ERROR items) from
-		// partially successful ones (some errors but also real work done).
+        // "Successful" = at least one non-ERROR item. This is only used to pin the most
+		// recent good import; retention itself counts every stopped import regardless of
+		// state. Without the pin, a string of failures could push every successful import
+		// out of the retain window, forcing a full refetch on the next incremental update.
 		String hasNonErrorItems =
 				"EXISTS (SELECT 1 FROM OclItem item WHERE item.anImport = i " +
 				"AND (item.state IS NULL OR item.state <> :errorState))";
 
 		// Always protect in-progress imports
 		List<Long> inProgressIds = session.createQuery(
-				"SELECT i.importId FROM OclImport i WHERE i.localDateStopped IS NULL")
+				"SELECT i.importId FROM OclImport i WHERE i.localDateStopped IS NULL", Long.class)
 				.list();
-		protectedIds.addAll(inProgressIds);
+        Set<Long> protectedIds = new HashSet<>(inProgressIds);
 
 		if (RETENTION_TYPE_RUNS.equals(retentionType)) {
-			// Protect the N most recent successful imports.
-			// This implicitly includes the most recent successful import.
-			Query runsQuery = session.createQuery(
+			// Protect the N most recent stopped imports regardless of state
+			List<Long> recentIds = session.createQuery(
+					"SELECT i.importId FROM OclImport i " +
+					"WHERE i.localDateStopped IS NOT NULL " +
+					"ORDER BY i.importId DESC", Long.class)
+					.setMaxResults(retentionValue)
+					.list();
+			protectedIds.addAll(recentIds);
+
+			// Additionally, pin the most recent successful import (may be older than the
+			// retention window) so incremental updates can still resume from it.
+			Query<Long> latestSuccessful = session.createQuery(
 					"SELECT i.importId FROM OclImport i " +
 					"WHERE i.localDateStopped IS NOT NULL " +
 					"AND " + hasNonErrorItems + " " +
-					"ORDER BY i.importId DESC");
-			runsQuery.setParameter("errorState", ItemState.ERROR);
-			runsQuery.setMaxResults(retentionValue);
-			protectedIds.addAll(runsQuery.list());
+					"ORDER BY i.importId DESC", Long.class);
+			latestSuccessful.setParameter("errorState", ItemState.ERROR);
+			latestSuccessful.setMaxResults(1);
+			Long latestSuccessfulId = latestSuccessful.uniqueResult();
+			if (latestSuccessfulId != null) {
+				protectedIds.add(latestSuccessfulId);
+			}
 		} else {
 			// Protect imports completed within the last N days
 			Calendar cutoff = Calendar.getInstance();
@@ -141,20 +158,20 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 			List<Long> dayIds = session.createQuery(
 					"SELECT i.importId FROM OclImport i " +
 					"WHERE i.localDateStopped IS NOT NULL " +
-					"AND i.localDateStopped >= :cutoffDate")
+					"AND i.localDateStopped >= :cutoffDate", Long.class)
 					.setParameter("cutoffDate", cutoff.getTime())
 					.list();
 			protectedIds.addAll(dayIds);
 
 			// Always protect the most recent successful import even if it's older than the cutoff
-			Query latestQuery = session.createQuery(
+			Query<Long> latestQuery = session.createQuery(
 					"SELECT i.importId FROM OclImport i " +
 					"WHERE i.localDateStopped IS NOT NULL " +
 					"AND " + hasNonErrorItems + " " +
-					"ORDER BY i.importId DESC");
+					"ORDER BY i.importId DESC", Long.class);
 			latestQuery.setParameter("errorState", ItemState.ERROR);
 			latestQuery.setMaxResults(1);
-			Long latestId = (Long) latestQuery.uniqueResult();
+			Long latestId = latestQuery.uniqueResult();
 			if (latestId != null) {
 				protectedIds.add(latestId);
 			}
@@ -169,14 +186,13 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 	 * at least one successful record exists for every imported concept/mapping
 	 * that has one.
 	 */
-	@SuppressWarnings("unchecked")
 	private Set<Long> getLatestItemIdPerUrl() {
 		// MAX(i.itemId) gives the most recently created item per URL because itemId
 		// is an auto-increment primary key. hashedUrl is indexed for efficient GROUP BY.
 		List<Long> ids = getSession().createQuery(
 				"SELECT MAX(i.itemId) FROM OclItem i " +
 				"WHERE (i.state IS NULL OR i.state <> :errorState) " +
-				"GROUP BY i.hashedUrl")
+				"GROUP BY i.hashedUrl", Long.class)
 				.setParameter("errorState", ItemState.ERROR)
 				.list();
 
@@ -195,9 +211,10 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 		long lastSeenId = 0;
 
 		while (true) {
-			// An empty protected set is a legitimate state — e.g. RUNS retention with only
-			// failed imports in history. We still proceed so the accumulated error items
-			// (and their now-orphaned imports) get cleaned up rather than accumulating forever.
+			// An empty protected set is a legitimate state — e.g. a fresh install with no
+			// imports, or DAYS retention where every import is older than the cutoff and
+			// no successful import exists to pin. We still proceed so orphaned items get
+			// cleaned up rather than accumulating forever.
 			List<Long> batch = fetchEligibleBatch(protectedImportIds, lastSeenId);
 
 			if (batch.isEmpty()) {
@@ -227,13 +244,12 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 		return totalDeleted;
 	}
 
-	@SuppressWarnings("unchecked")
 	private List<Long> fetchEligibleBatch(Set<Long> protectedImportIds, long lastSeenId) {
 		if (protectedImportIds.isEmpty()) {
 			return getSession().createQuery(
 					"SELECT i.itemId FROM OclItem i " +
 					"WHERE i.itemId > :lastSeenId " +
-					"ORDER BY i.itemId")
+					"ORDER BY i.itemId", Long.class)
 					.setParameter("lastSeenId", lastSeenId)
 					.setMaxResults(DELETE_BATCH_SIZE)
 					.list();
@@ -242,7 +258,7 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 				"SELECT i.itemId FROM OclItem i " +
 				"WHERE i.anImport.importId NOT IN (:protectedImports) " +
 				"AND i.itemId > :lastSeenId " +
-				"ORDER BY i.itemId")
+				"ORDER BY i.itemId", Long.class)
 				.setParameterList("protectedImports", protectedImportIds)
 				.setParameter("lastSeenId", lastSeenId)
 				.setMaxResults(DELETE_BATCH_SIZE)
@@ -253,14 +269,13 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 	 * Deletes completed Import records that have no remaining Items.
 	 * Only deletes imports that are already stopped (never in-progress ones).
 	 */
-	@SuppressWarnings("unchecked")
 	private int deleteOrphanedImports() {
 		List<Long> orphanIds = getSession().createQuery(
 				"SELECT i.importId FROM OclImport i " +
 				"WHERE i.localDateStopped IS NOT NULL " +
 				"AND NOT EXISTS (" +
 				"  SELECT 1 FROM OclItem item WHERE item.anImport = i" +
-				")")
+				")", Long.class)
 				.list();
 
 		if (orphanIds.isEmpty()) {

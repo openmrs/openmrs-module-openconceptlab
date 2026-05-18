@@ -25,9 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 public class ItemCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
@@ -264,8 +264,10 @@ public class ItemCleanupServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	public void runCleanup_shouldNotCountFailedImportsAsRecentForRunsRetention() {
-		// Create 3 successful imports and 1 failed import (most recent), all touching the same URL
+	public void runCleanup_shouldCountFailedImportsTowardRunsBudget() {
+		// Under RUNS retention, every stopped import counts toward the N most recent
+		// budget — a failed import does not "skip the queue", it consumes a slot the
+		// same as any other run. Admins reason about RUNS as "keep the N most recent".
 		Import import1 = createAndStopImport();
 		importService.saveItem(createItem(import1, "/orgs/test/concepts/1/", "uuid-1"));
 
@@ -275,36 +277,32 @@ public class ItemCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		Import import3 = createAndStopImport();
 		importService.saveItem(createItem(import3, "/orgs/test/concepts/1/", "uuid-1"));
 
-		// Failed import is the most recent completed import (only has ERROR items)
 		Import failedImport = createAndFailImport("Something went wrong");
 		importService.saveItem(createErrorItem(failedImport, "/orgs/test/concepts/1/", "uuid-1"));
 
-		// Keep only 2 most recent successful imports (import2, import3).
-		// The failed import should NOT count toward the 2.
+		// RUNS=2 protects import3 and failedImport (the two most recent). import3 is
+		// also the latest successful import, so the pin is redundant here.
 		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETENTION_TYPE, "RUNS");
 		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETAIN_IMPORTS, "2");
 
 		int deleted = cleanupService.runCleanup();
 
-		// import1 is outside retention (it's the 3rd successful import back).
-		// failedImport is not protected by the RUNS count.
-		// The latest *successful* item per URL is in import3 (protected), so:
-		// - import1's ADDED item is eligible and deleted
-		// - failedImport's ERROR item is eligible and deleted (ERROR items aren't preserved per URL)
-		assertThat(deleted, greaterThanOrEqualTo(2));
+		// import1 and import2 are outside the window. Their items aren't the latest
+		// non-error item per URL (import3 holds that), so both get deleted.
+		assertThat(deleted, is(2));
 
 		assertThat(importService.getImportItems(import1, 0, 100, new HashSet<>()).size(), is(0));
-		assertThat(importService.getImportItems(import2, 0, 100, new HashSet<>()).size(), is(1));
+		assertThat(importService.getImportItems(import2, 0, 100, new HashSet<>()).size(), is(0));
 		assertThat(importService.getImportItems(import3, 0, 100, new HashSet<>()).size(), is(1));
-		assertThat(importService.getImportItems(failedImport, 0, 100, new HashSet<>()).size(), is(0));
+		// failedImport is within the retain window — its ERROR item survives.
+		assertThat(importService.getImportItems(failedImport, 0, 100, new HashSet<>()).size(), is(1));
 	}
 
 	@Test
-	public void runCleanup_shouldCleanFailedOnlyHistoryUnderRunsRetention() {
-		// RUNS retention treats an import as "successful" only if it has a non-ERROR item.
-		// When every stopped import is failed, no import qualifies for protection. Cleanup
-		// must still make progress — otherwise an environment that has only ever produced
-		// failed imports would accumulate error items and import rows forever.
+	public void runCleanup_shouldRetainNMostRecentImportsRegardlessOfState() {
+		// With no successful imports in history (so the pin is empty), the N most
+		// recent failed imports are still retained because RUNS counts every stopped
+		// import. Only the imports outside the window get cleaned.
 		Import import1 = createAndFailImport("error 1");
 		importService.saveItem(createErrorItem(import1, "/orgs/test/concepts/1/", "uuid-1"));
 
@@ -319,18 +317,59 @@ public class ItemCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
 		int deleted = cleanupService.runCleanup();
 
-		// All three ERROR items go: none qualifies as latest-non-error-per-URL.
-		assertThat(deleted, is(3));
+		// Only import1 is outside the window — its ERROR item gets cleaned, and the
+		// now-empty import is swept by the orphan pass.
+		assertThat(deleted, is(1));
 
-		// All three imports become orphans (zero items) and get swept.
 		List<Import> remaining = importService.getImportsInOrder(0, 1000);
 		Set<Long> remainingIds = new HashSet<>();
 		for (Import i : remaining) {
 			remainingIds.add(i.getImportId());
 		}
 		assertThat(remainingIds.contains(import1.getImportId()), is(false));
-		assertThat(remainingIds.contains(import2.getImportId()), is(false));
-		assertThat(remainingIds.contains(import3.getImportId()), is(false));
+		assertThat(remainingIds.contains(import2.getImportId()), is(true));
+		assertThat(remainingIds.contains(import3.getImportId()), is(true));
+	}
+
+	@Test
+	public void runCleanup_shouldPinLatestSuccessfulImportEvenWhenOlderThanRunsWindow() {
+		// The latest successful import must survive even if a run of failures has
+		// pushed it outside the RUNS window. Without this pin, the next import would
+		// have no "last successful" timestamp to resume incremental updates from and
+		// would have to refetch everything.
+		Import oldSuccess = createAndStopImport();
+		importService.saveItem(createItem(oldSuccess, "/orgs/test/concepts/1/", "uuid-1"));
+
+		Import failed1 = createAndFailImport("error 1");
+		importService.saveItem(createErrorItem(failed1, "/orgs/test/concepts/1/", "uuid-1"));
+
+		Import failed2 = createAndFailImport("error 2");
+		importService.saveItem(createErrorItem(failed2, "/orgs/test/concepts/1/", "uuid-1"));
+
+		Import failed3 = createAndFailImport("error 3");
+		importService.saveItem(createErrorItem(failed3, "/orgs/test/concepts/1/", "uuid-1"));
+
+		// RUNS=2 → top 2 by importId are failed2 and failed3. failed1 sits between
+		// the retain window and the pinned oldSuccess, so it gets cleaned.
+		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETENTION_TYPE, "RUNS");
+		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETAIN_IMPORTS, "2");
+
+		int deleted = cleanupService.runCleanup();
+
+		assertThat(deleted, is(1));
+		assertThat(importService.getImportItems(oldSuccess, 0, 100, new HashSet<>()).size(), is(1));
+		assertThat(importService.getImportItems(failed2, 0, 100, new HashSet<>()).size(), is(1));
+		assertThat(importService.getImportItems(failed3, 0, 100, new HashSet<>()).size(), is(1));
+
+		List<Import> remaining = importService.getImportsInOrder(0, 1000);
+		Set<Long> remainingIds = new HashSet<>();
+		for (Import i : remaining) {
+			remainingIds.add(i.getImportId());
+		}
+		assertThat(remainingIds.contains(oldSuccess.getImportId()), is(true));
+		assertThat(remainingIds.contains(failed1.getImportId()), is(false));
+		assertThat(remainingIds.contains(failed2.getImportId()), is(true));
+		assertThat(remainingIds.contains(failed3.getImportId()), is(true));
 	}
 
 	@Test
