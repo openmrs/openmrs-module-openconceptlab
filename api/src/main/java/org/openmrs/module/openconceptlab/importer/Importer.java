@@ -35,6 +35,7 @@ import org.openmrs.module.openconceptlab.client.OclClient;
 import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
+import org.openmrs.module.openconceptlab.scheduler.CleanupScheduler;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,8 @@ public class Importer implements Runnable {
 
 	private Saver saver;
 
+	private CleanupScheduler cleanupScheduler;
+
 	private volatile Import anImport;
 
 	private CountingInputStream in = null;
@@ -98,6 +101,10 @@ public class Importer implements Runnable {
 
     public void setSaver(Saver persister) {
 	    this.saver = persister;
+    }
+
+    public void setCleanupScheduler(CleanupScheduler cleanupScheduler) {
+	    this.cleanupScheduler = cleanupScheduler;
     }
 
 	public void setZipFile(ZipFile zipFile) {
@@ -228,6 +235,15 @@ public class Importer implements Runnable {
 			}
 			catch (Exception e) {
 				log.error("Failed to stop anImport", e);
+			}
+
+			try {
+				if (cleanupScheduler != null) {
+					cleanupScheduler.scheduleCleanup();
+				}
+			}
+			catch (Exception e) {
+				log.error("Failed to schedule cleanup", e);
 			}
 
 			in = null;

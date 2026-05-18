@@ -54,6 +54,25 @@
 		<property>openconceptlab.token</property>
 		<description>The OCL API Token</description>
 	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.cleanupRetentionType</property>
+		<description>Item retention policy: RUNS (keep N most recent successful imports, meaning imports with at least one non-ERROR item) or DAYS (keep imports within X days). Leave empty to disable cleanup.</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.cleanupRetainImports</property>
+		<description>Number of most recent successful imports to retain (when using RUNS policy; successful means the import has at least one non-ERROR item)</description>
+		<defaultValue>3</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.cleanupRetainDays</property>
+		<description>Number of days to retain import data (when using DAYS policy)</description>
+		<defaultValue>30</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.cleanupDelayMinutes</property>
+		<description>Minutes to wait after import completion before running cleanup (debounce period)</description>
+		<defaultValue>5</defaultValue>
+	</globalProperty>
 
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
