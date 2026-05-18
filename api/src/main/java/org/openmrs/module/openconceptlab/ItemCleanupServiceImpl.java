@@ -191,27 +191,14 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 	 * to limit IN-clause parameter list sizes and periodically clear the Hibernate session cache.
 	 */
 	private int deleteEligibleItems(Set<Long> protectedImportIds, Set<Long> preservedItemIds) {
-		if (protectedImportIds.isEmpty()) {
-			// No protected imports means either no imports exist (fresh install) or we
-			// can't safely determine what to keep — either way, nothing to delete
-			log.debug("No protected imports found. Skipping item deletion.");
-			return 0;
-		}
-
 		int totalDeleted = 0;
 		long lastSeenId = 0;
 
 		while (true) {
-			@SuppressWarnings("unchecked")
-			List<Long> batch = getSession().createQuery(
-					"SELECT i.itemId FROM OclItem i " +
-					"WHERE i.anImport.importId NOT IN (:protectedImports) " +
-					"AND i.itemId > :lastSeenId " +
-					"ORDER BY i.itemId")
-					.setParameterList("protectedImports", protectedImportIds)
-					.setParameter("lastSeenId", lastSeenId)
-					.setMaxResults(DELETE_BATCH_SIZE)
-					.list();
+			// An empty protected set is a legitimate state — e.g. RUNS retention with only
+			// failed imports in history. We still proceed so the accumulated error items
+			// (and their now-orphaned imports) get cleaned up rather than accumulating forever.
+			List<Long> batch = fetchEligibleBatch(protectedImportIds, lastSeenId);
 
 			if (batch.isEmpty()) {
 				break;
@@ -238,6 +225,28 @@ public class ItemCleanupServiceImpl implements ItemCleanupService {
 		}
 
 		return totalDeleted;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Long> fetchEligibleBatch(Set<Long> protectedImportIds, long lastSeenId) {
+		if (protectedImportIds.isEmpty()) {
+			return getSession().createQuery(
+					"SELECT i.itemId FROM OclItem i " +
+					"WHERE i.itemId > :lastSeenId " +
+					"ORDER BY i.itemId")
+					.setParameter("lastSeenId", lastSeenId)
+					.setMaxResults(DELETE_BATCH_SIZE)
+					.list();
+		}
+		return getSession().createQuery(
+				"SELECT i.itemId FROM OclItem i " +
+				"WHERE i.anImport.importId NOT IN (:protectedImports) " +
+				"AND i.itemId > :lastSeenId " +
+				"ORDER BY i.itemId")
+				.setParameterList("protectedImports", protectedImportIds)
+				.setParameter("lastSeenId", lastSeenId)
+				.setMaxResults(DELETE_BATCH_SIZE)
+				.list();
 	}
 
 	/**

@@ -300,6 +300,40 @@ public class ItemCleanupServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
+	public void runCleanup_shouldCleanFailedOnlyHistoryUnderRunsRetention() {
+		// RUNS retention treats an import as "successful" only if it has a non-ERROR item.
+		// When every stopped import is failed, no import qualifies for protection. Cleanup
+		// must still make progress — otherwise an environment that has only ever produced
+		// failed imports would accumulate error items and import rows forever.
+		Import import1 = createAndFailImport("error 1");
+		importService.saveItem(createErrorItem(import1, "/orgs/test/concepts/1/", "uuid-1"));
+
+		Import import2 = createAndFailImport("error 2");
+		importService.saveItem(createErrorItem(import2, "/orgs/test/concepts/2/", "uuid-2"));
+
+		Import import3 = createAndFailImport("error 3");
+		importService.saveItem(createErrorItem(import3, "/orgs/test/concepts/3/", "uuid-3"));
+
+		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETENTION_TYPE, "RUNS");
+		setGlobalProperty(OpenConceptLabConstants.GP_CLEANUP_RETAIN_IMPORTS, "2");
+
+		int deleted = cleanupService.runCleanup();
+
+		// All three ERROR items go: none qualifies as latest-non-error-per-URL.
+		assertThat(deleted, is(3));
+
+		// All three imports become orphans (zero items) and get swept.
+		List<Import> remaining = importService.getImportsInOrder(0, 1000);
+		Set<Long> remainingIds = new HashSet<>();
+		for (Import i : remaining) {
+			remainingIds.add(i.getImportId());
+		}
+		assertThat(remainingIds.contains(import1.getImportId()), is(false));
+		assertThat(remainingIds.contains(import2.getImportId()), is(false));
+		assertThat(remainingIds.contains(import3.getImportId()), is(false));
+	}
+
+	@Test
 	public void runCleanup_shouldDeleteItemsFromImportsOlderThanRetainedDays() {
 		// Create an old import with two concepts
 		Import oldImport = createAndStopImport();
