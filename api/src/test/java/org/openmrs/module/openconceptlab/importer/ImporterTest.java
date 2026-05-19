@@ -405,6 +405,92 @@ public class ImporterTest extends BaseContextMockTest {
 		assertEquals(JsonToken.START_ARRAY, result);
 	}
 
+	/**
+	 * @see Importer#run()
+	 * @verifies import mappings even when concepts array is absent from JSON
+	 */
+	@Test
+	public void runUpdate_shouldImportMappingsWhenConceptsAreAbsent() throws Exception {
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+		when(subscription.isSubscribedToSnapshot()).thenReturn(true);
+
+		Import lastUpdate = new Import();
+		Date updatedSince = new Date();
+		lastUpdate.setOclDateStarted(updatedSince);
+
+		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastUpdate);
+
+		Import anImport = new Import();
+		when(importService.getImport(nullable(Long.class))).thenReturn(anImport);
+
+		// Mappings-only JSON — no concepts array at all
+		String mappingsOnlyJson = "{\"mappings\":[{\"external_id\":\"m1\",\"map_type\":\"Same As\",\"from_concept_url\":\"/orgs/Test/sources/Test/concepts/1/\",\"to_concept_url\":\"/orgs/Test/sources/Test/concepts/2/\",\"url\":\"/orgs/Test/sources/Test/mappings/m1/\"}]}";
+		OclResponse oclResponse = new OclClient.OclResponse(
+				IOUtils.toInputStream(mappingsOnlyJson), mappingsOnlyJson.length(), new Date());
+
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+				.thenReturn(oclResponse);
+
+		doAnswer(new Answer<Item>() {
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Import update = (Import) invocation.getArguments()[1];
+				OclMapping oclMapping = (OclMapping) invocation.getArguments()[2];
+				return new Item(update, oclMapping, ItemState.ADDED);
+			}
+		}).when(saver).saveMapping(any(CacheService.class), any(Import.class), any(OclMapping.class));
+
+		importer.run();
+
+		// Verify mappings were saved (saveItems called with at least one mapping item)
+		verify(importService).saveItems(
+				argThat(hasItems(hasUrl("/orgs/Test/sources/Test/mappings/m1/"))));
+	}
+
+	/**
+	 * @see Importer#run()
+	 * @verifies import mappings when mappings appears before concepts in JSON
+	 */
+	@Test
+	public void runUpdate_shouldImportMappingsWhenMappingsAppearBeforeConcepts() throws Exception {
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+		when(subscription.isSubscribedToSnapshot()).thenReturn(true);
+
+		Import lastUpdate = new Import();
+		Date updatedSince = new Date();
+		lastUpdate.setOclDateStarted(updatedSince);
+
+		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastUpdate);
+
+		Import anImport = new Import();
+		when(importService.getImport(nullable(Long.class))).thenReturn(anImport);
+
+		// mappings before concepts — the stopAtField will cause advanceToListOf to return FIELD_NAME
+		String mappingsFirstJson = "{\"mappings\":[{\"external_id\":\"m1\",\"map_type\":\"Same As\",\"from_concept_url\":\"/orgs/Test/sources/Test/concepts/1/\",\"to_concept_url\":\"/orgs/Test/sources/Test/concepts/2/\",\"url\":\"/orgs/Test/sources/Test/mappings/m1/\"}],\"concepts\":[{\"id\":\"1\"}]}";
+		OclResponse oclResponse = new OclClient.OclResponse(
+				IOUtils.toInputStream(mappingsFirstJson), mappingsFirstJson.length(), new Date());
+
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(), lastUpdate.getOclDateStarted()))
+				.thenReturn(oclResponse);
+
+		doAnswer(new Answer<Item>() {
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Import update = (Import) invocation.getArguments()[1];
+				OclMapping oclMapping = (OclMapping) invocation.getArguments()[2];
+				return new Item(update, oclMapping, ItemState.ADDED);
+			}
+		}).when(saver).saveMapping(any(CacheService.class), any(Import.class), any(OclMapping.class));
+
+		importer.run();
+
+		// Verify mappings were saved even though mappings appeared before concepts
+		verify(importService).saveItems(
+				argThat(hasItems(hasUrl("/orgs/Test/sources/Test/mappings/m1/"))));
+	}
+
 	private JsonParser createParser(String json) throws IOException {
 		JsonParser parser = new ObjectMapper().getJsonFactory().createJsonParser(new ByteArrayInputStream(json.getBytes("UTF-8")));
 		assertEquals(JsonToken.START_OBJECT, parser.nextToken());

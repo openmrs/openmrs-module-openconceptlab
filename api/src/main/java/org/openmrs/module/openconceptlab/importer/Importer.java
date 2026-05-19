@@ -316,10 +316,6 @@ public class Importer implements Runnable {
 
 		token = advanceToListOf("concepts", "mappings", parser);
 
-		if (token == null || token == JsonToken.END_OBJECT || token == JsonToken.FIELD_NAME) {
-			return;
-		}
-
 		String baseUrl = "";
 		if (importService.getSubscription() != null) {
 			baseUrl = importService.getSubscription().getUrl();
@@ -340,46 +336,49 @@ public class Importer implements Runnable {
 		CacheService cacheService = new CacheService(conceptService, oclConceptService);
 
 		List<Item> items = new ArrayList<>(BATCH_SIZE);
-		while (parser.nextToken() != JsonToken.END_ARRAY) {
-			OclConcept oclConcept = parser.readValueAs(OclConcept.class);
-			oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
-			oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
 
-			Item item;
-			try {
-				item = saver.saveConcept(cacheService, anImport, oclConcept);
-				log.info("Imported concept {}", oclConcept);
-			} catch (Throwable e) {
-				log.error("Failed to import concept {}", oclConcept, e);
-				Context.clearSession();
-				cacheService.clearCache();
+		if (token == JsonToken.START_ARRAY) {
+			while (parser.nextToken() != JsonToken.END_ARRAY) {
+				OclConcept oclConcept = parser.readValueAs(OclConcept.class);
+				oclConcept.setVersionUrl(prependBaseUrl(baseUrl, oclConcept.getVersionUrl()));
+				oclConcept.setUrl(prependBaseUrl(baseUrl, oclConcept.getUrl()));
 
-				item = new Item(anImport, oclConcept, ItemState.ERROR);
-				item.setErrorMessage(getUserFriendlyErrorMessage(e));
+				Item item;
+				try {
+					item = saver.saveConcept(cacheService, anImport, oclConcept);
+					log.info("Imported concept {}", oclConcept);
+				} catch (Throwable e) {
+					log.error("Failed to import concept {}", oclConcept, e);
+					Context.clearSession();
+					cacheService.clearCache();
+
+					item = new Item(anImport, oclConcept, ItemState.ERROR);
+					item.setErrorMessage(getUserFriendlyErrorMessage(e));
+				}
+				items.add(item);
+
+				if (items.size() >= BATCH_SIZE) {
+					importService.saveItems(items);
+					items = new ArrayList<>(BATCH_SIZE);
+					// Flush and clear session to prevent memory buildup, then clear cache since entities are detached
+					importService.flushAndClearSession();
+					cacheService.clearCache();
+				}
 			}
-			items.add(item);
 
-			if (items.size() >= BATCH_SIZE) {
+			if (!items.isEmpty()) {
 				importService.saveItems(items);
 				items = new ArrayList<>(BATCH_SIZE);
-				// Flush and clear session to prevent memory buildup, then clear cache since entities are detached
-				importService.flushAndClearSession();
-				cacheService.clearCache();
 			}
-		}
 
-		if (!items.isEmpty()) {
-			importService.saveItems(items);
-			items = new ArrayList<>(BATCH_SIZE);
+			// Flush and clear before processing mappings to start fresh
+			importService.flushAndClearSession();
+			cacheService.clearCache();
 		}
-
-		// Flush and clear before processing mappings to start fresh
-		importService.flushAndClearSession();
-		cacheService.clearCache();
 
 		token = advanceToListOf("mappings", null, parser);
 
-		if (token == JsonToken.END_OBJECT) {
+		if (token != JsonToken.START_ARRAY) {
 			return;
 		}
 
