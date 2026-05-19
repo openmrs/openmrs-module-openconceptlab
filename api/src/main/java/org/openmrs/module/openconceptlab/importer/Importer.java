@@ -316,7 +316,7 @@ public class Importer implements Runnable {
 
 		token = advanceToListOf("concepts", "mappings", parser);
 
-		if (token == JsonToken.END_OBJECT || token == null) {
+		if (token == null || token == JsonToken.END_OBJECT || token == JsonToken.FIELD_NAME) {
 			return;
 		}
 
@@ -443,33 +443,38 @@ public class Importer implements Runnable {
 		if (token == null) {
 			token = parser.nextToken();
 		}
+		// Caller ensures we start at the outer START_OBJECT; advance past it.
+		if (token == JsonToken.START_OBJECT) {
+			token = parser.nextToken();
+		}
 
-		do {
-			if (token == JsonToken.START_OBJECT) {
-				String text = parser.getText();
-				while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
-					if (token == null) {
-						throw new IOException("Missing end of object: " + text);
-					}
-				}
-			} else if (parser.getText().equals(field)) {
+		while (token != null && token != JsonToken.END_OBJECT) {
+			if (token != JsonToken.FIELD_NAME) {
+				// Defensive: unexpected token inside an object (e.g. END_ARRAY from a prior array consumption).
+				// Skip and continue scanning for the target field.
+				parser.skipChildren();
+				token = parser.nextToken();
+				continue;
+			}
+
+			String name = parser.getCurrentName();
+			if (field.equals(name)) {
 				token = parser.nextToken();
 				if (token != JsonToken.START_ARRAY) {
 					throw new ImportException(field + " must be a list");
 				}
 				return token;
-			} else if (token == JsonToken.START_ARRAY) {
-				String text = parser.getText();
-				while ((token = parser.nextToken()) != JsonToken.END_ARRAY) {
-					if (token == null) {
-						throw new IOException("Missing end of array: " + text);
-					}
-				}
-			} else if (stopAtField != null && parser.getText().equals(stopAtField)) {
+			}
+			if (stopAtField != null && stopAtField.equals(name)) {
 				return token;
 			}
-		} while ((token = parser.nextToken()) != null);
 
+			// Skip this field's value (scalar, array, or nested object).
+			parser.nextToken();
+			parser.skipChildren();
+			token = parser.nextToken();
+		}
+		log.info("Field '{}' not found in JSON object (stopAtField={})", field, stopAtField);
 		return null;
 	}
 
