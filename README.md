@@ -11,7 +11,7 @@ The module fetches all the items from the subscription URL updating the existing
 
 Please make sure you have the following installed:
 - MySQL 5.6.x
-- JDK 1.7
+- JDK 8
 - Maven
 - OpenMRS SDK, see [installation instructions](https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation)
 
@@ -79,11 +79,11 @@ Click Subscribe and follow the next section then <b>Import from subscription ser
 OCL provides a “custom validation schema” feature for OpenMRS that allows the OCL API to perform extra validation checks on concepts. You might get errors while importing concepts to OpenMRS if it is not validated with validator schema. The OpenMRS concept validator rule includes:
 
 For any concept…
-5. Only one fully specified name per locale
-1. Must not have more than one preferred name per locale
-2. All names (except short names) must be unique within the concept
-3. Must not have more than one short name per locale
-4. Short name must not be marked as locale preferred
+1. Only one fully specified name per locale
+2. Must not have more than one preferred name per locale
+3. All names (except short names) must be unique within the concept
+4. Must not have more than one short name per locale
+5. Short name must not be marked as locale preferred
 6. At least one fully specified name (across all locales)
 7. Valid values for class, data type, name type, and locale
 8. All concepts should have a UUID (currently OCL’s external ID)
