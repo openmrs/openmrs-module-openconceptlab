@@ -11,17 +11,11 @@ package org.openmrs.module.openconceptlab.client;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.auth.AuthPolicy;
-import org.apache.commons.httpclient.auth.AuthScheme;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -60,6 +54,8 @@ public class OclClient {
 
 	private static final int NUMBER_OF_SLASHES_AFTER_BASE_URL = 5;
 
+	private static final int MAX_REDIRECTS = 5;
+
 	private final static int TIMEOUT_IN_MS = 128000;
 
 	private final String dataDirectory;
@@ -71,10 +67,7 @@ public class OclClient {
 	private final HttpClient client = new HttpClient();
 
 	{
-		AuthPolicy.registerAuthScheme("token", OclTokenAuthenticationScheme.class);
-		HttpClientParams params = client.getParams();
-		params.setSoTimeout(TIMEOUT_IN_MS);
-		params.setAuthenticationPreemptive(true);
+		client.getParams().setSoTimeout(TIMEOUT_IN_MS);
 	}
 
 	public OclClient() {
@@ -106,12 +99,8 @@ public class OclClient {
 
 		get.setQueryString(query.toArray(new NameValuePair[0]));
 
-		try {
-			client.executeMethod(get);
-		}
-		finally {
-			client.getState().clearCredentials();
-		}
+		client.executeMethod(get);
+		get = followRedirectsWithoutToken(get);
 
 		if (get.getStatusCode() != 200) {
 			throw new IOException(get.getStatusLine().toString());
@@ -132,7 +121,7 @@ public class OclClient {
 	}
 
 	public GetMethod executeExportRequest(String url, String collectionVersion, String token) throws IOException {
-		GetMethod exportUrlGet = executeGetMethod(getExportUrl(url, collectionVersion), token);
+		GetMethod exportUrlGet = executeGetMethod(getExportUrl(url, collectionVersion), token, true);
 
 		if (exportUrlGet.getStatusCode() != 200) {
 			throw new IOException(exportUrlGet.getStatusLine().toString());
@@ -383,7 +372,7 @@ public class OclClient {
 
 		String latestVersionUrl = url + "/versions";
 
-		GetMethod versionsGet = executeGetMethod(latestVersionUrl, token);
+		GetMethod versionsGet = executeGetMethod(latestVersionUrl, token, true);
 
 		if (versionsGet.getStatusCode() != 200) {
 			throw new IOException(versionsGet.getStatusLine().toString());
@@ -398,10 +387,13 @@ public class OclClient {
 			if (!versionName.contains("HEAD") && StringUtils.isNotBlank(versionName)) {
 				String versionUrl = url + "/" + versionName + "/export";
 
-				GetMethod exportGet = executeGetMethod(versionUrl, token);
-
+				// A released version's export answers with a redirect to its S3 download, so a
+				// redirect (or a direct 200) confirms the version exists without fetching the archive.
+				GetMethod exportGet = executeGetMethod(versionUrl, token, false);
 				int statusCode = exportGet.getStatusCode();
-				if (statusCode == 200) {
+				exportGet.releaseConnection();
+
+				if (statusCode == HttpStatus.SC_OK || isRedirect(statusCode)) {
 					return versionName;
 				}
 			}
@@ -409,97 +401,58 @@ public class OclClient {
 		throw new IllegalStateException("There is no released version of given source");
 	}
 
-	private GetMethod constructGetMethod(String url, String token) throws IOException {
+	/**
+	 * Builds a GET request for the given OCL URL, attaching the subscription token as an
+	 * {@code Authorization} header when one is supplied.
+	 * <p>
+	 * Automatic redirect following is disabled deliberately: OCL's export endpoints answer with a
+	 * cross-host 303 redirect to a pre-signed S3 URL, and commons-httpclient reuses the same request
+	 * (headers included) when following a redirect. Forwarding the OCL token to S3 makes it reject
+	 * the request with a 400, so redirects are instead followed manually, and token-free, by
+	 * {@link #followRedirectsWithoutToken(GetMethod)}.
+	 */
+	private GetMethod constructGetMethod(String url, String token) {
+		GetMethod getMethod = new GetMethod(url);
+		getMethod.setFollowRedirects(false);
 		if (!StringUtils.isBlank(token)) {
-			URL oclUrl = new URL(url);
-			client.getState().setCredentials(
-					new AuthScope(oclUrl.getHost(), oclUrl.getPort()),
-					new OclTokenCredentials(token));
-		}
-
-		return new GetMethod(url);
-	}
-
-	private GetMethod executeGetMethod(String url, String token) throws IOException {
-		GetMethod getMethod = constructGetMethod(url, token);
-
-		try {
-			client.executeMethod(getMethod);
-		}
-		finally {
-			client.getState().clearCredentials();
+			getMethod.addRequestHeader("Authorization", "Token " + token);
 		}
 
 		return getMethod;
 	}
 
-	private static final class OclTokenCredentials implements Credentials {
+	private GetMethod executeGetMethod(String url, String token, boolean followRedirects) throws IOException {
+		GetMethod getMethod = constructGetMethod(url, token);
+		client.executeMethod(getMethod);
 
-		private final String token;
-
-		OclTokenCredentials(String token) {
-			this.token = token;
-		}
-
-		public String getToken() {
-			return token;
-		}
+		return followRedirects ? followRedirectsWithoutToken(getMethod) : getMethod;
 	}
 
-	private static final class OclTokenAuthenticationScheme implements AuthScheme {
-
-		@Override
-		public void processChallenge(String challenge) {
-			// no implementation needed
-		}
-
-		@Override
-		public String getSchemeName() {
-			return "OCL Token Auth";
-		}
-
-		@Override
-		public String getParameter(String name) {
-			return null;
-		}
-
-		@Override
-		public String getRealm() {
-			return null;
-		}
-
-		@Override
-		public String getID() {
-			return null;
-		}
-
-		@Override
-		public boolean isConnectionBased() {
-			return false;
-		}
-
-		@Override
-		public boolean isComplete() {
-			return true;
-		}
-
-		@Override
-		@Deprecated
-		public String authenticate(Credentials credentials, String method, String uri) throws AuthenticationException {
-			if (!(credentials instanceof OclTokenCredentials)) {
-				throw new AuthenticationException("credentials must be an OclTokenCredentials object");
+	/**
+	 * Follows redirects from an already-executed request, re-issuing each hop without the OCL token
+	 * so the credentials are never forwarded to a (cross-host) redirect target such as the S3 bucket
+	 * backing OCL exports. Returns the response of the final, non-redirect hop.
+	 */
+	private GetMethod followRedirectsWithoutToken(GetMethod getMethod) throws IOException {
+		int redirects = 0;
+		while (isRedirect(getMethod.getStatusCode()) && redirects++ < MAX_REDIRECTS) {
+			Header location = getMethod.getResponseHeader("Location");
+			if (location == null || StringUtils.isBlank(location.getValue())) {
+				break;
 			}
 
-			return "Token " + ((OclTokenCredentials) credentials).getToken();
+			String redirectUrl = location.getValue();
+			getMethod.releaseConnection();
+
+			getMethod = constructGetMethod(redirectUrl, null);
+			client.executeMethod(getMethod);
 		}
 
-		@Override
-		public String authenticate(Credentials credentials, HttpMethod method) throws AuthenticationException {
-			if (!(credentials instanceof OclTokenCredentials)) {
-				throw new AuthenticationException("credentials must be an OclTokenCredentials object");
-			}
+		return getMethod;
+	}
 
-			return "Token " + ((OclTokenCredentials) credentials).getToken();
-		}
+	private static boolean isRedirect(int statusCode) {
+		return statusCode == HttpStatus.SC_MOVED_PERMANENTLY || statusCode == HttpStatus.SC_MOVED_TEMPORARILY
+				|| statusCode == HttpStatus.SC_SEE_OTHER || statusCode == HttpStatus.SC_TEMPORARY_REDIRECT;
 	}
 }
