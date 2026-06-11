@@ -10,6 +10,7 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -24,8 +25,11 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +44,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class ImportServiceImpl implements ImportService {
+
+	private static final Logger log = LoggerFactory.getLogger(ImportServiceImpl.class);
 
 	DbSessionFactory sessionFactory;
 
@@ -577,6 +583,46 @@ public class ImportServiceImpl implements ImportService {
 		DbSession session = getSession();
 		session.flush();
 		session.clear();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int maxResults) {
+		Criteria criteria = getSession().createCriteria(Import.class);
+		criteria.add(Restrictions.lt("localDateStopped", cutoff));
+		if (excludedImportId != null) {
+			criteria.add(Restrictions.ne("importId", excludedImportId));
+		}
+		criteria.addOrder(Order.asc("localDateStopped"));
+		criteria.setMaxResults(maxResults);
+		return criteria.list();
+	}
+
+	@Override
+	public int purgeOldImports(int retentionDays, int batchSize) {
+		if (retentionDays <= 0) throw new IllegalArgumentException("retentionDays must be greater than 0, given: " + retentionDays);
+		if (batchSize <= 0) throw new IllegalArgumentException("batchSize must be greater than 0, given: " + batchSize);
+
+		ImportService importService = Context.getService(ImportService.class);
+		
+		Date cutoff = DateUtils.addDays(new Date(), -retentionDays);
+		Import lastSuccessful = importService.getLastSuccessfulSubscriptionImport();
+		Long excludedImportId = (lastSuccessful != null) ? lastSuccessful.getImportId() : null;
+
+		List<Import> purgable = importService.getImportsStoppedBefore(cutoff, excludedImportId, batchSize);
+		int purged = 0;
+
+		for (Import anImport : purgable) {
+			int itemsDeleted = getSession().createQuery("delete from OclItem i where i.anImport = :anImport")
+			        .setParameter("anImport", anImport)
+			        .executeUpdate();
+			getSession().delete(anImport);
+			purged++;
+			log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
+			        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
+			        anImport.getLocalDateStopped(), itemsDeleted);
+		}
+		return purged;
 	}
 
 }
