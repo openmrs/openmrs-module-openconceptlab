@@ -9,19 +9,25 @@
  */
 package org.openmrs.module.openconceptlab.scheduler;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
+import org.openmrs.module.openconceptlab.ImportServiceImpl;
 import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
+import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.util.Date;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,11 +35,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ImportCleanupTaskTest extends BaseModuleContextSensitiveTest {
 
-	private static final long MILLIS_PER_DAY = 86400000L;
+	private static final Instant NOW = Instant.parse("2026-06-01T12:00:00Z");
 
 	@Autowired
 	@Qualifier("openconceptlab.importService")
 	private ImportService importService;
+
+	@BeforeEach
+	public void fixClock() throws Exception {
+		ImportServiceImpl impl = (ImportServiceImpl) ((Advised) importService).getTargetSource().getTarget();
+		impl.setClock(Clock.fixed(NOW, ZoneId.systemDefault()));
+	}
 
 	@Test
 	public void execute_shouldDoNothingWhenCleanupIsDisabled() throws Exception {
@@ -86,7 +98,7 @@ public class ImportCleanupTaskTest extends BaseModuleContextSensitiveTest {
 		PreparedStatement statement = getConnection()
 		        .prepareStatement("update openconceptlab_import set local_date_stopped = ? where import_id = ?");
 		try {
-			statement.setTimestamp(1, new Timestamp(System.currentTimeMillis() - stoppedDaysAgo * MILLIS_PER_DAY));
+			statement.setTimestamp(1, Timestamp.from(NOW.minus(stoppedDaysAgo, ChronoUnit.DAYS)));
 			statement.setLong(2, anImport.getImportId());
 			statement.executeUpdate();
 		}

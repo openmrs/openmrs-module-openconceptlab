@@ -9,15 +9,21 @@
  */
 package org.openmrs.module.openconceptlab;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
+import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -29,11 +35,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
-	private static final long MILLIS_PER_DAY = 86400000L;
+	private static final Instant NOW = Instant.parse("2026-06-01T12:00:00Z");
 
 	@Autowired
 	@Qualifier("openconceptlab.importService")
 	private ImportService importService;
+
+	@BeforeEach
+	public void fixClock() throws Exception {
+		ImportServiceImpl impl = (ImportServiceImpl) ((Advised) importService).getTargetSource().getTarget();
+		impl.setClock(Clock.fixed(NOW, ZoneId.systemDefault()));
+	}
 
 	@Test
 	public void purgeOldImports_shouldPurgeImportsOlderThanRetentionPeriodWithSupersededItems() throws Exception {
@@ -156,7 +168,7 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		Import inProgressImport = new Import();
 		importService.startImport(inProgressImport);
 
-		Date cutoff = new Date(System.currentTimeMillis() - 90 * MILLIS_PER_DAY);
+		Date cutoff = Date.from(NOW.minus(90, ChronoUnit.DAYS));
 
 		List<Import> imports = importService.getImportsStoppedBefore(cutoff, null, 10);
 		assertEquals(2, imports.size());
@@ -184,7 +196,7 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		Import anImport = new Import();
 		importService.startImport(anImport);
 		if (successful) {
-			importService.updateOclDateStarted(anImport, new Date());
+			importService.updateOclDateStarted(anImport, Date.from(NOW));
 		} else {
 			importService.failImport(anImport, "test failure");
 		}
@@ -213,7 +225,7 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		PreparedStatement statement = getConnection()
 		        .prepareStatement("update openconceptlab_import set local_date_stopped = ? where import_id = ?");
 		try {
-			statement.setTimestamp(1, new Timestamp(System.currentTimeMillis() - daysAgo * MILLIS_PER_DAY));
+			statement.setTimestamp(1, Timestamp.from(NOW.minus(daysAgo, ChronoUnit.DAYS)));
 			statement.setLong(2, importId);
 			statement.executeUpdate();
 		}

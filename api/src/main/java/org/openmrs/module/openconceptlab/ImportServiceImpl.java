@@ -10,7 +10,6 @@
 package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -33,6 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Clock;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -48,6 +49,10 @@ public class ImportServiceImpl implements ImportService {
 	private static final Logger log = LoggerFactory.getLogger(ImportServiceImpl.class);
 
 	private static final int ITEM_DELETE_CHUNK_SIZE = 1000;
+
+	private static final String LOCAL_DATE_STOPPED = "localDateStopped";
+
+	private Clock clock = Clock.systemDefaultZone();
 
 	DbSessionFactory sessionFactory;
 
@@ -74,6 +79,14 @@ public class ImportServiceImpl implements ImportService {
 	}
 
 	/**
+	 * Overrides the clock used to compute the retention cutoff in
+	 * {@link #purgeOldImports(int, int)}. Intended for tests.
+	 */
+	public void setClock(Clock clock) {
+		this.clock = clock;
+	}
+
+	/**
 	 * @should return all updates ordered descending by ids
 	 */
 	@Override
@@ -92,7 +105,7 @@ public class ImportServiceImpl implements ImportService {
 	@SuppressWarnings("unchecked")
 	public List<Import> getInProgressImports() {
 		Criteria c = getSession().createCriteria(Import.class);
-		c.add(Restrictions.isNull("localDateStopped"));
+		c.add(Restrictions.isNull(LOCAL_DATE_STOPPED));
 		c.addOrder(Order.desc("importId"));
 		return c.list();
 	}
@@ -591,11 +604,11 @@ public class ImportServiceImpl implements ImportService {
 	@SuppressWarnings("unchecked")
 	public List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int maxResults) {
 		Criteria criteria = getSession().createCriteria(Import.class);
-		criteria.add(Restrictions.lt("localDateStopped", cutoff));
+		criteria.add(Restrictions.lt(LOCAL_DATE_STOPPED, cutoff));
 		if (excludedImportId != null) {
 			criteria.add(Restrictions.ne("importId", excludedImportId));
 		}
-		criteria.addOrder(Order.asc("localDateStopped"));
+		criteria.addOrder(Order.asc(LOCAL_DATE_STOPPED));
 		criteria.setMaxResults(maxResults);
 		return criteria.list();
 	}
@@ -607,7 +620,7 @@ public class ImportServiceImpl implements ImportService {
 
 		ImportService importService = Context.getService(ImportService.class);
 		
-		Date cutoff = DateUtils.addDays(new Date(), -retentionDays);
+		Date cutoff = Date.from(clock.instant().minus(retentionDays, ChronoUnit.DAYS));
 		Import lastSuccessful = importService.getLastSuccessfulSubscriptionImport();
 		Long excludedImportId = (lastSuccessful != null) ? lastSuccessful.getImportId() : null;
 
