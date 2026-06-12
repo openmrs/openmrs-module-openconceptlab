@@ -36,21 +36,22 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 	private ImportService importService;
 
 	@Test
-	public void purgeOldImports_shouldPurgeImportsOlderThanRetentionPeriodWithTheirItems() throws Exception {
-		Import oldImport = createFailedImport(200, 3);
-		Import recentImport = createSuccessfulImport(1, 1);
+	public void purgeOldImports_shouldPurgeImportsOlderThanRetentionPeriodWithSupersededItems() throws Exception {
+		Import oldImport = createFailedImport(200, "/concepts/a/", "/concepts/b/");
+		Import recentImport = createSuccessfulImport(1, "/concepts/a/", "/concepts/b/");
 
 		int purged = importService.purgeOldImports(90, 10);
 
 		assertEquals(1, purged);
 		assertImportPurged(oldImport.getImportId());
-		assertEquals(0, importService.getImportItemsCount(oldImport, Collections.<ItemState> emptySet()).intValue());
+		assertEquals(0, itemCount(oldImport));
 		assertNotNull(importService.getImport(recentImport.getImportId()));
+		assertEquals(2, itemCount(recentImport));
 	}
 
 	@Test
 	public void purgeOldImports_shouldKeepImportsWithinRetentionPeriod() throws Exception {
-		Import recentImport = createFailedImport(5, 1);
+		Import recentImport = createFailedImport(5, "/concepts/a/");
 
 		int purged = importService.purgeOldImports(90, 10);
 
@@ -60,14 +61,15 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
 	@Test
 	public void purgeOldImports_shouldNeverPurgeLastSuccessfulSubscriptionImport() throws Exception {
-		Import oldFailedImport = createFailedImport(500, 2);
-		Import oldSuccessfulImport = createSuccessfulImport(400, 2);
+		Import oldFailedImport = createFailedImport(500, "/concepts/a/");
+		Import oldSuccessfulImport = createSuccessfulImport(400, "/concepts/a/");
 
 		int purged = importService.purgeOldImports(90, 10);
 
 		assertEquals(1, purged);
 		assertImportPurged(oldFailedImport.getImportId());
 		assertNotNull(importService.getImport(oldSuccessfulImport.getImportId()));
+		assertEquals(1, itemCount(oldSuccessfulImport));
 	}
 
 	@Test
@@ -83,9 +85,9 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
 	@Test
 	public void purgeOldImports_shouldPurgeNoMoreThanBatchSizeImportsOldestFirst() throws Exception {
-		Import oldestImport = createFailedImport(300, 1);
-		Import olderImport = createFailedImport(200, 1);
-		Import oldImport = createFailedImport(150, 1);
+		Import oldestImport = createFailedImport(300);
+		Import olderImport = createFailedImport(200);
+		Import oldImport = createFailedImport(150);
 
 		int purged = importService.purgeOldImports(90, 2);
 
@@ -95,6 +97,43 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		assertNotNull(importService.getImport(oldImport.getImportId()));
 
 		assertEquals(1, importService.purgeOldImports(90, 2));
+		assertImportPurged(oldImport.getImportId());
+	}
+
+	@Test
+	public void purgeOldImports_shouldKeepItemsThatAreTheLastUsableRecordForTheirUrl() throws Exception {
+		Import oldImport = createFailedImport(200, "/concepts/only-record/");
+
+		int purged = importService.purgeOldImports(90, 10);
+
+		assertEquals(0, purged);
+		assertNotNull(importService.getImport(oldImport.getImportId()));
+		assertEquals(1, itemCount(oldImport));
+	}
+
+	@Test
+	public void purgeOldImports_shouldTrimSupersededItemsButKeepImportWithLastUsableRecords() throws Exception {
+		Import oldImport = createFailedImport(200, "/concepts/superseded/", "/concepts/only-record/");
+		Import recentImport = createSuccessfulImport(1, "/concepts/superseded/");
+
+		int purged = importService.purgeOldImports(90, 10);
+
+		assertEquals(0, purged);
+		assertNotNull(importService.getImport(oldImport.getImportId()));
+		List<Item> remainingItems = importService.getImportItems(oldImport, 0, 10, Collections.<ItemState> emptySet());
+		assertEquals(1, remainingItems.size());
+		assertEquals("/concepts/only-record/", remainingItems.get(0).getUrl());
+		assertEquals(1, itemCount(recentImport));
+	}
+
+	@Test
+	public void purgeOldImports_shouldAlwaysDeleteErrorItems() throws Exception {
+		Import oldImport = createFailedImport(200);
+		addItem(oldImport, "/concepts/failed-item/", ItemState.ERROR);
+
+		int purged = importService.purgeOldImports(90, 10);
+
+		assertEquals(1, purged);
 		assertImportPurged(oldImport.getImportId());
 	}
 
@@ -111,9 +150,9 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void getImportsStoppedBefore_shouldReturnImportsStoppedBeforeCutoffOldestFirstExcludingGivenImport()
 	        throws Exception {
-		Import oldestImport = createFailedImport(300, 0);
-		Import olderImport = createFailedImport(200, 0);
-		createFailedImport(5, 0);
+		Import oldestImport = createFailedImport(300);
+		Import olderImport = createFailedImport(200);
+		createFailedImport(5);
 		Import inProgressImport = new Import();
 		importService.startImport(inProgressImport);
 
@@ -133,15 +172,15 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		assertEquals(oldestImport.getImportId(), imports.get(0).getImportId());
 	}
 
-	private Import createSuccessfulImport(int stoppedDaysAgo, int itemCount) throws Exception {
-		return createImport(true, stoppedDaysAgo, itemCount);
+	private Import createSuccessfulImport(int stoppedDaysAgo, String... itemUrls) throws Exception {
+		return createImport(true, stoppedDaysAgo, itemUrls);
 	}
 
-	private Import createFailedImport(int stoppedDaysAgo, int itemCount) throws Exception {
-		return createImport(false, stoppedDaysAgo, itemCount);
+	private Import createFailedImport(int stoppedDaysAgo, String... itemUrls) throws Exception {
+		return createImport(false, stoppedDaysAgo, itemUrls);
 	}
 
-	private Import createImport(boolean successful, int stoppedDaysAgo, int itemCount) throws Exception {
+	private Import createImport(boolean successful, int stoppedDaysAgo, String... itemUrls) throws Exception {
 		Import anImport = new Import();
 		importService.startImport(anImport);
 		if (successful) {
@@ -149,16 +188,24 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		} else {
 			importService.failImport(anImport, "test failure");
 		}
-		for (int i = 0; i < itemCount; i++) {
-			OclConcept concept = new OclConcept();
-			concept.setUrl("/orgs/test/sources/test/concepts/" + UUID.randomUUID() + "/");
-			concept.setVersionUrl(concept.getUrl() + "1/");
-			concept.setExternalId(UUID.randomUUID().toString());
-			importService.saveItem(new Item(anImport, concept, ItemState.ADDED));
+		for (String url : itemUrls) {
+			addItem(anImport, url, ItemState.ADDED);
 		}
 		importService.stopImport(anImport);
 		backdateLocalDateStopped(anImport.getImportId(), stoppedDaysAgo);
 		return importService.getImport(anImport.getImportId());
+	}
+
+	private void addItem(Import anImport, String url, ItemState state) {
+		OclConcept concept = new OclConcept();
+		concept.setUrl(url);
+		concept.setVersionUrl(url + "1/");
+		concept.setExternalId(UUID.randomUUID().toString());
+		importService.saveItem(new Item(anImport, concept, state));
+	}
+
+	private int itemCount(Import anImport) {
+		return importService.getImportItemsCount(anImport, Collections.<ItemState> emptySet());
 	}
 
 	private void backdateLocalDateStopped(Long importId, int daysAgo) throws Exception {

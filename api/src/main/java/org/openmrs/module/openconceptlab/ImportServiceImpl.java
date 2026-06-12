@@ -47,6 +47,8 @@ public class ImportServiceImpl implements ImportService {
 
 	private static final Logger log = LoggerFactory.getLogger(ImportServiceImpl.class);
 
+	private static final int ITEM_DELETE_CHUNK_SIZE = 1000;
+
 	DbSessionFactory sessionFactory;
 
 	AdministrationService adminService;
@@ -613,16 +615,52 @@ public class ImportServiceImpl implements ImportService {
 		int purged = 0;
 
 		for (Import anImport : purgable) {
-			int itemsDeleted = getSession().createQuery("delete from OclItem i where i.anImport = :anImport")
-			        .setParameter("anImport", anImport)
-			        .executeUpdate();
-			getSession().delete(anImport);
-			purged++;
-			log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
-			        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
-			        anImport.getLocalDateStopped(), itemsDeleted);
+			int itemsDeleted = deleteItems(getDeletableItemIds(anImport));
+			int itemsRetained = importService. getImportItemsCount(anImport, Collections.emptySet());
+			if (itemsRetained == 0) {
+				getSession().delete(anImport);
+				purged++;
+				log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
+				        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
+				        anImport.getLocalDateStopped(), itemsDeleted);
+			} else {
+				log.info("Trimmed OCL import id={}, uuid={}: items deleted={}, items retained={} as the last usable "
+				        + "records for their OCL URLs; the import will be purged once newer imports supersede them",
+				        anImport.getImportId(), anImport.getUuid(), itemsDeleted, itemsRetained);
+			}
 		}
 		return purged;
+	}
+
+	/**
+	 * Returns ids of items in the given import that are no longer needed to resolve OCL URLs to local
+	 * concepts and mappings (see {@link #getLastSuccessfulItemByUrl(String)}): items in ERROR state and
+	 * items superseded by a newer non-error item with the same URL. The newest non-error item for each
+	 * URL is never returned.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Long> getDeletableItemIds(Import anImport) {
+		Query query = getSession().createQuery("select i.itemId from OclItem i where i.anImport = :anImport"
+		        + " and (i.state = :error or exists (select n.itemId from OclItem n where n.hashedUrl = i.hashedUrl"
+		        + " and n.url = i.url and n.itemId > i.itemId and n.state <> :error))");
+		query.setParameter("anImport", anImport);
+		query.setParameter("error", ItemState.ERROR);
+		return query.list();
+	}
+
+	/**
+	 * Deletes items by id in chunks. MySQL cannot delete from a table referenced in the delete's own
+	 * subquery (error 1093), so deletable ids are selected first and deleted by id here.
+	 */
+	private int deleteItems(List<Long> itemIds) {
+		int deleted = 0;
+		for (int from = 0; from < itemIds.size(); from += ITEM_DELETE_CHUNK_SIZE) {
+			List<Long> chunk = itemIds.subList(from, Math.min(from + ITEM_DELETE_CHUNK_SIZE, itemIds.size()));
+			deleted += getSession().createQuery("delete from OclItem i where i.itemId in (:itemIds)")
+			        .setParameterList("itemIds", chunk)
+			        .executeUpdate();
+		}
+		return deleted;
 	}
 
 }
