@@ -45,6 +45,9 @@ public class OclConcept {
 
 	private boolean retired;
 
+	@JsonProperty("retire_reason")
+	private String retireReason;
+
 	private String url;
 
 	@JsonProperty("version_url")
@@ -133,6 +136,14 @@ public class OclConcept {
 
 	public void setRetired(boolean retired) {
 		this.retired = retired;
+	}
+
+	public String getRetireReason() {
+		return retireReason;
+	}
+
+	public void setRetireReason(String retireReason) {
+		this.retireReason = retireReason;
 	}
 
 	public String getUrl() {

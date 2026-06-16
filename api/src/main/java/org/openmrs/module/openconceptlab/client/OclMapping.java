@@ -108,6 +108,7 @@ public class OclMapping {
 	public void setRetired(Boolean retired) {
 		this.retired = retired;
 	}
+
 	
 	public String getMapType() {
 		return mapType;
