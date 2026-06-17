@@ -657,21 +657,29 @@ public class ImportServiceImpl implements ImportService {
 				if (purged >= batchSize) {
 					break;
 				}
-				Long importId = anImport.getImportId();
-				try {
-					if (importService.purgeImport(importId)) {
-						purged++;
-					} else {
-						kept++;
-					}
-				}
-				catch (Exception e) {
+				if (tryPurgeImport(importService, anImport.getImportId())) {
+					purged++;
+				} else {
 					kept++;
-					log.error("Failed to purge OCL import id={}, skipping it and continuing", importId, e);
 				}
 			}
 		}
 		return purged;
+	}
+
+	/**
+	 * Purges a single import, swallowing any failure so the surrounding batch can continue.
+	 *
+	 * @return {@code true} if the import was purged, {@code false} if it was kept or failed to purge
+	 */
+	private boolean tryPurgeImport(ImportService importService, Long importId) {
+		try {
+			return importService.purgeImport(importId);
+		}
+		catch (Exception e) {
+			log.error("Failed to purge OCL import id={}, skipping it and continuing", importId, e);
+			return false;
+		}
 	}
 
 	/**
