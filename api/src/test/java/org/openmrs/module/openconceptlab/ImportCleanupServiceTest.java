@@ -11,7 +11,10 @@ package org.openmrs.module.openconceptlab;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,6 +205,28 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
 		assertEquals(1, purged);
 		assertImportPurged(oldImport.getImportId());
+	}
+
+	@Test
+	public void purgeOldImports_shouldSkipImportThatFailsToPurgeAndContinueWithTheRest() throws Exception {
+		Import failingImport = createFailedImport(300);
+		Import purgeableImport = createFailedImport(200);
+
+		ImportService realService = importService;
+		ImportService throwingService = Mockito.mock(ImportService.class, AdditionalAnswers.delegatesTo(realService));
+		Mockito.doThrow(new RuntimeException("simulated purge failure")).when(throwingService)
+		        .purgeImport(failingImport.getImportId());
+		ServiceContext.getInstance().setService(ImportService.class, throwingService);
+		try {
+			int purged = importService.purgeOldImports(90, 10);
+
+			assertEquals(1, purged);
+			assertNotNull(importService.getImport(failingImport.getImportId()));
+			assertImportPurged(purgeableImport.getImportId());
+		}
+		finally {
+			ServiceContext.getInstance().setService(ImportService.class, realService);
+		}
 	}
 
 	@Test
