@@ -18,9 +18,9 @@ import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.ImportServiceImpl;
 import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
-import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.util.AopTestUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
@@ -42,8 +42,8 @@ public class ImportCleanupTaskTest extends BaseModuleContextSensitiveTest {
 	private ImportService importService;
 
 	@BeforeEach
-	public void fixClock() throws Exception {
-		ImportServiceImpl impl = (ImportServiceImpl) ((Advised) importService).getTargetSource().getTarget();
+	public void fixClock() {
+		ImportServiceImpl impl = AopTestUtils.getUltimateTargetObject(importService);
 		impl.setClock(Clock.fixed(NOW, ZoneId.systemDefault()));
 	}
 

@@ -602,54 +602,82 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int maxResults) {
+	public List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int firstResult, int maxResults) {
 		Criteria criteria = getSession().createCriteria(Import.class);
 		criteria.add(Restrictions.lt(LOCAL_DATE_STOPPED, cutoff));
 		if (excludedImportId != null) {
 			criteria.add(Restrictions.ne("importId", excludedImportId));
 		}
 		criteria.addOrder(Order.asc(LOCAL_DATE_STOPPED));
+		criteria.setFirstResult(firstResult);
 		criteria.setMaxResults(maxResults);
 		return criteria.list();
 	}
 
+	@Override
+	public boolean purgeImport(Long importId) {
+		Import anImport = getImport(importId);
+		int itemsDeleted = deleteItems(getDeletableItemIds(anImport));
+		int itemsRetained = getImportItemsCount(anImport, Collections.emptySet());
+		if (itemsRetained == 0) {
+			getSession().delete(anImport);
+			log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
+			        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
+			        anImport.getLocalDateStopped(), itemsDeleted);
+			return true;
+		}
+		log.info("Trimmed OCL import id={}, uuid={}: items deleted={}, items retained={}",
+		        anImport.getImportId(), anImport.getUuid(), itemsDeleted, itemsRetained);
+		return false;
+	}
+
+	// Intentionally not @Transactional: each purgeImport call must commit in its own transaction so
+	// a large import is a bounded unit of work and earlier purges survive if a later one fails.
 	@Override
 	public int purgeOldImports(int retentionDays, int batchSize) {
 		if (retentionDays <= 0) throw new IllegalArgumentException("retentionDays must be greater than 0, given: " + retentionDays);
 		if (batchSize <= 0) throw new IllegalArgumentException("batchSize must be greater than 0, given: " + batchSize);
 
 		ImportService importService = Context.getService(ImportService.class);
-		
+
 		Date cutoff = Date.from(clock.instant().minus(retentionDays, ChronoUnit.DAYS));
 		Import lastSuccessful = importService.getLastSuccessfulSubscriptionImport();
 		Long excludedImportId = (lastSuccessful != null) ? lastSuccessful.getImportId() : null;
 
-		List<Import> purgable = importService.getImportsStoppedBefore(cutoff, excludedImportId, batchSize);
 		int purged = 0;
-
-		for (Import anImport : purgable) {
-			int itemsDeleted = deleteItems(getDeletableItemIds(anImport));
-			int itemsRetained = importService. getImportItemsCount(anImport, Collections.emptySet());
-			if (itemsRetained == 0) {
-				getSession().delete(anImport);
-				purged++;
-				log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
-				        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
-				        anImport.getLocalDateStopped(), itemsDeleted);
-			} else {
-				log.info("Trimmed OCL import id={}, uuid={}: items deleted={}, items retained={} as the last usable "
-				        + "records for their OCL URLs; the import will be purged once newer imports supersede them",
-				        anImport.getImportId(), anImport.getUuid(), itemsDeleted, itemsRetained);
+		// Imports we keep (trimmed or failed) stay in the result set, so advance the offset past them;
+		// purged imports are deleted and drop out, so they must not be counted in the offset.
+		int kept = 0;
+		while (purged < batchSize) {
+			List<Import> candidates = importService.getImportsStoppedBefore(cutoff, excludedImportId, kept, batchSize);
+			if (candidates.isEmpty()) {
+				break;
+			}
+			for (Import anImport : candidates) {
+				if (purged >= batchSize) {
+					break;
+				}
+				Long importId = anImport.getImportId();
+				try {
+					if (importService.purgeImport(importId)) {
+						purged++;
+					} else {
+						kept++;
+					}
+				}
+				catch (Exception e) {
+					kept++;
+					log.error("Failed to purge OCL import id={}, skipping it and continuing", importId, e);
+				}
 			}
 		}
 		return purged;
 	}
 
 	/**
-	 * Returns ids of items in the given import that are no longer needed to resolve OCL URLs to local
-	 * concepts and mappings (see {@link #getLastSuccessfulItemByUrl(String)}): items in ERROR state and
-	 * items superseded by a newer non-error item with the same URL. The newest non-error item for each
-	 * URL is never returned.
+	 * Item ids in the given import no longer needed to resolve OCL URLs: ERROR-state items and items
+	 * superseded by a newer non-error item with the same URL. This is the exact complement of
+	 * {@link #getLastSuccessfulItemByUrl(String)}, so the item that method would return is never returned.
 	 */
 	@SuppressWarnings("unchecked")
 	private List<Long> getDeletableItemIds(Import anImport) {

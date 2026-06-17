@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
-import org.springframework.aop.framework.Advised;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.util.AopTestUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
@@ -42,8 +42,8 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 	private ImportService importService;
 
 	@BeforeEach
-	public void fixClock() throws Exception {
-		ImportServiceImpl impl = (ImportServiceImpl) ((Advised) importService).getTargetSource().getTarget();
+	public void fixClock() {
+		ImportServiceImpl impl = AopTestUtils.getUltimateTargetObject(importService);
 		impl.setClock(Clock.fixed(NOW, ZoneId.systemDefault()));
 	}
 
@@ -82,6 +82,61 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 		assertImportPurged(oldFailedImport.getImportId());
 		assertNotNull(importService.getImport(oldSuccessfulImport.getImportId()));
 		assertEquals(1, itemCount(oldSuccessfulImport));
+	}
+
+	@Test
+	public void purgeOldImports_shouldKeepLastSuccessfulSubscriptionImportEvenIfAllItsItemsAreSuperseded() throws Exception {
+		Import oldSuccessfulImport = createSuccessfulImport(400, "/concepts/a/");
+		createFailedImport(200, "/concepts/a/");
+
+		int purged = importService.purgeOldImports(90, 10);
+
+		assertEquals(0, purged);
+		assertNotNull(importService.getImport(oldSuccessfulImport.getImportId()));
+		assertEquals(1, itemCount(oldSuccessfulImport));
+	}
+
+	@Test
+	public void purgeOldImports_shouldPagePastRetainedImportsToReachPurgeableOnes() throws Exception {
+		createFailedImport(400, "/concepts/only-a/");
+		createFailedImport(390, "/concepts/only-b/");
+		Import superseded = createFailedImport(300, "/concepts/x/");
+		createSuccessfulImport(1, "/concepts/x/");
+
+		int purged = importService.purgeOldImports(90, 2);
+
+		assertEquals(1, purged);
+		assertImportPurged(superseded.getImportId());
+	}
+
+	@Test
+	public void purgeOldImports_shouldReachPurgeableImportBehindMultiplePagesOfRetainedImports() throws Exception {
+		createFailedImport(400, "/concepts/only-a/");
+		createFailedImport(390, "/concepts/only-b/");
+		createFailedImport(380, "/concepts/only-c/");
+		createFailedImport(370, "/concepts/only-d/");
+		createFailedImport(360, "/concepts/only-e/");
+		Import superseded = createFailedImport(300, "/concepts/x/");
+		createSuccessfulImport(1, "/concepts/x/");
+
+		int purged = importService.purgeOldImports(90, 2);
+
+		assertEquals(1, purged);
+		assertImportPurged(superseded.getImportId());
+	}
+
+	@Test
+	public void purgeOldImports_shouldNotSkipPurgeableImportsInterleavedWithRetainedOnes() throws Exception {
+		Import purgeableA = createFailedImport(400);
+		createFailedImport(390, "/concepts/only-a/");
+		Import purgeableB = createFailedImport(380);
+		createFailedImport(370, "/concepts/only-b/");
+
+		int purged = importService.purgeOldImports(90, 2);
+
+		assertEquals(2, purged);
+		assertImportPurged(purgeableA.getImportId());
+		assertImportPurged(purgeableB.getImportId());
 	}
 
 	@Test
@@ -170,18 +225,22 @@ public class ImportCleanupServiceTest extends BaseModuleContextSensitiveTest {
 
 		Date cutoff = Date.from(NOW.minus(90, ChronoUnit.DAYS));
 
-		List<Import> imports = importService.getImportsStoppedBefore(cutoff, null, 10);
+		List<Import> imports = importService.getImportsStoppedBefore(cutoff, null, 0, 10);
 		assertEquals(2, imports.size());
 		assertEquals(oldestImport.getImportId(), imports.get(0).getImportId());
 		assertEquals(olderImport.getImportId(), imports.get(1).getImportId());
 
-		imports = importService.getImportsStoppedBefore(cutoff, oldestImport.getImportId(), 10);
+		imports = importService.getImportsStoppedBefore(cutoff, oldestImport.getImportId(), 0, 10);
 		assertEquals(1, imports.size());
 		assertEquals(olderImport.getImportId(), imports.get(0).getImportId());
 
-		imports = importService.getImportsStoppedBefore(cutoff, null, 1);
+		imports = importService.getImportsStoppedBefore(cutoff, null, 0, 1);
 		assertEquals(1, imports.size());
 		assertEquals(oldestImport.getImportId(), imports.get(0).getImportId());
+
+		imports = importService.getImportsStoppedBefore(cutoff, null, 1, 10);
+		assertEquals(1, imports.size());
+		assertEquals(olderImport.getImportId(), imports.get(0).getImportId());
 	}
 
 	private Import createSuccessfulImport(int stoppedDaysAgo, String... itemUrls) throws Exception {
