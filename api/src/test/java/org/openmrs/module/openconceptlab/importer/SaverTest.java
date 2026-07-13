@@ -1795,6 +1795,22 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(concept.getRetireReason(), is(OpenConceptLabConstants.DEFAULT_RETIRE_REASON));
 	}
 
+	@Test
+	public void saveConcept_shouldTruncateLongRetireReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		String longReason = new String(new char[300]).replace('\0', 'x');
+		oclConcept.setRetireReason(longReason);
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertTrue(concept.isRetired());
+		assertThat(concept.getRetireReason().length(), is(255));
+		assertTrue(concept.getRetireReason().endsWith("..."));
+	}
+
 
 	@Test
 	public void saveMapping_shouldNotRetireReferenceTermWhenMappingIsRetired() throws Exception {
