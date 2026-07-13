@@ -186,6 +186,7 @@ public class Saver {
 			oclConcept.setExternalId(version5Uuid(oclConcept.getUrl()).toString());
 			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		}
+		
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
@@ -232,7 +233,7 @@ public class Saver {
 		concept.setRetired(oclConcept.isRetired());
 		if (oclConcept.isRetired()) {
 			if (StringUtils.isNotBlank(oclConcept.getRetireReason())) {
-				concept.setRetireReason(oclConcept.getRetireReason());
+				concept.setRetireReason(StringUtils.abbreviate(oclConcept.getRetireReason(), 255));
 			} else {
 				concept.setRetireReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
 			}
@@ -380,6 +381,7 @@ public class Saver {
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
 						}
+						
 						if (toConcept == null) {
 							String source = oclMapping.getToSourceName();
 							String code = oclMapping.getToConceptCode();
@@ -618,6 +620,7 @@ public class Saver {
 		if (sortWeight != null) {
 			return sortWeight;
 		}
+		
 		return defaultIfUndefined;
 	}
 
