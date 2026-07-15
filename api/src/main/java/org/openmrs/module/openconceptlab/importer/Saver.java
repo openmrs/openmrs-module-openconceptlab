@@ -644,10 +644,17 @@ public class Saver {
 					name.setConceptNameType(oclNameType);
 					name.setLocalePreferred(oclName.isLocalePreferred());
 
-					//Unvoiding if necessary
-					name.setVoided(false);
-					name.setVoidReason(null);
-					name.setVoidedBy(null);
+					name.setVoided(oclName.isRetired());
+					if (oclName.isRetired()) {
+						if (StringUtils.isNotBlank(oclName.getRetireReason())) {
+							name.setVoidReason(StringUtils.abbreviate(oclName.getRetireReason(), 255));
+						} else {
+							name.setVoidReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
+						}
+					} else {
+						name.setVoidReason(null);
+						name.setVoidedBy(null);
+					}
 
 					nameFound = true;
 					break;
@@ -663,6 +670,14 @@ public class Saver {
 				}
 				name.setConceptNameType(oclNameType);
 				name.setLocalePreferred(oclName.isLocalePreferred());
+				if (oclName.isRetired()) {
+					name.setVoided(true);
+					if (StringUtils.isNotBlank(oclName.getRetireReason())) {
+						name.setVoidReason(StringUtils.abbreviate(oclName.getRetireReason(), 255));
+					} else {
+						name.setVoidReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
+					}
+				}
 				concept.addName(name);
 			}
 		}
@@ -727,6 +742,10 @@ public class Saver {
                     continue;
                 }
 
+                if (oclDescription.isRetired()) {
+                    continue;
+                }
+
                 boolean descriptionFound = false;
                 for (ConceptDescription description : concept.getDescriptions()) {
                     if (isMatch(oclDescription, description)) {
@@ -758,8 +777,7 @@ public class Saver {
 			boolean descriptionFound = false;
 			for (Description oclDescription : oclConcept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
-					if (!StringUtils.isBlank(oclDescription.getDescription())) {
-						//Blank descriptions are invalid and will be removed
+					if (!StringUtils.isBlank(oclDescription.getDescription()) && !oclDescription.isRetired()) {
 						descriptionFound = true;
 					}
 					break;

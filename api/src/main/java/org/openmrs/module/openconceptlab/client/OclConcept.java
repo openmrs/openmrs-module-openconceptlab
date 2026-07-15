@@ -222,6 +222,11 @@ public class OclConcept {
 
 		private String type;
 
+		private Boolean retired;
+
+		@JsonProperty("retire_reason")
+		private String retireReason;
+
 		public String getUuid() {
 			return uuid;
 		}
@@ -278,6 +283,26 @@ public class OclConcept {
 			this.type = type;
 		}
 
+		public Boolean getRetired() {
+			return retired;
+		}
+
+		public boolean isRetired() {
+			return Boolean.TRUE.equals(retired);
+		}
+
+		public void setRetired(Boolean retired) {
+			this.retired = retired;
+		}
+
+		public String getRetireReason() {
+			return retireReason;
+		}
+
+		public void setRetireReason(String retireReason) {
+			this.retireReason = retireReason;
+		}
+
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this).append("name", name).build();
@@ -324,6 +349,11 @@ public class OclConcept {
 
 		private String description;
 
+		private Boolean retired;
+
+		@JsonProperty("retire_reason")
+		private String retireReason;
+
 		public String getUuid() {
 			return uuid;
 		}
@@ -354,6 +384,26 @@ public class OclConcept {
 
 		public void setDescription(String description) {
 			this.description = description;
+		}
+
+		public Boolean getRetired() {
+			return retired;
+		}
+
+		public boolean isRetired() {
+			return Boolean.TRUE.equals(retired);
+		}
+
+		public void setRetired(Boolean retired) {
+			this.retired = retired;
+		}
+
+		public String getRetireReason() {
+			return retireReason;
+		}
+
+		public void setRetireReason(String retireReason) {
+			this.retireReason = retireReason;
 		}
 
 		public void copyFrom(ConceptDescription description) {
