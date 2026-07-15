@@ -87,6 +87,7 @@ import static org.junit.Assert.fail;
 import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
 public class SaverTest extends BaseModuleContextSensitiveTest {
+
 	@Autowired
 	Saver saver;
 
@@ -98,15 +99,14 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Qualifier("openconceptlab.conceptService")
 	OclConceptService oclConceptService;
 
-	@Autowired
-	@Qualifier("openconceptlab.importService")
+	@Autowired @Qualifier("openconceptlab.importService")
 	ImportService importService;
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
 
-	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+	private final SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
+	
 	private Import anImport;
 
 	@Before
@@ -120,7 +120,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void stopUpdate() {
 		importService.stopImport(importService.getLastImport());
 	}
-
+	
 	private Subscription generateSubscription() {
 		Subscription sub = new Subscription();
 		sub.setToken("token");
@@ -173,7 +173,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	/**
-	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
+	 * @see Saver#saveConcept(CacheService, Import, OclConcept) 
 	 * @verifies add new names to concept
 	 */
 	@Test
@@ -195,7 +195,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImported(oclConcept);
 	}
-
+	
 	private Name newFourthName() {
 		Name fourthName = new Name();
 		fourthName.setExternalId("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
@@ -205,7 +205,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		fourthName.setNameType(ConceptNameType.INDEX_TERM.toString());
 		return fourthName;
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 * @verifies add new names to concept
@@ -214,6 +214,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldHandleNameTypesWithDashesCorrectly() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		
 		Name thirdName = new Name();
 		thirdName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
 		thirdName.setName("Third name");
@@ -221,7 +222,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		thirdName.setLocalePreferred(true);
 		thirdName.setNameType("Fully-Specified");
 		oclConcept.getNames().add(thirdName);
-
+		
 		Name fourthName = new Name();
 		fourthName.setExternalId("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
 		fourthName.setName("Fourth name");
@@ -229,14 +230,17 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		fourthName.setLocalePreferred(false);
 		fourthName.setNameType("Index-Term");
 		oclConcept.getNames().add(fourthName);
+		
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImported(oclConcept);
+		
 		ConceptName thirdConceptName = conceptService.getConceptNameByUuid("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
 		assertThat(thirdConceptName.getConceptNameType(), equalTo(ConceptNameType.FULLY_SPECIFIED));
+		
 		ConceptName fourthConceptName = conceptService.getConceptNameByUuid("a9105ff6-8f9c-449a-9d71-e8b819cc2452");
 		assertThat(fourthConceptName.getConceptNameType(), equalTo(ConceptNameType.INDEX_TERM));
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 */
@@ -244,7 +248,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldHandleTheNoneNameTypeCorrectly() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
-
+		
 		Name thirdName = new Name();
 		thirdName.setExternalId("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
 		thirdName.setName("Third name");
@@ -252,12 +256,14 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		thirdName.setLocalePreferred(true);
 		thirdName.setNameType("NONE");
 		oclConcept.getNames().add(thirdName);
+		
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImported(oclConcept);
+		
 		ConceptName thirdConceptName = conceptService.getConceptNameByUuid("9040fc62-fc52-4b54-a10b-3dfcdfa588e3");
 		assertThat(thirdConceptName.getConceptNameType(), nullValue());
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 */
@@ -265,7 +271,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldAssignUuidToNameWithoutExternalId() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
-
+		
 		Name thirdName = new Name();
 		thirdName.setUuid("12345");
 		thirdName.setName("Third name");
@@ -273,13 +279,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		thirdName.setLocalePreferred(true);
 		thirdName.setNameType("NONE");
 		oclConcept.getNames().add(thirdName);
-
+		
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImported(oclConcept);
-
+		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		Collection<ConceptName> names = concept.getNames(false);
-
+		
 		ConceptName thirdConceptName = null;
 		for (ConceptName name : names) {
 			if (name.getName().equals("Third name")) {
@@ -287,13 +293,12 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 				break;
 			}
 		}
-
+		
 		if (thirdConceptName == null) {
 			fail("Concept " + concept.getUuid() + " did not have the name \"Third name\" loaded successfully");
 		}
-
-		assertThat(thirdConceptName.getUuid(),
-		    equalTo(version5Uuid(oclConcept.getUrl() + "/names/" + thirdName.getUuid()).toString()));
+		
+		assertThat(thirdConceptName.getUuid(), equalTo(version5Uuid(oclConcept.getUrl() + "/names/" + thirdName.getUuid()).toString()));
 	}
 
 	/**
@@ -383,7 +388,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
-	 * @verifies void old names when names are updated with different uuids
+	 * TODO: Not
 	 */
 	@Test
 	public void importConcept_shouldUpdateNamesWithDifferentUuids() throws Exception {
@@ -402,8 +407,8 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		List<Matcher<? super ConceptName>> matchers = new ArrayList<Matcher<? super ConceptName>>();
 		for (Name name : oclConcept.getNames()) {
 			ConceptNameType nameType = (name.getNameType() != null) ? ConceptNameType.valueOf(name.getNameType()) : null;
-			matchers.add(allOf(hasProperty("name", is(name.getName())), hasProperty("conceptNameType", is(nameType))));
-		}
+	        matchers.add(allOf(hasProperty("name", is(name.getName())), hasProperty("conceptNameType", is(nameType))));
+        }
 
 		assertThat(concept.getNames(false), containsInAnyOrder(matchers));
 		assertThat(concept.getNames(true).size(), is(6));
@@ -555,7 +560,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		assertImported(oclConcept);
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 */
@@ -563,15 +568,19 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	public void importConcept_shouldAssignUuidToDescriptionWithoutExternalId() throws Exception {
 		OclConcept oclConcept = newOclConcept();
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		
 		Description desc1 = new Description();
 		desc1.setUuid("12345");
 		desc1.setDescription("test oclConceptDescription");
 		desc1.setLocale(Context.getLocale());
 		oclConcept.getDescriptions().add(desc1);
+		
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 		assertImported(oclConcept);
+		
 		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
 		Collection<ConceptDescription> descriptions = concept.getDescriptions();
+		
 		ConceptDescription conceptDescription = null;
 		for (ConceptDescription description : descriptions) {
 			if (description.getDescription().equals("test oclConceptDescription")) {
@@ -579,12 +588,12 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 				break;
 			}
 		}
+		
 		if (conceptDescription == null) {
-			fail("Concept " + concept.getUuid()
-			        + " did not have the description \"test oclConceptDescription\" loaded successfully");
+			fail("Concept " + concept.getUuid() + " did not have the description \"test oclConceptDescription\" loaded successfully");
 		}
-		assertThat(conceptDescription.getUuid(),
-		    equalTo(version5Uuid(oclConcept.getUrl() + "/descriptions/" + desc1.getUuid()).toString()));
+		
+		assertThat(conceptDescription.getUuid(), equalTo(version5Uuid(oclConcept.getUrl() + "/descriptions/" + desc1.getUuid()).toString()));
 	}
 
 	/**
@@ -704,7 +713,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(conceptClass, notNullValue());
 		assertThat(conceptClass.getUuid(), is(version5Uuid("conceptClass/" + concept.getConceptClass()).toString()));
 	}
-
+	
 	/**
 	 * @verifies generate deterministic UUID for new concept class
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
@@ -714,12 +723,17 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Import update = importService.getLastImport();
 		String className = "Drug route";
 		String expectedUuid = version5Uuid("conceptClass/" + className).toString();
+		
 		OclConcept concept = newOclConcept();
 		concept.setConceptClass(className);
+		
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept);
+		
 		ConceptClass conceptClass = conceptService.getConceptClassByName(className);
 		assertThat(conceptClass, notNullValue());
 		assertThat(conceptClass.getUuid(), is(expectedUuid));
+		
+		// Verify determinism: calling version5Uuid again with the same seed produces the same UUID
 		assertThat(version5Uuid("conceptClass/" + className).toString(), is(expectedUuid));
 	}
 
@@ -786,16 +800,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		Concept importedConceptWithIndexTerm = conceptService.getConceptByUuid(conceptWithSynonym.getExternalId());
 
-		assertThat(importedConcept.getNames(),
-		    hasItem((Matcher<? super ConceptName>) allOf(
-		        hasProperty("conceptNameType", equalTo(ConceptNameType.FULLY_SPECIFIED)),
-		        hasProperty("name", equalTo("Nazwa")))));
+		assertThat(importedConcept.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.FULLY_SPECIFIED)),
+			hasProperty("name", equalTo("Nazwa")))));
 
-		assertThat(importedConceptWithIndexTerm.getNames(),
-		    hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
-		        hasProperty("name", equalTo("Nazwa")))));
+		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
+			hasProperty("name", equalTo("Nazwa")))));
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 * @verifies save concept if versionUrl changed from last anImport
@@ -805,18 +816,18 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Import update = importService.getLastImport();
 		OclConcept concept = newOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept));
-
+		
 		OclConcept updateConcept = newOclConcept();
 		updateConcept.setVersionUrl(newOtherOclConcept().getVersionUrl());
 		updateConcept.setDatatype("Document");
-
+		
 		Item item = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, updateConcept);
 		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
-
+		
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(updateConcept.getDatatype())));
 	}
-
+	
 	/**
 	 * @see Saver#saveConcept(CacheService, Import, OclConcept)
 	 * @verifies skip saving concept if versionUrl didn't change from last anImport
@@ -826,13 +837,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Import update = importService.getLastImport();
 		OclConcept concept = newOclConcept();
 		OclConcept updateConcept = newOclConcept();
-
+			
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept));
-
-		updateConcept.setDatatype("Document");
+		
+		updateConcept.setDatatype("Document");		
 		Item item = saver.saveConcept(new CacheService(conceptService, oclConceptService), update, updateConcept);
 		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
-
+		
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		assertThat(importedConcept.getDatatype(), hasProperty("name", equalTo(concept.getDatatype())));
 	}
@@ -871,14 +882,11 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept importedConcept = conceptService.getConceptByUuid(concept.getExternalId());
 		Concept importedConceptWithIndexTerm = conceptService.getConceptByUuid(conceptWithSynonym.getExternalId());
 
-		assertThat(importedConcept.getNames(),
-		    hasItem((Matcher<? super ConceptName>) allOf(
-		        hasProperty("conceptNameType", equalTo(ConceptNameType.FULLY_SPECIFIED)),
-		        hasProperty("name", equalTo("Nazwa")))));
+		assertThat(importedConcept.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.FULLY_SPECIFIED)),
+			hasProperty("name", equalTo("Nazwa")))));
 
-		assertThat(importedConceptWithIndexTerm.getNames(),
-		    hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
-		        hasProperty("name", equalTo("Nazwa")))));
+		assertThat(importedConceptWithIndexTerm.getNames(), hasItem((Matcher<? super ConceptName>) allOf(hasProperty("conceptNameType", equalTo(ConceptNameType.INDEX_TERM)),
+			hasProperty("name", equalTo("Nazwa")))));
 	}
 
 	@Test
@@ -948,26 +956,26 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		assertThat(questionConcept.getAnswers(), contains(hasQuestionAndAnswer(questionConcept, answerConcept)));
 	}
-
+	
 	@Test
 	public void importMapping_shouldAddConceptAnswerWithSortWeight() throws Exception {
 		Import update = importService.getLastImport();
-
+		
 		OclConcept question = newOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, question));
-
+		
 		OclConcept answer = newOtherOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, answer));
-
+		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType(MapType.Q_AND_A);
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		oclMapping.setSortWeight(356.0);
-
+		
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
-
+		
 		Concept questionConcept = conceptService.getConceptByUuid(question.getExternalId());
 		Concept answerConcept = conceptService.getConceptByUuid(answer.getExternalId());
 		List<ConceptAnswer> answers = answersForConcept(questionConcept, answerConcept);
@@ -1048,23 +1056,26 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(questionConcept.getAnswers(), not(contains(hasQuestionAndAnswer(questionConcept, answerConcept))));
 	}
 
+
 	@Test
 	public void importMapping_shouldUpdateConceptAnswer() throws Exception {
 		importMapping_shouldAddConceptAnswer();
 		Import update = importService.getLastImport();
+		
 		Concept questionConcept = conceptService.getConceptByUuid(newOclConcept().getExternalId());
 		Concept answerConcept = conceptService.getConceptByUuid(newOtherOclConcept().getExternalId());
+		
 		List<ConceptAnswer> answers = answersForConcept(questionConcept, answerConcept);
 		assertThat(answers.size(), is(1));
 		assertThat(answers.get(0).getSortWeight(), is(1.0)); // Concept Answers are given a sort weight in core if null
-
+		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType(MapType.Q_AND_A);
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		oclMapping.setSortWeight(15.0);
-
+		
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 		answers = answersForConcept(questionConcept, answerConcept);
 		assertThat(answers.size(), is(1));
@@ -1120,21 +1131,27 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 		assertThat(setConcept.getSetMembers(), contains(memberConcept));
 	}
-
+	
 	@Test
 	public void importMapping_shouldAddConceptSetMemberWithSortWeight() throws Exception {
 		Import update = importService.getLastImport();
+		
 		OclConcept set = newOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, set));
+		
 		OclConcept member = newOtherOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, member));
+		
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		
 		oclMapping.setMapType(MapType.SET);
 		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
 		oclMapping.setToConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1002/");
 		oclMapping.setSortWeight(11.0);
+		
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+		
 		Concept setConcept = conceptService.getConceptByUuid(set.getExternalId());
 		Concept memberConcept = conceptService.getConceptByUuid(member.getExternalId());
 		List<ConceptSet> members = membersForConceptSet(setConcept, memberConcept);
@@ -1354,6 +1371,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertThat(cm.getConceptMapType(), equalTo(mapType));
 	}
 
+	
 	@Test
 	public void importMapping_shouldUpdateMappingOnylIfItHasBeenUpdatedSinceLastImport() throws Exception {
 		OclConcept oclConcept = newOclConcept();
@@ -1369,55 +1387,56 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		oclMapping.setUrl("/orgs/CIELTEST/sources/CIELTEST/mappings/303");
 
 		importService.saveItem(saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping));
-
+		
 		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
-
+		
 		Item item = saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 		assertThat(item, hasProperty("state", equalTo(ItemState.UPDATED)));
 		importService.saveItem(item);
-
+		
 		item = saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 		assertThat(item, hasProperty("state", equalTo(ItemState.UP_TO_DATE)));
 	}
-
+	
 	@Test
-	public void isMappingUpToDate_shouldReturnIfMappingUpdateOnIsAfter() throws Exception {
+	public void isMappingUpToDate_shouldReturnIfMappingUpdateOnIsAfter() throws Exception{
 		Import update = importService.getLastImport();
 
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType("SAME-AS");
 		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
-
+		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
-
+		
 		oclMapping.setUpdatedOn(dateFormat.parse("2008-02-18T09:10:16Z"));
 		assertTrue(saver.isMappingUpToDate(item, oclMapping));
 	}
-
+	
 	@Test
-	public void isMappingUpToDate_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception {
+	public void isMappingUpToDate_shouldReturnTrueIfItemUpdateOnIsNull() throws Exception{
 		Import update = importService.getLastImport();
 
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType("SAME-AS");
-
+		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
-
+		
 		oclMapping.setUpdatedOn(dateFormat.parse("2010-02-18T09:10:16Z"));
-
+		
 		assertFalse(saver.isMappingUpToDate(item, oclMapping));
 	}
-
 	@Test
-	public void isMappingUpToDate_shouldReturnTrueIfBothUpdatedOnAreNull() throws Exception {
+	public void isMappingUpToDate_shouldReturnTrueIfBothUpdatedOnAreNull() throws Exception{
 		Import update = importService.getLastImport();
 
 		OclMapping oclMapping = new OclMapping();
 		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
 		oclMapping.setMapType("SAME-AS");
+		
 		Item item = new Item(update, oclMapping, ItemState.ADDED);
+		
 		assertTrue(saver.isMappingUpToDate(item, oclMapping));
 	}
 
@@ -1663,12 +1682,13 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	private Matcher<? super ConceptName> hasName(final OclConcept.Name name) {
-		return new TypeSafeMatcher<ConceptName>(ConceptName.class) {
-
+		return new TypeSafeMatcher<ConceptName>(
+		                                        ConceptName.class) {
+			
 			@Override
 			public void describeTo(org.hamcrest.Description description) {
 				description.appendText("Concept name \"").appendText(name.getName()).appendText("\" of type ")
-				        .appendText(name.getNameType());
+						.appendText(name.getNameType());
 			}
 
 			@Override
@@ -1700,14 +1720,14 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	private Matcher<? super ConceptDescription> hasDescription(final Description description) {
-		return new TypeSafeMatcher<ConceptDescription>(ConceptDescription.class) {
-
+		return new TypeSafeMatcher<ConceptDescription>(
+		                                               ConceptDescription.class) {
+			
 			@Override
 			public void describeTo(org.hamcrest.Description desc) {
-				desc.appendText("Concept description").appendText("[").appendText(description.getDescription())
-				        .appendText("]");
+				desc.appendText("Concept description").appendText("[").appendText(description.getDescription()).appendText("]");
 			}
-
+			
 			@Override
 			protected boolean matchesSafely(ConceptDescription item) {
 				Description actualDescription = new Description();
@@ -1718,7 +1738,8 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	private Matcher<? super ConceptAnswer> hasQuestionAndAnswer(final Concept question, final Concept answer) {
-		return new TypeSafeMatcher<ConceptAnswer>(ConceptAnswer.class) {
+		return new TypeSafeMatcher<ConceptAnswer>(
+		                                          ConceptAnswer.class) {
 
 			@Override
 			public void describeTo(org.hamcrest.Description description) {
@@ -1733,7 +1754,8 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	private Matcher<? super ConceptMap> hasMapping(final ConceptSource source, final String code,
 	        final ConceptMapType mapType) {
-		return new TypeSafeMatcher<ConceptMap>(ConceptMap.class) {
+		return new TypeSafeMatcher<ConceptMap>(
+		                                       ConceptMap.class) {
 
 			@Override
 			public void describeTo(org.hamcrest.Description description) {
@@ -1811,7 +1833,6 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertTrue(concept.getRetireReason().endsWith("..."));
 	}
 
-
 	@Test
 	public void saveMapping_shouldNotRetireReferenceTermWhenMappingIsRetired() throws Exception {
 		Import update = importService.getLastImport();
@@ -1833,7 +1854,6 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
 		assertFalse(term.getRetired());
 	}
-
 
 	@Test
 	public void saveMapping_shouldUnretireReferenceTermAndClearReason() throws Exception {
