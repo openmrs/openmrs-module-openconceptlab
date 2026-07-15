@@ -738,18 +738,13 @@ public class Saver {
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
 		if (oclConcept.getDescriptions() != null) {
 			for (Description oclDescription : oclConcept.getDescriptions()) {
-                if (StringUtils.isBlank(oclDescription.getDescription())) {
-                    continue;
-                }
-
-                if (oclDescription.isRetired()) {
+                if (StringUtils.isBlank(oclDescription.getDescription()) || oclDescription.isRetired()) {
                     continue;
                 }
 
                 boolean descriptionFound = false;
                 for (ConceptDescription description : concept.getDescriptions()) {
                     if (isMatch(oclDescription, description)) {
-                        //Let's make sure all is the same
                         description.setDescription(oclDescription.getDescription());
                         description.setLocale(oclDescription.getLocale());
                         descriptionFound = true;
@@ -760,11 +755,11 @@ public class Saver {
                 if (!descriptionFound) {
                     ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
                             oclDescription.getLocale());
-	                if (oclDescription.getExternalId() != null) {
-		                description.setUuid(oclDescription.getExternalId());
-	                } else {
-		                description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
-	                }
+                    if (oclDescription.getExternalId() != null) {
+                        description.setUuid(oclDescription.getExternalId());
+                    } else {
+                        description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
+                    }
                     concept.addDescription(description);
                 }
             }
