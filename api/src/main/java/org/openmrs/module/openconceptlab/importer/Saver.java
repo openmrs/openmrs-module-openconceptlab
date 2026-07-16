@@ -72,6 +72,14 @@ public class Saver {
 	    this.importService = importService;
     }
 
+	private String resolveRetireReason(String retireReason) {
+		if (StringUtils.isNotBlank(retireReason)) {
+			return StringUtils.abbreviate(retireReason, 255);
+		}
+		return OpenConceptLabConstants.DEFAULT_RETIRE_REASON;
+	}
+
+
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
 		return saveConcept(cacheService, anImport, oclConcept, null);
 	}
@@ -232,11 +240,7 @@ public class Saver {
 
 		concept.setRetired(oclConcept.isRetired());
 		if (oclConcept.isRetired()) {
-			if (StringUtils.isNotBlank(oclConcept.getRetireReason())) {
-				concept.setRetireReason(StringUtils.abbreviate(oclConcept.getRetireReason(), 255));
-			} else {
-				concept.setRetireReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
-			}
+			concept.setRetireReason(resolveRetireReason(oclConcept.getRetireReason()));
 		} else {
 			concept.setRetireReason(null);
 			concept.setRetiredBy(null);
@@ -646,11 +650,7 @@ public class Saver {
 
 					name.setVoided(oclName.isRetired());
 					if (oclName.isRetired()) {
-						if (StringUtils.isNotBlank(oclName.getRetireReason())) {
-							name.setVoidReason(StringUtils.abbreviate(oclName.getRetireReason(), 255));
-						} else {
-							name.setVoidReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
-						}
+						name.setVoidReason(resolveRetireReason(oclName.getRetireReason()));
 					} else {
 						name.setVoidReason(null);
 						name.setVoidedBy(null);
@@ -672,11 +672,7 @@ public class Saver {
 				name.setLocalePreferred(oclName.isLocalePreferred());
 				if (oclName.isRetired()) {
 					name.setVoided(true);
-					if (StringUtils.isNotBlank(oclName.getRetireReason())) {
-						name.setVoidReason(StringUtils.abbreviate(oclName.getRetireReason(), 255));
-					} else {
-						name.setVoidReason(OpenConceptLabConstants.DEFAULT_RETIRE_REASON);
-					}
+					name.setVoidReason(resolveRetireReason(oclName.getRetireReason()));
 				}
 				concept.addName(name);
 			}

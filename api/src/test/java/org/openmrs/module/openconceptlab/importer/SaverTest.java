@@ -1812,12 +1812,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
 
 		// First create the mapping
-		OclMapping oclMapping = new OclMapping();
-		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
-		oclMapping.setMapType("SAME-AS");
-		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
-		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToConceptCode("1001");
+		OclMapping oclMapping = newOclMapping();
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 
 		oclMapping.setRetired(true);
@@ -1846,12 +1841,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		OclConcept oclConcept = newOclConcept();
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
 
-		OclMapping oclMapping = new OclMapping();
-		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
-		oclMapping.setMapType("SAME-AS");
-		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
-		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToConceptCode("1001");
+		OclMapping oclMapping = newOclMapping();
 		oclMapping.setRetired(true);
 
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
@@ -1869,12 +1859,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
 
 		// First create the mapping and get the reference term
-		OclMapping oclMapping = new OclMapping();
-		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
-		oclMapping.setMapType("SAME-AS");
-		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
-		oclMapping.setToSourceName("SNOMED CT");
-		oclMapping.setToConceptCode("1001");
+		OclMapping oclMapping = newOclMapping();
 		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
 
 		// Actually retire the reference term so the unretire path is exercised
@@ -1940,6 +1925,16 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		oclConcept.setNames(names);
 
 		return oclConcept;
+	}
+
+	public OclMapping newOclMapping() {
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToSourceName("SNOMED CT");
+		oclMapping.setToConceptCode("1001");
+		return oclMapping;
 	}
 
 	public OclConcept newOtherOclConcept() {
