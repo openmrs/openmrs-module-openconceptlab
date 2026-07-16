@@ -738,31 +738,31 @@ public class Saver {
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
 		if (oclConcept.getDescriptions() != null) {
 			for (Description oclDescription : oclConcept.getDescriptions()) {
-                if (StringUtils.isBlank(oclDescription.getDescription()) || oclDescription.isRetired()) {
-                    continue;
-                }
+				if (StringUtils.isBlank(oclDescription.getDescription()) || oclDescription.isRetired()) {
+					continue;
+				}
 
-                boolean descriptionFound = false;
-                for (ConceptDescription description : concept.getDescriptions()) {
-                    if (isMatch(oclDescription, description)) {
-                        description.setDescription(oclDescription.getDescription());
-                        description.setLocale(oclDescription.getLocale());
-                        descriptionFound = true;
-                        break;
-                    }
-                }
+				boolean descriptionFound = false;
+				for (ConceptDescription description : concept.getDescriptions()) {
+					if (isMatch(oclDescription, description)) {
+						description.setDescription(oclDescription.getDescription());
+						description.setLocale(oclDescription.getLocale());
+						descriptionFound = true;
+						break;
+					}
+				}
 
-                if (!descriptionFound) {
-                    ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
-                            oclDescription.getLocale());
-                    if (oclDescription.getExternalId() != null) {
-                        description.setUuid(oclDescription.getExternalId());
-                    } else {
-                        description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
-                    }
-                    concept.addDescription(description);
-                }
-            }
+				if (!descriptionFound) {
+					ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
+							oclDescription.getLocale());
+					if (oclDescription.getExternalId() != null) {
+						description.setUuid(oclDescription.getExternalId());
+					} else {
+						description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
+					}
+					concept.addDescription(description);
+				}
+			}
 		}
 	}
 
