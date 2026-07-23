@@ -15,6 +15,8 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -100,7 +102,7 @@ public class OclClient {
 		get.setQueryString(query.toArray(new NameValuePair[0]));
 
 		client.executeMethod(get);
-		get = followRedirectsWithoutToken(get);
+		get = followRedirects(get, token);
 
 		if (get.getStatusCode() != 200) {
 			throw new IOException(get.getStatusLine().toString());
@@ -408,8 +410,8 @@ public class OclClient {
 	 * Automatic redirect following is disabled deliberately: OCL's export endpoints answer with a
 	 * cross-host 303 redirect to a pre-signed S3 URL, and commons-httpclient reuses the same request
 	 * (headers included) when following a redirect. Forwarding the OCL token to S3 makes it reject
-	 * the request with a 400, so redirects are instead followed manually, and token-free, by
-	 * {@link #followRedirectsWithoutToken(GetMethod)}.
+	 * the request with a 400, so redirects are instead followed manually by
+	 * {@link #followRedirects(GetMethod, String)}, which drops the token on cross-origin hops.
 	 */
 	private GetMethod constructGetMethod(String url, String token) {
 		GetMethod getMethod = new GetMethod(url);
@@ -425,15 +427,22 @@ public class OclClient {
 		GetMethod getMethod = constructGetMethod(url, token);
 		client.executeMethod(getMethod);
 
-		return followRedirects ? followRedirectsWithoutToken(getMethod) : getMethod;
+		return followRedirects ? followRedirects(getMethod, token) : getMethod;
 	}
 
 	/**
-	 * Follows redirects from an already-executed request, re-issuing each hop without the OCL token
-	 * so the credentials are never forwarded to a (cross-host) redirect target such as the S3 bucket
-	 * backing OCL exports. Returns the response of the final, non-redirect hop.
+	 * Follows redirects from an already-executed request, returning the response of the final,
+	 * non-redirect hop.
+	 * <p>
+	 * Relative {@code Location} values (such as Django's trailing-slash 301 from {@code /export} to
+	 * {@code /export/}) are resolved against the URL of the request being redirected. The OCL token
+	 * is kept for hops that stay on the original origin (scheme, host and port) — same-origin
+	 * redirects still target OCL, which needs the credentials for private collections — but is
+	 * dropped for cross-origin hops such as the pre-signed S3 URL backing OCL exports, which rejects
+	 * requests carrying a foreign {@code Authorization} header.
 	 */
-	private GetMethod followRedirectsWithoutToken(GetMethod getMethod) throws IOException {
+	private GetMethod followRedirects(GetMethod getMethod, String token) throws IOException {
+		URI originalUri = getMethod.getURI();
 		int redirects = 0;
 		while (isRedirect(getMethod.getStatusCode()) && redirects++ < MAX_REDIRECTS) {
 			Header location = getMethod.getResponseHeader("Location");
@@ -441,14 +450,47 @@ public class OclClient {
 				break;
 			}
 
-			String redirectUrl = location.getValue();
+			URI currentUri = getMethod.getURI();
+			URI redirectUri;
+			try {
+				String locationValue = location.getValue();
+				// commons-httpclient 3.x's URI(base, relative) mis-resolves protocol-relative
+				// references ("//host/path") as if they were paths, so make those absolute here.
+				if (locationValue.startsWith("//")) {
+					locationValue = currentUri.getScheme() + ":" + locationValue;
+				}
+				redirectUri = new URI(locationValue, true);
+				if (redirectUri.isRelativeURI()) {
+					redirectUri = new URI(currentUri, redirectUri);
+				}
+			}
+			catch (URIException e) {
+				throw new IOException(
+						"Cannot follow redirect from " + currentUri + " to '" + location.getValue() + "'", e);
+			}
 			getMethod.releaseConnection();
 
-			getMethod = constructGetMethod(redirectUrl, null);
+			getMethod = constructGetMethod(redirectUri.toString(), hasSameOrigin(redirectUri, originalUri) ? token : null);
 			client.executeMethod(getMethod);
 		}
 
 		return getMethod;
+	}
+
+	static boolean hasSameOrigin(URI a, URI b) throws URIException {
+		return StringUtils.equalsIgnoreCase(a.getScheme(), b.getScheme())
+				&& StringUtils.equalsIgnoreCase(a.getHost(), b.getHost()) && effectivePort(a) == effectivePort(b);
+	}
+
+	/**
+	 * {@link URI#getPort()} is -1 when the URL leaves the port implicit, so an explicit
+	 * {@code :443} and a portless {@code https} URL would otherwise compare as different origins.
+	 */
+	private static int effectivePort(URI uri) {
+		if (uri.getPort() != -1) {
+			return uri.getPort();
+		}
+		return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
 	}
 
 	private static boolean isRedirect(int statusCode) {
