@@ -32,11 +32,14 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * Exercises {@link OclClient}'s HTTP handling against a real, local HTTP server so that the
+ * Exercises {@link OclClient}'s HTTP handling against real, local HTTP servers so that the
  * redirect-following behaviour can be verified end to end. OCL's export endpoints answer with a
- * cross-host redirect (production returns 302, older deployments 303) to a pre-signed S3 URL; these
- * tests confirm the subscription token reaches the OCL host but is never forwarded to the redirect
- * target (which would make S3 reject the request), regardless of which 3xx code is used.
+ * cross-host redirect (production returns 302, older deployments 303) to a pre-signed S3 URL —
+ * simulated here by a second server on another port — and may first answer with a relative
+ * trailing-slash 301 (Django's APPEND_SLASH). These tests confirm the subscription token reaches
+ * the OCL origin (including same-origin redirect hops, needed for private collections) but is never
+ * forwarded to a cross-origin redirect target (which would make S3 reject the request), and that
+ * relative {@code Location} values are resolved rather than executed as host-less requests.
  */
 public class OclClientRedirectTest {
 
@@ -55,6 +58,11 @@ public class OclClientRedirectTest {
 	private HttpServer server;
 
 	private String baseUrl;
+
+	/** A second server on a different port, standing in for the cross-origin S3 download host. */
+	private HttpServer s3Server;
+
+	private String s3BaseUrl;
 
 	private File tempDir;
 
@@ -75,12 +83,19 @@ public class OclClientRedirectTest {
 		server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		server.start();
 		baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
+
+		s3Server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+		s3Server.start();
+		s3BaseUrl = "http://127.0.0.1:" + s3Server.getAddress().getPort();
 	}
 
 	@After
 	public void tearDown() {
 		if (server != null) {
 			server.stop(0);
+		}
+		if (s3Server != null) {
+			s3Server.stop(0);
 		}
 		FileUtils.deleteQuietly(tempDir);
 	}
@@ -107,8 +122,8 @@ public class OclClientRedirectTest {
 
 	@Test
 	public void executeExportRequest_shouldNotSendAuthorizationHeaderWhenNoTokenIsConfigured() throws IOException {
-		server.createContext("/coll/v1.0/export", redirectTo(FOUND, baseUrl + "/download"));
-		server.createContext("/download", respondWith(200, "application/zip", "export-data"));
+		server.createContext("/coll/v1.0/export", redirectTo(FOUND, s3BaseUrl + "/download"));
+		s3Server.createContext("/download", respondWith(200, "application/zip", "export-data"));
 
 		GetMethod result = oclClient.executeExportRequest(baseUrl + "/coll", "v1.0", null);
 		try {
@@ -122,10 +137,10 @@ public class OclClientRedirectTest {
 	}
 
 	@Test
-	public void executeExportRequest_shouldStripTokenAcrossEveryRedirectHop() throws IOException {
-		server.createContext("/coll/v1.0/export", redirectTo(FOUND, baseUrl + "/hop1"));
-		server.createContext("/hop1", redirectTo(FOUND, baseUrl + "/hop2"));
-		server.createContext("/hop2", respondWith(200, "application/zip", "export-data"));
+	public void executeExportRequest_shouldStripTokenAcrossEveryCrossOriginRedirectHop() throws IOException {
+		server.createContext("/coll/v1.0/export", redirectTo(FOUND, s3BaseUrl + "/hop1"));
+		s3Server.createContext("/hop1", redirectTo(FOUND, s3BaseUrl + "/hop2"));
+		s3Server.createContext("/hop2", respondWith(200, "application/zip", "export-data"));
 
 		GetMethod result = oclClient.executeExportRequest(baseUrl + "/coll", "v1.0", TOKEN);
 		try {
@@ -133,6 +148,44 @@ public class OclClientRedirectTest {
 			assertThat(authHeaderByPath.get("/coll/v1.0/export"), is(AUTHORIZATION));
 			assertThat(authHeaderByPath.get("/hop1"), is(""));
 			assertThat(authHeaderByPath.get("/hop2"), is(""));
+		}
+		finally {
+			result.releaseConnection();
+		}
+	}
+
+	/**
+	 * Models the production failure: OCL (Django) answers the slash-less export URL with a relative
+	 * trailing-slash 301, which used to be executed as a host-less request ("host parameter is
+	 * null"). The relative location must be resolved against the request URL, and since that hop
+	 * stays on the OCL origin, the token must be kept — private collections reject the request
+	 * otherwise. The subsequent cross-origin hop to S3 must still go out token-free.
+	 */
+	@Test
+	public void executeExportRequest_shouldResolveRelativeRedirectAndKeepTokenOnSameOriginHop() throws IOException {
+		// The JDK server matches contexts by prefix, so this handler sees both the slash-less
+		// request and the trailing-slash one, mirroring Django's APPEND_SLASH behaviour.
+		server.createContext("/coll/v1.0/export", new HttpHandler() {
+
+			@Override
+			public void handle(HttpExchange exchange) throws IOException {
+				if (exchange.getRequestURI().getPath().endsWith("/")) {
+					redirectTo(FOUND, s3BaseUrl + "/download").handle(exchange);
+				} else {
+					redirectTo(MOVED_PERMANENTLY, "/coll/v1.0/export/").handle(exchange);
+				}
+			}
+		});
+		s3Server.createContext("/download", respondWith(200, "application/zip", "export-data"));
+
+		GetMethod result = oclClient.executeExportRequest(baseUrl + "/coll", "v1.0", TOKEN);
+		try {
+			assertThat(result.getStatusCode(), is(200));
+			assertThat(authHeaderByPath.get("/coll/v1.0/export"), is(AUTHORIZATION));
+			assertThat("token must be kept on the same-origin redirect hop",
+					authHeaderByPath.get("/coll/v1.0/export/"), is(AUTHORIZATION));
+			assertThat("token must not be forwarded to the cross-origin redirect target",
+					authHeaderByPath.get("/download"), is(""));
 		}
 		finally {
 			result.releaseConnection();
@@ -167,8 +220,8 @@ public class OclClientRedirectTest {
 	}
 
 	private void assertExportFollowsRedirectWithoutForwardingToken(int redirectStatus) throws IOException {
-		server.createContext("/coll/v1.0/export", redirectTo(redirectStatus, baseUrl + "/download"));
-		server.createContext("/download", respondWith(200, "application/zip", "export-data"));
+		server.createContext("/coll/v1.0/export", redirectTo(redirectStatus, s3BaseUrl + "/download"));
+		s3Server.createContext("/download", respondWith(200, "application/zip", "export-data"));
 
 		GetMethod result = oclClient.executeExportRequest(baseUrl + "/coll", "v1.0", TOKEN);
 		try {
@@ -183,7 +236,7 @@ public class OclClientRedirectTest {
 
 	private void assertVersionProbeTreatsRedirectAsExistingVersion(int redirectStatus) throws IOException {
 		server.createContext("/coll/versions", respondWith(200, "application/json", "[{\"id\":\"HEAD\"},{\"id\":\"v1.0\"}]"));
-		server.createContext("/coll/v1.0/export", redirectTo(redirectStatus, baseUrl + "/download"));
+		server.createContext("/coll/v1.0/export", redirectTo(redirectStatus, s3BaseUrl + "/download"));
 
 		String version = oclClient.fetchLatestOclReleaseVersion(baseUrl + "/coll", TOKEN);
 
