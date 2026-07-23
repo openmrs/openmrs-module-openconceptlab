@@ -45,6 +45,9 @@ public class OclConcept {
 
 	private boolean retired;
 
+	@JsonProperty("retire_reason")
+	private String retireReason;
+
 	private String url;
 
 	@JsonProperty("version_url")
@@ -135,6 +138,14 @@ public class OclConcept {
 		this.retired = retired;
 	}
 
+	public String getRetireReason() {
+		return retireReason;
+	}
+
+	public void setRetireReason(String retireReason) {
+		this.retireReason = retireReason;
+	}
+
 	public String getUrl() {
 		return url;
 	}
@@ -192,14 +203,7 @@ public class OclConcept {
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Name {
-
-		private String uuid;
-
-		@JsonProperty("external_id")
-		private String externalId;
-
-		private Locale locale;
+	public static class Name extends OclLocalizedObject {
 
 		@JsonProperty("locale_preferred")
 		private boolean localePreferred;
@@ -210,30 +214,6 @@ public class OclConcept {
 		private String nameType;
 
 		private String type;
-
-		public String getUuid() {
-			return uuid;
-		}
-
-		public void setUuid(String uuid) {
-			this.uuid = uuid;
-		}
-
-		public String getExternalId() {
-			return externalId;
-		}
-
-		public void setExternalId(String externalId) {
-			this.externalId = externalId;
-		}
-
-		public Locale getLocale() {
-			return locale;
-		}
-
-		public void setLocale(Locale locale) {
-			this.locale = locale;
-		}
 
 		public boolean isLocalePreferred() {
 			return localePreferred;
@@ -274,7 +254,7 @@ public class OclConcept {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(locale).append(localePreferred).append(name).append(nameType).build();
+			return new HashCodeBuilder().append(getLocale()).append(localePreferred).append(name).append(nameType).build();
 		}
 
 		@Override
@@ -289,53 +269,22 @@ public class OclConcept {
 				return false;
 			}
 			Name rhs = (Name) obj;
-			return new EqualsBuilder().append(locale, rhs.locale).append(localePreferred, rhs.localePreferred)
+			return new EqualsBuilder().append(getLocale(), rhs.getLocale()).append(localePreferred, rhs.localePreferred)
 			        .append(name, rhs.name).append(nameType, rhs.nameType).build();
 		}
 
 		public void copyFrom(ConceptName name) {
 			this.name = name.getName();
-			locale = name.getLocale();
+			setLocale(name.getLocale());
 			localePreferred = name.getLocalePreferred() != null ? name.getLocalePreferred() : false;
 			nameType = name.getConceptNameType() != null ? name.getConceptNameType().toString() : null;
 		}
 	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class Description {
-
-		private String uuid;
-
-		@JsonProperty("external_id")
-		private String externalId;
-
-		private Locale locale;
+	public static class Description extends OclLocalizedObject {
 
 		private String description;
-
-		public String getUuid() {
-			return uuid;
-		}
-
-		public void setUuid(String uuid) {
-			this.uuid = uuid;
-		}
-
-		public String getExternalId() {
-			return externalId;
-		}
-
-		public void setExternalId(String externalId) {
-			this.externalId = externalId;
-		}
-
-		public Locale getLocale() {
-			return locale;
-		}
-
-		public void setLocale(Locale locale) {
-			this.locale = locale;
-		}
 
 		public String getDescription() {
 			return description;
@@ -347,12 +296,12 @@ public class OclConcept {
 
 		public void copyFrom(ConceptDescription description) {
 			this.description = description.getDescription();
-			locale = description.getLocale();
+			setLocale(description.getLocale());
 		}
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(locale).append(description).build();
+			return new HashCodeBuilder().append(getLocale()).append(description).build();
 		}
 
 		@Override
@@ -367,12 +316,12 @@ public class OclConcept {
 				return false;
 			}
 			Description rhs = (Description) obj;
-			return new EqualsBuilder().append(locale, rhs.locale).append(description, rhs.description).build();
+			return new EqualsBuilder().append(getLocale(), rhs.getLocale()).append(description, rhs.description).build();
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("description", description).append("locale", locale).build();
+			return new ToStringBuilder(this).append("description", description).append("locale", getLocale()).build();
 		}
 	}
 

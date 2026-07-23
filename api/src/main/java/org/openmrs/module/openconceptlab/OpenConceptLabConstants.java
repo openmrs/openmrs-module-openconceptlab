@@ -38,4 +38,9 @@ public class OpenConceptLabConstants {
 	public static final String GP_OCL_LOAD_AT_STARTUP_PATH = MODULE_ID + ".oclLoadAtStartupPath";
 
 	public static final UUID OPEN_CONCEPT_LAB_NAMESPACE_UUID = UUID.fromString("672c6cb2-4f47-4cb0-9fca-b5f6116cd33a");
+
+	/**
+	 * Default retire reason
+	 */
+	public static final String DEFAULT_RETIRE_REASON = "Retired in OCL";
 }

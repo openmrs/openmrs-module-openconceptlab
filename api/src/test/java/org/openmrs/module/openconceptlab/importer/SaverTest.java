@@ -43,6 +43,7 @@ import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
 import org.openmrs.module.openconceptlab.OclConceptService;
+import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.module.openconceptlab.Subscription;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
@@ -1489,6 +1490,393 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 
 	}
 
+	@Test
+	public void saveConcept_shouldRetireConceptWithReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		oclConcept.setRetireReason("Reason for retirement");
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertTrue(concept.isRetired());
+		assertThat(concept.getRetireReason(), is("Reason for retirement"));
+	}
+
+	@Test
+	public void saveConcept_shouldUnretireConceptAndClearReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		oclConcept.setRetireReason("Reason for retirement");
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		// Now unretire
+		oclConcept.setRetired(false);
+		oclConcept.setRetireReason(null);
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/"); // Increment version
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertFalse(concept.isRetired());
+		assertThat(concept.getRetireReason(), is(nullValue()));
+	}
+
+	@Test
+	public void saveConcept_shouldHandleNoRetireReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		oclConcept.setRetireReason(null);
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertTrue(concept.isRetired());
+		assertThat(concept.getRetireReason(), is(OpenConceptLabConstants.DEFAULT_RETIRE_REASON));
+	}
+
+	@Test
+	public void saveConcept_shouldTruncateLongRetireReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		oclConcept.setRetired(true);
+		String longReason = new String(new char[300]).replace('\0', 'x');
+		oclConcept.setRetireReason(longReason);
+
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		assertTrue(concept.isRetired());
+		assertThat(concept.getRetireReason().length(), is(255));
+		assertTrue(concept.getRetireReason().endsWith("..."));
+	}
+
+	@Test
+	public void saveConcept_shouldRetireNameWithReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/");
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(true);
+				name.setRetireReason("Name is no longer valid");
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertTrue(conceptName.getVoided());
+				assertThat(conceptName.getVoidReason(), is("Name is no longer valid"));
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldUnretireNameAndClearReason() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(true);
+				name.setRetireReason("Name is no longer valid");
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/");
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(false);
+				name.setRetireReason(null);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertFalse(conceptName.getVoided());
+				assertThat(conceptName.getVoidReason(), is(nullValue()));
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldHandleNoRetireReasonForName() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		// Set a name as retired without a reason
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(true);
+				name.setRetireReason(null);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertTrue(conceptName.getVoided());
+				assertThat(conceptName.getVoidReason(), is(OpenConceptLabConstants.DEFAULT_RETIRE_REASON));
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldTruncateLongRetireReasonForName() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		String longReason = new String(new char[300]).replace('\0', 'x');
+		// Set a name as retired with a long reason
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(true);
+				name.setRetireReason(longReason);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertTrue(conceptName.getVoided());
+				assertThat(conceptName.getVoidReason().length(), is(255));
+				assertTrue(conceptName.getVoidReason().endsWith("..."));
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldVoidNameWhenReimportedAsRetired() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertFalse(conceptName.getVoided());
+				break;
+			}
+		}
+
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/");
+		for (OclConcept.Name name : oclConcept.getNames()) {
+			if ("Second name".equals(name.getName()) && name.getNameType() == null) {
+				name.setRetired(true);
+				name.setRetireReason("No longer needed in OCL");
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptName conceptName : concept.getNames(true)) {
+			if ("Second name".equals(conceptName.getName()) && conceptName.getConceptNameType() == null) {
+				assertTrue(conceptName.getVoided());
+				assertThat(conceptName.getVoidReason(), is("No longer needed in OCL"));
+				break;
+			}
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldRemoveRetiredDescription() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		boolean foundDesc = false;
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			if ("Test description".equals(desc.getDescription())) {
+				foundDesc = true;
+				break;
+			}
+		}
+		assertTrue(foundDesc);
+
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/");
+		for (OclConcept.Description oclDesc : oclConcept.getDescriptions()) {
+			if ("Test description".equals(oclDesc.getDescription())) {
+				oclDesc.setRetired(true);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			assertFalse("Test description".equals(desc.getDescription()));
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldNotAddRetiredDescription() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+
+		for (OclConcept.Description oclDesc : oclConcept.getDescriptions()) {
+			if ("Test description".equals(oclDesc.getDescription())) {
+				oclDesc.setRetired(true);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			assertFalse("Test description".equals(desc.getDescription()));
+		}
+	}
+
+	@Test
+	public void saveConcept_shouldReaddDescriptionWhenRetiredThenReactivated() throws Exception {
+		Import update = importService.getLastImport();
+		OclConcept oclConcept = newOclConcept();
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		boolean foundDesc = false;
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			if ("Test description".equals(desc.getDescription())) {
+				foundDesc = true;
+				break;
+			}
+		}
+		assertTrue(foundDesc);
+
+		// Retire the description
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "2/");
+		for (OclConcept.Description oclDesc : oclConcept.getDescriptions()) {
+			if ("Test description".equals(oclDesc.getDescription())) {
+				oclDesc.setRetired(true);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		foundDesc = false;
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			if ("Test description".equals(desc.getDescription())) {
+				foundDesc = true;
+				break;
+			}
+		}
+		assertFalse(foundDesc);
+
+		// Reactivate the description
+		oclConcept.setVersionUrl(oclConcept.getVersionUrl() + "3/");
+		for (OclConcept.Description oclDesc : oclConcept.getDescriptions()) {
+			if ("Test description".equals(oclDesc.getDescription())) {
+				oclDesc.setRetired(false);
+				break;
+			}
+		}
+		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept);
+
+		concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		foundDesc = false;
+		for (ConceptDescription desc : concept.getDescriptions()) {
+			if ("Test description".equals(desc.getDescription())) {
+				foundDesc = true;
+				break;
+			}
+		}
+		assertTrue(foundDesc);
+	}
+
+	@Test
+	public void saveMapping_shouldNotRetireReferenceTermWhenMappingIsRetired() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
+
+		// First create the mapping
+		OclMapping oclMapping = newOclMapping();
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		oclMapping.setRetired(true);
+		oclMapping.setUpdatedOn(new Date());
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		Concept concept = conceptService.getConceptByUuid(oclConcept.getExternalId());
+		boolean found = false;
+		for (ConceptMap map : concept.getConceptMappings()) {
+			if ("1001".equals(map.getConceptReferenceTerm().getCode())) {
+				found = true;
+				break;
+			}
+		}
+		assertFalse(found);
+
+		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
+		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
+		assertFalse(BooleanUtils.isTrue(term.getRetired()));
+	}
+
+	@Test
+	public void saveMapping_shouldNotAddRetiredMapping() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
+
+		OclMapping oclMapping = newOclMapping();
+		oclMapping.setRetired(true);
+
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
+		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
+		assertFalse(BooleanUtils.isTrue(term.getRetired()));
+	}
+
+	@Test
+	public void saveMapping_shouldUnretireReferenceTermAndClearReason() throws Exception {
+		Import update = importService.getLastImport();
+
+		OclConcept oclConcept = newOclConcept();
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), update, oclConcept));
+
+		// First create the mapping and get the reference term
+		OclMapping oclMapping = newOclMapping();
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		// Actually retire the reference term so the unretire path is exercised
+		ConceptSource source = conceptService.getConceptSourceByName("SNOMED CT");
+		ConceptReferenceTerm term = conceptService.getConceptReferenceTermByCode("1001", source);
+		conceptService.retireConceptReferenceTerm(term, "Retired reason");
+
+		// Now unretire by importing a non-retired mapping with an updated date
+		oclMapping.setRetired(false);
+		oclMapping.setUpdatedOn(new Date());
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), update, oclMapping);
+
+		term = conceptService.getConceptReferenceTermByCode("1001", source);
+		assertFalse(term.getRetired());
+		assertNull(term.getRetireReason());
+	}
+
 	public OclConcept newOclConcept() {
 		OclConcept oclConcept = new OclConcept();
 
@@ -1537,6 +1925,16 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		oclConcept.setNames(names);
 
 		return oclConcept;
+	}
+
+	public OclMapping newOclMapping() {
+		OclMapping oclMapping = new OclMapping();
+		oclMapping.setExternalId("dde0d8cb-b44b-4901-90e6-e5066488814f");
+		oclMapping.setMapType("SAME-AS");
+		oclMapping.setFromConceptUrl("/orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
+		oclMapping.setToSourceName("SNOMED CT");
+		oclMapping.setToConceptCode("1001");
+		return oclMapping;
 	}
 
 	public OclConcept newOtherOclConcept() {

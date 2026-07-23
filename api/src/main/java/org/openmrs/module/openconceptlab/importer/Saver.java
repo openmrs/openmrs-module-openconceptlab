@@ -33,6 +33,7 @@ import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
+import org.openmrs.module.openconceptlab.OpenConceptLabConstants;
 import org.openmrs.module.openconceptlab.Utils;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclConcept;
@@ -70,6 +71,14 @@ public class Saver {
     public void setImportService(ImportService importService) {
 	    this.importService = importService;
     }
+
+	private String resolveRetireReason(String retireReason) {
+		if (StringUtils.isNotBlank(retireReason)) {
+			return StringUtils.abbreviate(retireReason, 255);
+		}
+		return OpenConceptLabConstants.DEFAULT_RETIRE_REASON;
+	}
+
 
 	public Item saveConcept(final CacheService cacheService, final Import anImport, final OclConcept oclConcept) throws ImportException {
 		return saveConcept(cacheService, anImport, oclConcept, null);
@@ -185,7 +194,7 @@ public class Saver {
 			oclConcept.setExternalId(version5Uuid(oclConcept.getUrl()).toString());
 			concept = cacheService.getConceptByUuid(oclConcept.getExternalId());
 		}
-		
+
 		if (concept == null) {
 			if (datatype.getUuid().equals(ConceptDatatype.NUMERIC_UUID)) {
 				concept = new ConceptNumeric();
@@ -231,7 +240,7 @@ public class Saver {
 
 		concept.setRetired(oclConcept.isRetired());
 		if (oclConcept.isRetired()) {
-			concept.setRetireReason("Retired in OCL");
+			concept.setRetireReason(resolveRetireReason(oclConcept.getRetireReason()));
 		} else {
 			concept.setRetireReason(null);
 			concept.setRetiredBy(null);
@@ -376,7 +385,7 @@ public class Saver {
 						if (toItem != null) {
 							toConcept = cacheService.getConceptByUuid(toItem.getUuid());
 						}
-						
+
 						if (toConcept == null) {
 							String source = oclMapping.getToSourceName();
 							String code = oclMapping.getToConceptCode();
@@ -615,7 +624,7 @@ public class Saver {
 		if (sortWeight != null) {
 			return sortWeight;
 		}
-		
+
 		return defaultIfUndefined;
 	}
 
@@ -639,10 +648,13 @@ public class Saver {
 					name.setConceptNameType(oclNameType);
 					name.setLocalePreferred(oclName.isLocalePreferred());
 
-					//Unvoiding if necessary
-					name.setVoided(false);
-					name.setVoidReason(null);
-					name.setVoidedBy(null);
+					name.setVoided(oclName.isRetired());
+					if (oclName.isRetired()) {
+						name.setVoidReason(resolveRetireReason(oclName.getRetireReason()));
+					} else {
+						name.setVoidReason(null);
+						name.setVoidedBy(null);
+					}
 
 					nameFound = true;
 					break;
@@ -658,6 +670,10 @@ public class Saver {
 				}
 				name.setConceptNameType(oclNameType);
 				name.setLocalePreferred(oclName.isLocalePreferred());
+				if (oclName.isRetired()) {
+					name.setVoided(true);
+					name.setVoidReason(resolveRetireReason(oclName.getRetireReason()));
+				}
 				concept.addName(name);
 			}
 		}
@@ -718,32 +734,31 @@ public class Saver {
 	void addDescriptionsFromOcl(Concept concept, OclConcept oclConcept) {
 		if (oclConcept.getDescriptions() != null) {
 			for (Description oclDescription : oclConcept.getDescriptions()) {
-                if (StringUtils.isBlank(oclDescription.getDescription())) {
-                    continue;
-                }
+				if (StringUtils.isBlank(oclDescription.getDescription()) || oclDescription.isRetired()) {
+					continue;
+				}
 
-                boolean descriptionFound = false;
-                for (ConceptDescription description : concept.getDescriptions()) {
-                    if (isMatch(oclDescription, description)) {
-                        //Let's make sure all is the same
-                        description.setDescription(oclDescription.getDescription());
-                        description.setLocale(oclDescription.getLocale());
-                        descriptionFound = true;
-                        break;
-                    }
-                }
+				boolean descriptionFound = false;
+				for (ConceptDescription description : concept.getDescriptions()) {
+					if (isMatch(oclDescription, description)) {
+						description.setDescription(oclDescription.getDescription());
+						description.setLocale(oclDescription.getLocale());
+						descriptionFound = true;
+						break;
+					}
+				}
 
-                if (!descriptionFound) {
-                    ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
-                            oclDescription.getLocale());
-	                if (oclDescription.getExternalId() != null) {
-		                description.setUuid(oclDescription.getExternalId());
-	                } else {
-		                description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
-	                }
-                    concept.addDescription(description);
-                }
-            }
+				if (!descriptionFound) {
+					ConceptDescription description = new ConceptDescription(oclDescription.getDescription(),
+							oclDescription.getLocale());
+					if (oclDescription.getExternalId() != null) {
+						description.setUuid(oclDescription.getExternalId());
+					} else {
+						description.setUuid(version5Uuid(oclConcept.getUrl() + "/descriptions/" + oclDescription.getUuid()).toString());
+					}
+					concept.addDescription(description);
+				}
+			}
 		}
 	}
 
@@ -753,8 +768,7 @@ public class Saver {
 			boolean descriptionFound = false;
 			for (Description oclDescription : oclConcept.getDescriptions()) {
 				if (isMatch(oclDescription, description)) {
-					if (!StringUtils.isBlank(oclDescription.getDescription())) {
-						//Blank descriptions are invalid and will be removed
+					if (!StringUtils.isBlank(oclDescription.getDescription()) && !oclDescription.isRetired()) {
 						descriptionFound = true;
 					}
 					break;
