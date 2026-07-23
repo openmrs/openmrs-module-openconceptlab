@@ -450,9 +450,23 @@ public class OclClient {
 				break;
 			}
 
-			URI redirectUri = new URI(location.getValue(), true);
-			if (redirectUri.isRelativeURI()) {
-				redirectUri = new URI(getMethod.getURI(), redirectUri);
+			URI currentUri = getMethod.getURI();
+			URI redirectUri;
+			try {
+				String locationValue = location.getValue();
+				// commons-httpclient 3.x's URI(base, relative) mis-resolves protocol-relative
+				// references ("//host/path") as if they were paths, so make those absolute here.
+				if (locationValue.startsWith("//")) {
+					locationValue = currentUri.getScheme() + ":" + locationValue;
+				}
+				redirectUri = new URI(locationValue, true);
+				if (redirectUri.isRelativeURI()) {
+					redirectUri = new URI(currentUri, redirectUri);
+				}
+			}
+			catch (URIException e) {
+				throw new IOException(
+						"Cannot follow redirect from " + currentUri + " to '" + location.getValue() + "'", e);
 			}
 			getMethod.releaseConnection();
 
@@ -463,9 +477,20 @@ public class OclClient {
 		return getMethod;
 	}
 
-	private static boolean hasSameOrigin(URI a, URI b) throws URIException {
+	static boolean hasSameOrigin(URI a, URI b) throws URIException {
 		return StringUtils.equalsIgnoreCase(a.getScheme(), b.getScheme())
-				&& StringUtils.equalsIgnoreCase(a.getHost(), b.getHost()) && a.getPort() == b.getPort();
+				&& StringUtils.equalsIgnoreCase(a.getHost(), b.getHost()) && effectivePort(a) == effectivePort(b);
+	}
+
+	/**
+	 * {@link URI#getPort()} is -1 when the URL leaves the port implicit, so an explicit
+	 * {@code :443} and a portless {@code https} URL would otherwise compare as different origins.
+	 */
+	private static int effectivePort(URI uri) {
+		if (uri.getPort() != -1) {
+			return uri.getPort();
+		}
+		return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
 	}
 
 	private static boolean isRedirect(int statusCode) {

@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.DateUtil;
@@ -161,6 +162,24 @@ public class OclClientTest extends MockTest {
 		String collectionVersion = "v1.0";
 		String getMethodUrlWithoutVersion = oclClient.getExportUrl(URL_WITHOUT_VERSION, collectionVersion);
 		assertThat(getMethodUrlWithoutVersion, is(URL_WITHOUT_VERSION + "/v1.0" + "/export"));
+	}
+
+	@Test
+	public void hasSameOrigin_shouldTreatImplicitAndExplicitDefaultPortAsSameOrigin() throws URIException {
+		assertThat(OclClient.hasSameOrigin(uri("https://host/a"), uri("https://host:443/b")), is(true));
+		assertThat(OclClient.hasSameOrigin(uri("http://host/a"), uri("http://host:80/b")), is(true));
+		assertThat(OclClient.hasSameOrigin(uri("HTTPS://HOST/a"), uri("https://host/b")), is(true));
+	}
+
+	@Test
+	public void hasSameOrigin_shouldTreatDifferentSchemeHostOrPortAsDifferentOrigin() throws URIException {
+		assertThat(OclClient.hasSameOrigin(uri("https://host/a"), uri("http://host/a")), is(false));
+		assertThat(OclClient.hasSameOrigin(uri("https://host/a"), uri("https://other/a")), is(false));
+		assertThat(OclClient.hasSameOrigin(uri("https://host:8443/a"), uri("https://host/a")), is(false));
+	}
+
+	private static URI uri(String url) throws URIException {
+		return new URI(url, true);
 	}
 
 	@Test
