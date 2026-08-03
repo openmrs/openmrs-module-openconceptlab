@@ -57,6 +57,10 @@ public class Importer implements Runnable {
 
 	// Number of items to process before flushing/clearing the Hibernate session.
 	public final static int BATCH_SIZE = 512;
+	private static final String CONCEPTS_FIELD = "concepts";
+	private static final String MAPPINGS_FIELD = "mappings";
+	private static final String COLLECTION_FIELD = "collection";
+	private static final String CUSTOM_VALIDATION_SCHEMA_FIELD = "custom_validation_schema";
 
 	private ImportService importService;
 
@@ -316,7 +320,9 @@ public class Importer implements Runnable {
 			throw new IOException("JSON must start from an object");
 		}
 
-		token = advanceToListOf("concepts", "mappings", parser);
+		verifyCollectionUsesOpenMRSValidationSchema(parser);
+
+		token = advanceToListOf(CONCEPTS_FIELD, MAPPINGS_FIELD, parser);
 
 		// Look up subscription once for the entire import
 		Subscription subscription = importService.getSubscription();
@@ -397,7 +403,7 @@ public class Importer implements Runnable {
 			cacheService.clearCache();
 		}
 
-		token = advanceToListOf("mappings", null, parser);
+		token = advanceToListOf(MAPPINGS_FIELD, null, parser);
 
 		if (token != JsonToken.START_ARRAY) {
 			return;
@@ -457,6 +463,113 @@ public class Importer implements Runnable {
 			url = "/" + url;
 		}
 		return baseUrl + url;
+	}
+
+	/**
+	 * Verifies that a collection export declares the OpenMRS validation schema before the import
+	 * processes its concepts and mappings. Source exports (no "collection" object in the metadata)
+	 * are not checked.
+	 * <p>
+	 * The metadata block always precedes the "concepts"/"mappings" arrays, so only the leading
+	 * fields of the top-level object are scanned. The parser is left at the "concepts" or
+	 * "mappings" field name (or at the end of the object when neither exists) so that
+	 * {@link #advanceToListOf(String, String, JsonParser)} can continue from where this method
+	 * stopped.
+	 *
+	 * @throws ImportException if a collection export is not validated with the OpenMRS schema
+	 */
+	private void verifyCollectionUsesOpenMRSValidationSchema(JsonParser parser) throws IOException {
+		JsonToken token = parser.getCurrentToken();
+		if (token == null) {
+			token = parser.nextToken();
+		}
+		if (token == JsonToken.START_OBJECT) {
+			token = parser.nextToken();
+		}
+
+		CollectionMetadata metadata = new CollectionMetadata();
+		boolean reachedContentList = false;
+		while (token != null && token != JsonToken.END_OBJECT && !reachedContentList) {
+			if (token == JsonToken.FIELD_NAME) {
+				String name = parser.getCurrentName();
+				if (CONCEPTS_FIELD.equals(name) || MAPPINGS_FIELD.equals(name)) {
+					reachedContentList = true;
+				} else {
+					token = readMetadataField(parser, name, metadata);
+				}
+			} else {
+				parser.skipChildren();
+				token = parser.nextToken();
+			}
+		}
+
+		if (!metadata.foundCollection) {
+			return;
+		}
+
+		String validationSchema = metadata.collectionValidationSchema != null ? metadata.collectionValidationSchema : metadata.topLevelValidationSchema;
+		if (!OpenConceptLabConstants.OPEN_MRS_VALIDATION_SCHEMA.equalsIgnoreCase(validationSchema)) {
+			throw new ImportException("The collection in the exported data is not validated with the OpenMRS validation"
+			        + " schema (custom_validation_schema=" + validationSchema + "). Only collections that use the OpenMRS"
+			        + " validation schema can be imported.");
+		}
+	}
+
+	/**
+	 * Reads a single metadata field of the top-level export object, recording the collection
+	 * flag and any validation schema declaration, and returns the token after the field's value.
+	 */
+	private JsonToken readMetadataField(JsonParser parser, String name, CollectionMetadata metadata) throws IOException {
+		JsonToken token = parser.nextToken();
+		if (COLLECTION_FIELD.equals(name)) {
+			metadata.foundCollection = true;
+			if (token == JsonToken.START_OBJECT) {
+				metadata.collectionValidationSchema = readStringField(parser, CUSTOM_VALIDATION_SCHEMA_FIELD);
+			} else {
+				parser.skipChildren();
+			}
+		} else if (CUSTOM_VALIDATION_SCHEMA_FIELD.equals(name)) {
+			if (token == JsonToken.VALUE_STRING) {
+				metadata.topLevelValidationSchema = parser.getText();
+			} else {
+				parser.skipChildren();
+			}
+		} else {
+			parser.skipChildren();
+		}
+		return parser.nextToken();
+	}
+
+	/**
+	 * Holds the facts gathered from the leading metadata fields of an export.
+	 */
+	private static class CollectionMetadata {
+		boolean foundCollection;
+		String topLevelValidationSchema;
+		String collectionValidationSchema;
+	}
+
+	/**
+	 * Scans a JSON object for a string field, returning its value or null when the field is absent
+	 * or not a string. The parser must be at the START_OBJECT of the object to scan and is left at
+	 * its END_OBJECT.
+	 */
+	private String readStringField(JsonParser parser, String fieldName) throws IOException {
+		String value = null;
+		JsonToken token = parser.nextToken();
+		while (token != null && token != JsonToken.END_OBJECT) {
+			if (token == JsonToken.FIELD_NAME && fieldName.equals(parser.getCurrentName())) {
+				token = parser.nextToken();
+				if (token == JsonToken.VALUE_STRING) {
+					value = parser.getText();
+				}
+			}
+			if (token != null && token != JsonToken.FIELD_NAME) {
+				parser.skipChildren();
+			}
+			token = parser.nextToken();
+		}
+		return value;
 	}
 
 	private JsonToken advanceToListOf(String field, String stopAtField, JsonParser parser) throws IOException {

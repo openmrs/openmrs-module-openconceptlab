@@ -9,12 +9,14 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
@@ -74,6 +76,8 @@ public class ImporterTest extends BaseContextMockTest {
 
     @Mock
     Subscription subscription;
+
+	Import lastSuccessfulImport;
 
 	@InjectMocks
 	Importer importer;
@@ -490,6 +494,191 @@ public class ImporterTest extends BaseContextMockTest {
 		// Verify mappings were saved even though mappings appeared before concepts
 		verify(importService).saveItems(
 				argThat(hasItems(hasUrl("/orgs/Test/sources/Test/mappings/m1/"))));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies allow a collection export validated with the OpenMRS schema
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldAllowOpenMRSValidatedCollection() throws Exception {
+		String json = "{\"type\":\"Collection Version\",\"collection\":{\"id\":\"refapp\",\"custom_validation_schema\":\"OpenMRS\"},\"concepts\":[],\"mappings\":[]}";
+		JsonParser parser = createParser(json);
+
+		invokeVerifyCollectionSchema(parser);
+
+		assertEquals(JsonToken.FIELD_NAME, parser.getCurrentToken());
+		assertEquals("concepts", parser.getCurrentName());
+		assertEquals(JsonToken.START_ARRAY, invokeAdvanceToListOf("concepts", "mappings", parser));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies treat the OpenMRS schema as case-insensitive
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldAllowOpenMRSSchemaCaseInsensitive() throws Exception {
+		String json = "{\"collection\":{\"id\":\"refapp\",\"custom_validation_schema\":\"openmrs\"},\"concepts\":[],\"mappings\":[]}";
+
+		invokeVerifyCollectionSchema(createParser(json));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies fall back to the top level custom_validation_schema for the current OCL format
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldFallBackToTopLevelSchemaForCurrentFormat() throws Exception {
+		String json = "{\"type\":\"Collection Version\",\"custom_validation_schema\":\"OpenMRS\",\"collection\":{\"id\":\"refapp\"},\"concepts\":[],\"mappings\":[]}";
+
+		invokeVerifyCollectionSchema(createParser(json));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies prefer the nested collection schema over the top level schema
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldPreferNestedSchemaOverTopLevel() throws Exception {
+		String json = "{\"custom_validation_schema\":\"OCL\",\"collection\":{\"id\":\"refapp\",\"custom_validation_schema\":\"OpenMRS\"},\"concepts\":[],\"mappings\":[]}";
+
+		invokeVerifyCollectionSchema(createParser(json));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies allow a source export without a collection object
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldAllowSourceExportWithoutCollection() throws Exception {
+		String json = "{\"type\":\"Source\",\"short_code\":\"CIEL\",\"concepts\":[],\"mappings\":[]}";
+
+		invokeVerifyCollectionSchema(createParser(json));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies reject a collection export that declares a non OpenMRS schema
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldRejectNonOpenMRSSchema() throws Exception {
+		String json = "{\"collection\":{\"id\":\"refapp\",\"custom_validation_schema\":\"OCL\"},\"concepts\":[],\"mappings\":[]}";
+
+		expectImportException(() -> invokeVerifyCollectionSchema(createParser(json)));
+	}
+
+	/**
+	 * @see Importer#verifyCollectionUsesOpenMRSValidationSchema(JsonParser)
+	 * @verifies reject a collection export without a custom_validation_schema field
+	 */
+	@Test
+	public void verifyCollectionSchema_shouldRejectCollectionWithoutSchemaField() throws Exception {
+		String json = "{\"collection\":{\"id\":\"refapp\"},\"concepts\":[],\"mappings\":[]}";
+
+		expectImportException(() -> invokeVerifyCollectionSchema(createParser(json)));
+	}
+
+	/**
+	 * @see Importer#run()
+	 * @verifies fail the import when the collection schema is not OpenMRS
+	 */
+	@Test
+	public void runUpdate_shouldFailWhenCollectionValidationSchemaIsNotOpenMRS() throws Exception {
+		setupSnapshotSubscription();
+
+		String badCollectionJson = "{\"type\":\"Collection Version\",\"collection\":{\"id\":\"test\",\"custom_validation_schema\":\"OCL\"},\"concepts\":[],\"mappings\":[]}";
+		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream(badCollectionJson),
+		        badCollectionJson.length(), new Date());
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(),
+		        lastSuccessfulImport.getOclDateStarted())).thenReturn(oclResponse);
+
+		importer.run();
+
+		verify(importService).failImport(any(Import.class),
+		    argThat(containsString("custom_validation_schema=OCL")));
+	}
+
+	/**
+	 * @see Importer#run()
+	 * @verifies fail the import when the collection schema field is missing
+	 */
+	@Test
+	public void runUpdate_shouldFailWhenCollectionValidationSchemaIsMissing() throws Exception {
+		setupSnapshotSubscription();
+
+		String missingSchemaJson = "{\"type\":\"Collection Version\",\"collection\":{\"id\":\"test\"},\"concepts\":[],\"mappings\":[]}";
+		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream(missingSchemaJson),
+		        missingSchemaJson.length(), new Date());
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(),
+		        lastSuccessfulImport.getOclDateStarted())).thenReturn(oclResponse);
+
+		importer.run();
+
+		verify(importService).failImport(any(Import.class),
+		    argThat(containsString("custom_validation_schema=null")));
+	}
+
+	/**
+	 * @see Importer#run()
+	 * @verifies import an OpenMRS validated collection
+	 */
+	@Test
+	public void runUpdate_shouldImportOpenMRSValidatedCollection() throws Exception {
+		setupSnapshotSubscription();
+
+		Date updatedTo = new Date();
+		OclResponse oclResponse = OclClient.unzipResponse(
+		        TestResources.getResponseAsStream("refapp-collection-response-v1/response.zip"), updatedTo);
+		when(oclClient.fetchSnapshotUpdates(subscription.getUrl(), subscription.getToken(),
+		        lastSuccessfulImport.getOclDateStarted())).thenReturn(oclResponse);
+
+		doAnswer(new Answer<Item>() {
+			@Override
+			public Item answer(InvocationOnMock invocation) throws Throwable {
+				Import update = (Import) invocation.getArguments()[1];
+				OclConcept oclConcept = (OclConcept) invocation.getArguments()[2];
+				return new Item(update, oclConcept, ItemState.ADDED);
+			}
+		}).when(saver).saveConcept(any(CacheService.class), any(Import.class), any(OclConcept.class),
+		        any(ValidationType.class));
+
+		importer.run();
+
+		verify(saver).saveConcept(any(CacheService.class), any(Import.class), any(OclConcept.class),
+		        any(ValidationType.class));
+	}
+
+	private void setupSnapshotSubscription() {
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+		when(subscription.isSubscribedToSnapshot()).thenReturn(true);
+
+		lastSuccessfulImport = new Import();
+		lastSuccessfulImport.setOclDateStarted(new Date());
+		when(importService.getLastSuccessfulSubscriptionImport()).thenReturn(lastSuccessfulImport);
+
+		when(importService.getImport(nullable(Long.class))).thenReturn(new Import());
+	}
+
+	private interface ExceptionRunnable {
+		void run() throws Exception;
+	}
+
+	private void expectImportException(ExceptionRunnable runnable) throws Exception {
+		try {
+			runnable.run();
+			fail("Expected ImportException");
+		}
+		catch (Exception e) {
+			assertTrue("Expected ImportException, got: " + e,
+			    e instanceof ImportException || e.getCause() instanceof ImportException);
+		}
+	}
+
+	private void invokeVerifyCollectionSchema(JsonParser parser) throws Exception {
+		Method method = Importer.class.getDeclaredMethod("verifyCollectionUsesOpenMRSValidationSchema", JsonParser.class);
+		method.setAccessible(true);
+		method.invoke(importer, parser);
 	}
 
 	private JsonParser createParser(String json) throws IOException {
