@@ -36,6 +36,15 @@ public class OpenConceptLabConstants {
 	public static final String GP_SUBSCRIBED_TO_SNAPSHOT = MODULE_ID + ".subscribedToSnapshot";
 	public static final String GP_VALIDATION_TYPE = MODULE_ID + ".validationType";
 	public static final String GP_OCL_LOAD_AT_STARTUP_PATH = MODULE_ID + ".oclLoadAtStartupPath";
+	public static final String GP_IMPORT_CLEANUP_ENABLED = MODULE_ID + ".importCleanupEnabled";
+	public static final String GP_IMPORT_RETENTION_DAYS = MODULE_ID + ".importRetentionDays";
+	public static final String GP_IMPORT_CLEANUP_BATCH_SIZE = MODULE_ID + ".importCleanupBatchSize";
+
+	/**
+	 * Import cleanup scheduled task
+	 */
+	public static final String IMPORT_CLEANUP_TASK_NAME = "Open Concept Lab Import Cleanup";
+	public static final long IMPORT_CLEANUP_TASK_INTERVAL = 86400L;
 
 	public static final UUID OPEN_CONCEPT_LAB_NAMESPACE_UUID = UUID.fromString("672c6cb2-4f47-4cb0-9fca-b5f6116cd33a");
 
