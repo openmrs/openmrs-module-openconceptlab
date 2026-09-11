@@ -59,7 +59,7 @@ Every time you make changes in code in the api directory, you need to build and 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
 The module has no user interface of its own. It is configured through global properties and driven through its REST API
-(`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://dictionary.openconceptlab.org) is the recommended
+(`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org) is the recommended
 front end for browsing and managing the concepts you subscribe to.
 
 ### Setup Subscription
@@ -69,7 +69,8 @@ You will need an account on the Open Concept Lab server, which you can create at
 Login and go to  your profile page by clicking your username in the page header and copy your API token, which can be found on the bottom left.
 Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL.
 Set the subscription URL and token through the `openconceptlab.subscriptionUrl` and `openconceptlab.token` global properties
-(or via the module's REST subscription resource), then run <b>Import from subscription server</b>.
+(or via the module's REST subscription resource), then start an import with `POST /openmrs/ws/rest/v1/openconceptlab/import`
+(or let the scheduled import run, per the `openconceptlab.scheduledDays` and `openconceptlab.scheduledTime` global properties).
 
 ### OpenMRS Custom Validation Schema
 

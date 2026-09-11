@@ -21,6 +21,12 @@
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.OpenConceptLabActivator</activator>
 
+	<!-- Adds a link to the concept page to check if a concept is subscribed or not -->
+	<extension>
+		<point>org.openmrs.dictionary.conceptHeader</point>
+		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.HighlightSubscribedConcept</class>
+	</extension>
+
 	<globalProperty>
 		<property>openconceptlab.subscriptionUrl</property>
 		<description>The OCL subscription URL</description>
