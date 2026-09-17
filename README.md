@@ -22,11 +22,6 @@ $ mvn openmrs-sdk:setup -DserverId=refapp -Ddistro=referenceapplication:2.4
 ````
 If there are any issues with setting up the server, check out <b>[OpenMRS SDK documentation](https://wiki.openmrs.org/display/docs/OpenMRS+SDK)</b>
 
-Deploy OWA module on the server:
-````sh
-$ mvn openmrs-sdk:deploy -DserverId=refapp -DartifactId=owa -Dversion=1.6.3
-````
-
 You also need to deploy webservices.rest module:
 ````sh
 $ mvn openmrs-sdk:deploy -DartifactId=webservices.rest -Dversion=2.17-SNAPSHOT -DserverId=refapp
@@ -63,16 +58,22 @@ Every time you make changes in code in the api directory, you need to build and 
 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
-OCL Module is now available from the Advanced System Administration or at `/openmrs/openconceptlab/status.page`
+The module no longer ships a dedicated management UI. It is configured through global properties and driven through its
+REST API (`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org) is the recommended
+front end for browsing and managing the concepts you subscribe to.
+
+The one piece of UI the module still contributes is on the legacy concept dictionary page: if a concept was downloaded
+from your OCL subscription, it shows a banner warning that local edits will be lost on the next import.
 
 ### Setup Subscription
 
 You need to set up the subscription before using the module (except for 'Import at server startup').
 You will need an account on the Open Concept Lab server, which you can create at https://app.openconceptlab.org/#/accounts/signup/
 Login and go to  your profile page by clicking your username in the page header and copy your API token, which can be found on the bottom left.
-Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL
-Enter URL and token at `/openmrs/owa/openconceptlab/index.html#/subscription` page and save changes.
-Click Subscribe and follow the next section then <b>Import from subscription server</b>.
+Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL.
+Set the subscription URL and token through the `openconceptlab.subscriptionUrl` and `openconceptlab.token` global properties
+(or via the module's REST subscription resource), then start an import with `POST /openmrs/ws/rest/v1/openconceptlab/import`
+(or let the scheduled import run, per the `openconceptlab.scheduledDays` and `openconceptlab.scheduledTime` global properties).
 
 ### OpenMRS Custom Validation Schema
 

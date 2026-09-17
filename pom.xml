@@ -50,12 +50,10 @@
     <modules>
         <module>api</module>
         <module>omod</module>
-        <module>owa</module>
     </modules>
 
     <properties>
         <openmrsVersion>2.7.8</openmrsVersion>
-        <legacyuiVersion>2.0.0</legacyuiVersion>
         <webservices.restVersion>3.0.0</webservices.restVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>8</maven.compiler.source>
@@ -89,13 +87,6 @@
         </dependency>
 
         <!-- End OpenMRS core -->
-
-        <dependency>
-            <groupId>org.openmrs.module</groupId>
-            <artifactId>legacyui-api</artifactId>
-            <version>${legacyuiVersion}</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>commons-httpclient</groupId>
