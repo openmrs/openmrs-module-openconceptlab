@@ -58,9 +58,12 @@ Every time you make changes in code in the api directory, you need to build and 
 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
-The module has no user interface of its own. It is configured through global properties and driven through its REST API
-(`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org) is the recommended
+The module no longer ships a dedicated management UI. It is configured through global properties and driven through its
+REST API (`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org) is the recommended
 front end for browsing and managing the concepts you subscribe to.
+
+The one piece of UI the module still contributes is on the legacy concept dictionary page: if a concept was downloaded
+from your OCL subscription, it shows a banner warning that local edits will be lost on the next import.
 
 ### Setup Subscription
 
