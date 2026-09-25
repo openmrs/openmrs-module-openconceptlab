@@ -112,13 +112,13 @@ public class ImporterTest extends BaseContextMockTest {
 	 */
 	@Test
 	public void runTask_shouldIndexAsynchronouslyDuringImportAndRestoreDefaultAfterwards() throws Exception {
-		Subscription subscription = new Subscription();
-		subscription.setUrl("http://some.com/url");
-		when(importService.getSubscription()).thenReturn(subscription);
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(newSubscription);
 
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
-		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+		when(oclClient.fetchOclConcepts(newSubscription.getUrl(), newSubscription.getToken())).thenReturn(oclResponse);
 
 		importer.runTask();
 
@@ -135,10 +135,10 @@ public class ImporterTest extends BaseContextMockTest {
 	 */
 	@Test
 	public void runTask_shouldFlushAndRestoreDefaultStrategyWhenImportFails() throws Exception {
-		Subscription subscription = new Subscription();
-		subscription.setUrl("http://some.com/url");
-		when(importService.getSubscription()).thenReturn(subscription);
-		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken()))
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(newSubscription);
+		when(oclClient.fetchOclConcepts(newSubscription.getUrl(), newSubscription.getToken()))
 				.thenThrow(new RuntimeException("OCL is down"));
 
 		try {
@@ -162,13 +162,13 @@ public class ImporterTest extends BaseContextMockTest {
 	public void runTask_shouldCompleteImportWhenSearchSessionIsUnavailable() throws Exception {
 		when(searchSessionFactory.getSearchSession()).thenThrow(new IllegalStateException("no search session"));
 
-		Subscription subscription = new Subscription();
-		subscription.setUrl("http://some.com/url");
-		when(importService.getSubscription()).thenReturn(subscription);
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(newSubscription);
 
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
-		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+		when(oclClient.fetchOclConcepts(newSubscription.getUrl(), newSubscription.getToken())).thenReturn(oclResponse);
 
 		importer.runTask();
 
@@ -184,14 +184,14 @@ public class ImporterTest extends BaseContextMockTest {
 	 */
 	@Test
 	public void runUpdate_shouldStartFirstUpdateWithResponseDate() throws Exception {
-		Subscription subscription = new Subscription();
-		subscription.setUrl("http://some.com/url");
-		when(importService.getSubscription()).thenReturn(subscription);
+		Subscription newSubscription = new Subscription();
+		newSubscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(newSubscription);
 
 		Date updatedTo = new Date();
 		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
 		when(importService.getLastImport()).thenReturn(null);
-		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+		when(oclClient.fetchOclConcepts(newSubscription.getUrl(), newSubscription.getToken())).thenReturn(oclResponse);
 
 		importer.run();
 
