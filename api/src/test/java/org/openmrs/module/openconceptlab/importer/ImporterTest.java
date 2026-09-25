@@ -23,7 +23,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
@@ -175,7 +175,7 @@ public class ImporterTest extends BaseContextMockTest {
 		verify(importService).updateOclDateStarted(any(Import.class), Mockito.eq(updatedTo));
 		verify(importService, never()).failImport(any(Import.class));
 		verify(importService, never()).failImport(any(Import.class), anyString());
-		verifyZeroInteractions(searchSession);
+		verifyNoInteractions(searchSession);
 	}
 
 	/**
