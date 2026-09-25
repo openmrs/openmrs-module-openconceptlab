@@ -69,6 +69,7 @@
 		<property name="oclConceptService" ref="openconceptlab.conceptService" />
 		<property name="oclClient" ref="openconceptlab.oclClient" />
 		<property name="saver" ref="openconceptlab.saver" />
+		<property name="searchSessionFactory" ref="searchSessionFactory" />
 	</bean>
 	
 	<bean id="openconceptlab.updateScheduler" class="org.openmrs.module.openconceptlab.scheduler.UpdateScheduler">
