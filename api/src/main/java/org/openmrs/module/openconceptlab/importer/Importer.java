@@ -16,9 +16,14 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.hibernate.search.mapper.pojo.work.IndexingPlanSynchronizationStrategy;
+import org.openmrs.ConceptName;
+import org.openmrs.Drug;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.Daemon;
+import org.openmrs.api.db.hibernate.search.session.SearchSessionFactory;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportProgress;
@@ -49,6 +54,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipFile;
 
 public class Importer implements Runnable {
@@ -67,6 +73,8 @@ public class Importer implements Runnable {
 	private OclClient oclClient;
 
 	private Saver saver;
+
+	private SearchSessionFactory searchSessionFactory;
 
 	private volatile Import anImport;
 
@@ -102,6 +110,10 @@ public class Importer implements Runnable {
 
 	public void setZipFile(ZipFile zipFile) {
 		this.zipFile = zipFile;
+	}
+
+	public void setSearchSessionFactory(SearchSessionFactory searchSessionFactory) {
+		this.searchSessionFactory = searchSessionFactory;
 	}
 
 	/**
@@ -196,6 +208,7 @@ public class Importer implements Runnable {
 		anImport = newUpdate;
 		totalBytesToProcess = -1; //unknown
 
+		SearchSession searchSession = beginBulkIndexing();
 		try {
 			task.run();
 
@@ -221,6 +234,7 @@ public class Importer implements Runnable {
 
 			zipFile = null;
 
+			endBulkIndexing(searchSession);
 			try {
 				if (anImport != null && anImport.getImportId() != null) {
 					importService.stopImport(anImport);
@@ -544,6 +558,44 @@ public class Importer implements Runnable {
 		}
 
 		return updateProgress;
+	}
+
+	private SearchSession beginBulkIndexing() {
+		try {
+			SearchSession searchSession = searchSessionFactory.getSearchSession();
+			searchSession.indexingPlanSynchronizationStrategy(IndexingPlanSynchronizationStrategy.async());
+			return searchSession;
+		} catch (Exception e) {
+			log.warn("Failed to switch to async indexing, continuing with default indexing", e);
+			return null;
+		}
+	}
+
+	private void endBulkIndexing(SearchSession searchSession) {
+		if (searchSession == null) {
+			return;
+		}
+
+		try {
+			searchSession.workspace(ConceptName.class, Drug.class).flush();
+			searchSession.indexingPlanSynchronizationStrategy(getConfiguredSyncStrategy());
+		} catch (Exception e) {
+			log.warn("Failed to flush search index or restore indexing strategy", e);
+		}
+	}
+
+	private IndexingPlanSynchronizationStrategy getConfiguredSyncStrategy() {
+		String syncStrategy = Context.getRuntimeProperties().getProperty("hibernate.search.indexing.plan.synchronization.strategy", "write-sync");
+		switch (syncStrategy) {
+			case "async":
+				return IndexingPlanSynchronizationStrategy.async();
+			case "read-sync":
+				return IndexingPlanSynchronizationStrategy.readSync();
+			case "sync":
+				return IndexingPlanSynchronizationStrategy.sync();
+			default:
+				return IndexingPlanSynchronizationStrategy.writeSync();
+		}
 	}
 
 }

@@ -15,10 +15,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
@@ -33,14 +38,21 @@ import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
+import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.hibernate.search.mapper.orm.work.SearchWorkspace;
+import org.hibernate.search.mapper.pojo.work.IndexingPlanSynchronizationStrategy;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.openmrs.ConceptName;
+import org.openmrs.Drug;
 import org.openmrs.api.db.ContextDAO;
+import org.openmrs.api.db.hibernate.search.session.SearchSessionFactory;
 import org.openmrs.module.openconceptlab.CacheService;
 import org.openmrs.module.openconceptlab.Item;
 import org.openmrs.module.openconceptlab.ItemState;
@@ -78,9 +90,92 @@ public class ImporterTest extends BaseContextMockTest {
 	@InjectMocks
 	Importer importer;
 
+	@Mock
+	SearchSessionFactory searchSessionFactory;
+
+	@Mock
+	SearchSession searchSession;
+
+	@Mock
+	SearchWorkspace searchWorkspace;
+
 	@Before
 	public void before() {
 		TestResources.setupDaemonToken();
+		when(searchSessionFactory.getSearchSession()).thenReturn(searchSession);
+		when(searchSession.workspace(ConceptName.class, Drug.class)).thenReturn(searchWorkspace);
+	}
+
+	/**
+	 * @see Importer#runTask()
+	 * @verifies index asynchronously during the import and restore the default strategy afterwards
+	 */
+	@Test
+	public void runTask_shouldIndexAsynchronouslyDuringImportAndRestoreDefaultAfterwards() throws Exception {
+		Subscription subscription = new Subscription();
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+
+		Date updatedTo = new Date();
+		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
+		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+
+		importer.runTask();
+
+		InOrder inOrder = inOrder(searchSession, searchWorkspace, importService);
+		inOrder.verify(searchSession).indexingPlanSynchronizationStrategy(IndexingPlanSynchronizationStrategy.async());
+		inOrder.verify(importService).updateOclDateStarted(any(Import.class), Mockito.eq(updatedTo));
+		inOrder.verify(searchWorkspace).flush();
+		inOrder.verify(searchSession).indexingPlanSynchronizationStrategy(IndexingPlanSynchronizationStrategy.writeSync());
+	}
+
+	/**
+	 * @see Importer#runTask()
+	 * @verifies flush the index and restore the default strategy when the import fails
+	 */
+	@Test
+	public void runTask_shouldFlushAndRestoreDefaultStrategyWhenImportFails() throws Exception {
+		Subscription subscription = new Subscription();
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken()))
+				.thenThrow(new RuntimeException("OCL is down"));
+
+		try {
+			importer.runTask();
+			fail("Expected ImportException");
+		}
+		catch (ImportException expected) {
+			// the import failure must still propagate
+		}
+
+		verify(importService).failImport(any(Import.class), anyString());
+		verify(searchWorkspace).flush();
+		verify(searchSession).indexingPlanSynchronizationStrategy(IndexingPlanSynchronizationStrategy.writeSync());
+	}
+
+	/**
+	 * @see Importer#runTask()
+	 * @verifies complete the import with default indexing when the search session is unavailable
+	 */
+	@Test
+	public void runTask_shouldCompleteImportWhenSearchSessionIsUnavailable() throws Exception {
+		when(searchSessionFactory.getSearchSession()).thenThrow(new IllegalStateException("no search session"));
+
+		Subscription subscription = new Subscription();
+		subscription.setUrl("http://some.com/url");
+		when(importService.getSubscription()).thenReturn(subscription);
+
+		Date updatedTo = new Date();
+		OclResponse oclResponse = new OclClient.OclResponse(IOUtils.toInputStream("{}"), 0, updatedTo);
+		when(oclClient.fetchOclConcepts(subscription.getUrl(), subscription.getToken())).thenReturn(oclResponse);
+
+		importer.runTask();
+
+		verify(importService).updateOclDateStarted(any(Import.class), Mockito.eq(updatedTo));
+		verify(importService, never()).failImport(any(Import.class));
+		verify(importService, never()).failImport(any(Import.class), anyString());
+		verifyZeroInteractions(searchSession);
 	}
 
 	/**
