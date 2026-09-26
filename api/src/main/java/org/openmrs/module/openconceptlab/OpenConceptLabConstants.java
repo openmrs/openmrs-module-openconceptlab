@@ -43,4 +43,10 @@ public class OpenConceptLabConstants {
 	 * Default retire reason
 	 */
 	public static final String DEFAULT_RETIRE_REASON = "Retired in OCL";
+
+	/**
+	 * The OCL validation schema that a collection export must declare for its contents to be
+	 * compatible with OpenMRS.
+	 */
+	public static final String OPEN_MRS_VALIDATION_SCHEMA = "OpenMRS";
 }
