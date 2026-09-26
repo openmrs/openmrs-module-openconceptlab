@@ -184,4 +184,15 @@ public interface ImportService {
 	@Transactional
 	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
 	void flushAndClearSession();
+
+	@Transactional(readOnly = true)
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
+	List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int firstResult, int maxResults);
+
+	@Transactional
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
+	boolean purgeImport(Long importId);
+
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
+	int purgeOldImports(int retentionDays, int batchSize);
 }

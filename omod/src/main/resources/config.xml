@@ -54,6 +54,21 @@
 		<property>openconceptlab.token</property>
 		<description>The OCL API Token</description>
 	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.importCleanupEnabled</property>
+		<defaultValue>false</defaultValue>
+		<description>Set to true to enable the scheduled task that purges old OCL import records</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.importRetentionDays</property>
+		<defaultValue>180</defaultValue>
+		<description>Number of days to keep completed OCL import records before the cleanup task purges them. The most recent successful import is always kept.</description>
+	</globalProperty>
+	<globalProperty>
+		<property>openconceptlab.importCleanupBatchSize</property>
+		<defaultValue>10</defaultValue>
+		<description>Maximum number of import records (with their items) purged per cleanup task execution</description>
+	</globalProperty>
 
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
