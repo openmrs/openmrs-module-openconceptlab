@@ -44,59 +44,80 @@ public class OpenConceptLabActivator extends BaseModuleActivator implements Daem
 		log.info("Refreshing Open Concept Lab Module");
 	}
 
-	/**
-	 * @see ModuleActivator#contextRefreshed()
-	 */
-	public void contextRefreshed() {
-		if (!Context.isSessionOpen()) {
-			Context.openSession();
-		}
+    /**
+     * @see ModuleActivator#contextRefreshed()
+     */
+    public void contextRefreshed() {
+        if (!Context.isSessionOpen()) {
+            Context.openSession();
+        }
 
-		markInProgressImportsAsFailed();
+        markInProgressImportsAsFailed();
 
-		String loadAtStartupPath = Context.getAdministrationService()
-				.getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
-		if (StringUtils.isBlank(loadAtStartupPath)) {
-			loadAtStartupPath =
-					new File(new File(new File(OpenmrsUtil.getApplicationDataDirectory(), "ocl"), "configuration"),
-							"loadAtStartup").getAbsolutePath();
-			Context.getAdministrationService()
-					.saveGlobalProperty(
-							new GlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH, loadAtStartupPath)
-					);
-		}
+        String loadAtStartupPath = Context.getAdministrationService()
+                .getGlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH);
 
-		File loadAtStartupDir = new File(loadAtStartupPath);
-		if (!loadAtStartupDir.exists()) {
-			loadAtStartupDir.mkdirs();
-		}
+        // TASK 1: If property is missing, set a default RELATIVE path
+        if (StringUtils.isBlank(loadAtStartupPath)) {
+            loadAtStartupPath = "ocl" + File.separator + "configuration" + File.separator + "loadAtStartup";
+            Context.getAdministrationService()
+                    .saveGlobalProperty(
+                            new GlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH, loadAtStartupPath)
+                    );
+        }
 
-		UpdateScheduler scheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
+        else {
+            File appDataDir = new File(OpenmrsUtil.getApplicationDataDirectory());
+            if (new File(loadAtStartupPath).isAbsolute() && loadAtStartupPath.startsWith(appDataDir.getAbsolutePath())) {
+                loadAtStartupPath = loadAtStartupPath.substring(appDataDir.getAbsolutePath().length());
+                if (loadAtStartupPath.startsWith(File.separator)) {
+                    loadAtStartupPath = loadAtStartupPath.substring(1);
+                }
 
-		File[] files = loadAtStartupDir.listFiles();
-		if (files != null && files.length > 1) {
-			throw new IllegalStateException(
-					"There is more than one file in ocl/loadAtStartup directory\n" +
-							"Ensure that there is only one file\n" +
-							"Absolute directory path: " + loadAtStartupDir.getAbsolutePath());
-		} else if (files != null && files.length != 0) {
-			if (files[0].getName().endsWith(".zip")) {
-				try {
-					ZipFile zipFile = (new ZipFile(files[0]));
-					Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
-					importer.run(zipFile);
-				}
-				catch (IOException e) {
-					throw new IllegalStateException("Failed to open zip file", e);
-				}
-			} else {
-				throw new IllegalStateException("File " + files[0].getName() + " must be in *.zip format");
-			}
-		}
-		scheduler.scheduleUpdate();
-		log.info("Open Concept Lab Module refreshed");
-	}
+                Context.getAdministrationService()
+                        .saveGlobalProperty(
+                                new GlobalProperty(OpenConceptLabConstants.GP_OCL_LOAD_AT_STARTUP_PATH, loadAtStartupPath)
+                        );
+            }
+        }
 
+
+        File loadAtStartupDir;
+        if (new File(loadAtStartupPath).isAbsolute()) {
+            loadAtStartupDir = new File(loadAtStartupPath);
+        } else {
+            // It is relative, so attach it to the Application Data Directory
+            loadAtStartupDir = new File(OpenmrsUtil.getApplicationDataDirectory(), loadAtStartupPath);
+        }
+
+        if (!loadAtStartupDir.exists()) {
+            loadAtStartupDir.mkdirs();
+        }
+
+        UpdateScheduler scheduler = Context.getRegisteredComponent("openconceptlab.updateScheduler", UpdateScheduler.class);
+
+        File[] files = loadAtStartupDir.listFiles();
+        if (files != null && files.length > 1) {
+            throw new IllegalStateException(
+                    "There is more than one file in ocl/loadAtStartup directory\n" +
+                            "Ensure that there is only one file\n" +
+                            "Absolute directory path: " + loadAtStartupDir.getAbsolutePath());
+        } else if (files != null && files.length != 0) {
+            if (files[0].getName().endsWith(".zip")) {
+                try {
+                    ZipFile zipFile = (new ZipFile(files[0]));
+                    Importer importer = Context.getRegisteredComponent("openconceptlab.importer", Importer.class);
+                    importer.run(zipFile);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed to open zip file", e);
+                }
+            } else {
+                throw new IllegalStateException("File " + files[0].getName() + " must be in *.zip format");
+            }
+        }
+        scheduler.scheduleUpdate();
+        log.info("Open Concept Lab Module refreshed");
+    }
 	/**
 	 * If OpenMRS is unexpectedly shutdown while an OCL Import is in progress, the import record in the database
 	 * can be left in an "in progress" state, even though the import is no longer actually running.
