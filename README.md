@@ -58,9 +58,11 @@ Every time you make changes in code in the api directory, you need to build and 
 
 Alternatively you can upload `*.omod` file via <b>Advanced Administration</b> -> <b>Manage Modules</b> panel. This way you will not have to restart the server.
 
-The module no longer ships a dedicated management UI. It is configured through global properties and driven through its
-REST API (`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org) is the recommended
-front end for browsing and managing the concepts you subscribe to.
+The module no longer ships a dedicated management UI. On O3, the Open Concept Lab tile under System Administration
+(`/openmrs/spa/ocl`, from `@openmrs/esm-openconceptlab-app`) is where you manage the subscription, run imports (from the
+subscription or an uploaded zip) and review past imports. Elsewhere the module is configured through global properties and
+driven through its REST API (`/openmrs/ws/rest/v1/openconceptlab/...`). Dictionary Manager (https://app.openconceptlab.org)
+is the recommended front end for browsing and managing the concepts you subscribe to.
 
 The one piece of UI the module still contributes is on the legacy concept dictionary page: if a concept was downloaded
 from your OCL subscription, it shows a banner warning that local edits will be lost on the next import.
@@ -72,8 +74,7 @@ You will need an account on the Open Concept Lab server, which you can create at
 Login and go to  your profile page by clicking your username in the page header and copy your API token, which can be found on the bottom left.
 Now determine the collection URL or source URL you want to subscribe to, create a version and copy the subscription URL.
 Set the subscription URL and token through the `openconceptlab.subscriptionUrl` and `openconceptlab.token` global properties
-(or via the module's REST subscription resource), then start an import with `POST /openmrs/ws/rest/v1/openconceptlab/import`
-(or let the scheduled import run, per the `openconceptlab.scheduledDays` and `openconceptlab.scheduledTime` global properties).
+(or via the module's REST subscription resource), then start an import with `POST /openmrs/ws/rest/v1/openconceptlab/import`.
 
 ### OpenMRS Custom Validation Schema
 
