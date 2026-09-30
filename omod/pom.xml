@@ -20,14 +20,6 @@
         </dependency>
 
         <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>${project.parent.artifactId}-owa</artifactId>
-            <version>${project.parent.version}</version>
-            <type>zip</type>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.openmrs.web</groupId>
             <artifactId>openmrs-web</artifactId>
             <version>${openmrsVersion}</version>
@@ -52,13 +44,6 @@
 
         <dependency>
             <groupId>org.openmrs.module</groupId>
-            <artifactId>legacyui-omod</artifactId>
-            <version>${legacyuiVersion}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openmrs.module</groupId>
             <artifactId>webservices.rest-omod-common</artifactId>
             <version>${webservices.restVersion}</version>
             <scope>provided</scope>
@@ -82,13 +67,6 @@
             <version>${webservices.restVersion}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>rubygems</groupId>
-            <artifactId>compass</artifactId>
-            <version>0.11.7</version>
-            <type>gem</type>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -196,25 +174,6 @@
                             <excludeTransitive>true</excludeTransitive>
                             <includes>**/*</includes>
                             <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>include-owa</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${project.parent.groupId}</groupId>
-                                    <artifactId>${project.parent.artifactId}-owa</artifactId>
-                                    <version>${project.parent.version}</version>
-                                    <type>zip</type>
-                                    <destFileName>openconceptlab.owa</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/classes/web/module/owas</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
