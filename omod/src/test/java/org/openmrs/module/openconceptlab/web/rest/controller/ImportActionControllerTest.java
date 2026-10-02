@@ -1,9 +1,10 @@
 package org.openmrs.module.openconceptlab.web.rest.controller;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
@@ -25,7 +26,7 @@ public class ImportActionControllerTest extends MainResourceControllerTest {
 
     private ImportService importService;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
         importService = Context.getService(ImportService.class);
@@ -44,10 +45,10 @@ public class ImportActionControllerTest extends MainResourceControllerTest {
 
         SimpleObject newImportAction = deserialize(handle(req));
 
-        Assert.assertNotNull(newImportAction);
+        Assertions.assertNotNull(newImportAction);
         List<Item> importItems = importService.getImportItems(importService.getImport(RestTestConstants.IMPORT_UUID), 0, 2, new HashSet<ItemState>());
         for(Item item: importItems){
-            Assert.assertThat(item.getState(), is(not(ItemState.ERROR)));
+            MatcherAssert.assertThat(item.getState(), is(not(ItemState.ERROR)));
         }
     }
 
@@ -64,35 +65,35 @@ public class ImportActionControllerTest extends MainResourceControllerTest {
 
         SimpleObject newImportAction = deserialize(handle(req));
 
-        Assert.assertNotNull(newImportAction);
+        Assertions.assertNotNull(newImportAction);
         List<Item> importItems = importService.getImportItems(importService.getImport(RestTestConstants.IMPORT_UUID), 0, 2, new HashSet<ItemState>());
         for(Item item: importItems){
-            Assert.assertThat(item.getState(), is(not(ItemState.IGNORED_ERROR)));
+            MatcherAssert.assertThat(item.getState(), is(not(ItemState.IGNORED_ERROR)));
         }
     }
 
     @Override
-    @Test(expected = ResourceDoesNotSupportOperationException.class)
+    @Test
     public void shouldGetDefaultByUuid() throws Exception {
-        super.shouldGetDefaultByUuid();
+        Assertions.assertThrows(ResourceDoesNotSupportOperationException.class, () -> super.shouldGetDefaultByUuid());
     }
 
     @Override
-    @Test(expected = ResourceDoesNotSupportOperationException.class)
+    @Test
     public void shouldGetRefByUuid() throws Exception {
-        super.shouldGetRefByUuid();
+        Assertions.assertThrows(ResourceDoesNotSupportOperationException.class, () -> super.shouldGetRefByUuid());
     }
 
     @Override
-    @Test(expected = ResourceDoesNotSupportOperationException.class)
+    @Test
     public void shouldGetFullByUuid() throws Exception {
-        super.shouldGetFullByUuid();
+        Assertions.assertThrows(ResourceDoesNotSupportOperationException.class, () -> super.shouldGetFullByUuid());
     }
 
     @Override
-    @Test(expected = ResourceDoesNotSupportOperationException.class)
+    @Test
     public void shouldGetAll() throws Exception {
-        super.shouldGetAll();
+        Assertions.assertThrows(ResourceDoesNotSupportOperationException.class, () -> super.shouldGetAll());
     }
 
     @Override

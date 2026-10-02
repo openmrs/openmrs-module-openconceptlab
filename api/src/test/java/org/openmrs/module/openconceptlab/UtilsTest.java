@@ -6,7 +6,7 @@ import static org.hamcrest.Matchers.not;
 import static org.openmrs.module.openconceptlab.Utils.normalizeConceptSourceName;
 import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class UtilsTest {
 

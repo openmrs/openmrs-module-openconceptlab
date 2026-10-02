@@ -9,8 +9,8 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptSource;
@@ -23,7 +23,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,7 +55,7 @@ public class CacheServiceTest extends MockTest {
 		return cs;
 	}
 
-	@Before
+	@BeforeEach
 	public void setupMocks() {
 		when(conceptService.getAllConceptSources(true)).thenReturn(getTestConceptSources());
 	}

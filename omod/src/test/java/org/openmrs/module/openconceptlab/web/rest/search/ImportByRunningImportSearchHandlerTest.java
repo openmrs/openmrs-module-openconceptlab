@@ -1,8 +1,8 @@
 package org.openmrs.module.openconceptlab.web.rest.search;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.openmrs.api.context.Context;
@@ -31,7 +31,7 @@ public class ImportByRunningImportSearchHandlerTest extends MainResourceControll
     @Mock
     Importer importer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
         service = Context.getService(ImportService.class);
@@ -44,8 +44,8 @@ public class ImportByRunningImportSearchHandlerTest extends MainResourceControll
         req.addParameter("runningImport", "true");
         SimpleObject result = deserialize(handle(req));
         List<Object> results = Util.getResultsList(result);
-        Assert.assertNotNull(results);
-        Assert.assertEquals(1, results.size());
+        Assertions.assertNotNull(results);
+        Assertions.assertEquals(1, results.size());
     }
 
     @Override

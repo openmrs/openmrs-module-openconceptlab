@@ -1,6 +1,6 @@
 package org.openmrs.module.openconceptlab.web.rest.search;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
@@ -33,7 +33,7 @@ public class ItemsByStateSearchHandler implements SubResourceSearchHandler {
     private static final String ITEM_STATE = "state";
 
     private final SearchConfig searchConfig = new SearchConfig("default", RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import/item",
-            Collections.singletonList("1.8.* - 2.*"),
+            Collections.singletonList("1.8.* - 9.*"),
             Arrays.asList(new SearchQuery.Builder("Allows you to get items by state")
                     .withRequiredParameters(ITEM_STATE)
                     .build()));

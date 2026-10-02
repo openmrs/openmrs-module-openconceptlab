@@ -4,7 +4,7 @@
 
     <groupId>org.openmrs.module</groupId>
     <artifactId>openconceptlab</artifactId>
-    <version>4.0.1-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Open Concept Lab Module</name>
     <description>Sustainable solution for using the CIEL dictionary and applying changes over time</description>
@@ -54,20 +54,22 @@
     </modules>
 
     <properties>
-        <openmrsVersion>2.8.0</openmrsVersion>
-        <legacyuiVersion>2.0.0</legacyuiVersion>
-        <webservices.restVersion>3.0.0</webservices.restVersion>
+        <openmrsVersion>3.0.0-SNAPSHOT</openmrsVersion>
+        <legacyuiVersion>3.0.0-SNAPSHOT</legacyuiVersion>
+        <webservices.restVersion>5.0.0-SNAPSHOT</webservices.restVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy</artifactId>
-                <version>1.14.8</version>
+                <groupId>org.openmrs</groupId>
+                <artifactId>openmrs-bom</artifactId>
+                <version>${openmrsVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -139,13 +141,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jsp-api</artifactId>
-            <version>2.0</version>
-            <scope>provided</scope>
-        </dependency>
-
 
     </dependencies>
 
@@ -170,7 +165,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.13.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.openmrs.maven.plugins</groupId>

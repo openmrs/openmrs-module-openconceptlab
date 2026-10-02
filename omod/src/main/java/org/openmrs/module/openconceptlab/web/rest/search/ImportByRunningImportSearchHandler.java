@@ -35,7 +35,7 @@ public class ImportByRunningImportSearchHandler implements SearchHandler {
     private static final String RUNNING_IMPORT = "runningImport";
 
     private final SearchConfig searchConfig = new SearchConfig("default", RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/import",
-            Collections.singletonList("1.8.* - 2.*"),
+            Collections.singletonList("1.8.* - 9.*"),
             Arrays.asList(new SearchQuery.Builder("Allows you to get running import")
                     .withRequiredParameters(RUNNING_IMPORT)
                     .build()));
