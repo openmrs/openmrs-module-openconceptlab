@@ -9,17 +9,15 @@
  */
 package org.openmrs.module.openconceptlab.importer;
 
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptClass;
@@ -53,7 +51,7 @@ import org.openmrs.module.openconceptlab.client.OclConcept.Name;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.client.OclMapping.MapType;
 import org.openmrs.obs.handler.BinaryDataHandler;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
 import org.openmrs.util.OpenmrsConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,6 +68,7 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -78,12 +77,13 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.openmrs.module.openconceptlab.Utils.version5Uuid;
 
 public class SaverTest extends BaseModuleContextSensitiveTest {
@@ -102,21 +102,18 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	@Autowired @Qualifier("openconceptlab.importService")
 	ImportService importService;
 
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
-
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss'Z'");
 	
 	private Import anImport;
 
-	@Before
+	@BeforeEach
 	public void startUpdate() {
 		anImport = new Import();
 		importService.saveSubscription(generateSubscription());
 		importService.startImport(anImport);
 	}
 
-	@After
+	@AfterEach
 	public void stopUpdate() {
 		importService.stopImport(importService.getLastImport());
 	}
@@ -616,7 +613,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		Concept concept = assertImported(oclConcept);
 
 		//cloning object to save state of descriptions after importing again
-		Concept cloned = (Concept) org.apache.commons.lang.SerializationUtils.clone(concept);
+		Concept cloned = (Concept) org.apache.commons.lang3.SerializationUtils.clone(concept);
 
 		Collection<ConceptDescription> descriptionsBeforeVoiding = cloned.getDescriptions();
 
@@ -747,8 +744,8 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
 
 		oclConcept.setConceptClass(null);
-		exception.expect(ImportException.class);
-		saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept);
+		assertThrows(ImportException.class,
+				() -> saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, oclConcept));
 	}
 
 	/**
@@ -762,9 +759,9 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		OclConcept concept = newOclConcept();
 		concept.setDatatype("Some missing datatype");
 
-		exception.expect(ImportException.class);
-		exception.expectMessage("Cannot create concept /orgs/CIELTEST/sources/CIELTEST/concepts/1001/");
-		saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept);
+		ImportException exception = assertThrows(ImportException.class,
+				() -> saver.saveConcept(new CacheService(conceptService, oclConceptService), update, concept));
+		assertThat(exception.getMessage(), containsString("Cannot create concept /orgs/CIELTEST/sources/CIELTEST/concepts/1001/"));
 	}
 
 	/**
@@ -1262,7 +1259,7 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 	}
 
 	@Test
-	@Ignore
+	@Disabled
 	public void importMapping_shouldAddConceptMappingAndTerm() throws Exception {
 		Import update = importService.getLastImport();
 

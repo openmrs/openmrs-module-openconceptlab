@@ -31,7 +31,7 @@ import org.openmrs.module.webservices.rest.web.response.ResponseException;
 @Resource(
         name = RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/importaction",
         supportedClass = ImportAction.class,
-        supportedOpenmrsVersions = { "1.8.* - 2.*" }
+        supportedOpenmrsVersions = { "1.8.* - 9.*" }
 )
 public class ImportActionResource extends DelegatingCrudResource<ImportAction> {
     @Override

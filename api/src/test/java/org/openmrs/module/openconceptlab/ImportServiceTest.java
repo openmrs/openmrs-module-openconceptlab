@@ -16,10 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.RootLogger;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
@@ -32,7 +30,7 @@ import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.client.OclMapping;
 import org.openmrs.module.openconceptlab.importer.Importer;
 import org.openmrs.module.openconceptlab.importer.Saver;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.openmrs.test.jupiter.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Propagation;
@@ -60,11 +58,12 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.openconceptlab.client.OclClient.FILE_NAME_FORMAT;
 
@@ -88,9 +87,6 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	@Mock
 	private GetMethod mockedGetMethod;
 
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
-
 
 	/**
 	 * @see ImportServiceImpl#getImport(Long)
@@ -112,8 +108,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	public void getUpdate_shouldThrowIllegalArgumentExceptionIfUpdateDoesNotExist() throws Exception {
-		exception.expect(IllegalArgumentException.class);
-		importService.getImport(0L);
+		assertThrows(IllegalArgumentException.class, () -> importService.getImport(0L));
 
 	}
 
@@ -145,8 +140,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
     	importService.startImport(firstUpdate);
 
     	Import secondUpdate = new Import();
-    	exception.expect(IllegalStateException.class);
-    	importService.startImport(secondUpdate);
+    	assertThrows(IllegalStateException.class, () -> importService.startImport(secondUpdate));
     }
 
 	/**
@@ -156,8 +150,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void stopUpdate_shouldThrowIllegalArgumentExceptionIfNotScheduled() throws Exception {
     	Import update = new Import();
-    	exception.expect(IllegalArgumentException.class);
-    	importService.stopImport(update);
+    	assertThrows(IllegalArgumentException.class, () -> importService.stopImport(update));
     }
 
 	/**
@@ -170,8 +163,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
     	importService.startImport(update);
     	importService.stopImport(update);
 
-    	exception.expect(IllegalStateException.class);
-    	importService.stopImport(update);
+    	assertThrows(IllegalStateException.class, () -> importService.stopImport(update));
     }
 
 	/**
@@ -241,7 +233,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
      * This issue will be fixed when there will be prepared
      * test data, which will be easier to fetch.
      */
-    @Ignore("This test is used for update simulation")
+    @Disabled("This test is used for update simulation")
 	@Test
 	public void startUpdate_shouldStartInitialUpdate() throws Exception {
 		Subscription newSubscription = new Subscription();
@@ -262,7 +254,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         importer.runTask();
 	}
 
-    @Ignore("This test is used for update simulation")
+    @Disabled("This test is used for update simulation")
     @Test
     public void startUpdate_shouldStartReleaseUpdate() throws Exception {
         Subscription subscription = new Subscription();
@@ -291,7 +283,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         importer.runTask();
     }
 
-	@Ignore("This test is used for update simulation")
+	@Disabled("This test is used for update simulation")
 	@Test
     public void startUpdate_shouldStartSnapshotUpdate() throws Exception {
         Subscription subscription = new Subscription();
@@ -329,7 +321,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
         assertThat(version, is(importService.getLastSuccessfulSubscriptionImport().getReleaseVersion()));
     }
 
-	@Ignore("This test passes locally, but fails on Travis-CI")
+	@Disabled("This test passes locally, but fails on Travis-CI")
 	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldDoInitialUpdate() throws Exception {
@@ -396,7 +388,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		}
 	}
 
-	@Ignore("This test passes locally, but fails on Travis-CI")
+	@Disabled("This test passes locally, but fails on Travis-CI")
 	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldDoFollowupUpdate() throws Exception {
@@ -500,7 +492,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		}
 	}
 
-	@Ignore("This test passes locally, but fails on Travis-CI")
+	@Disabled("This test passes locally, but fails on Travis-CI")
 	@Transactional(propagation = Propagation.NEVER)
 	@Test
 	public void update_shouldNotRunFollowupUpdateWhenVersionDidNotChange() throws Exception {
@@ -574,7 +566,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 	}
 
     //ONLINE INTEGRATION TEST
-	@Ignore("This test passes locally, but fails on Travis-CI")
+	@Disabled("This test passes locally, but fails on Travis-CI")
 	@Transactional(propagation = Propagation.NEVER)
     @Test
 	public void update_shouldFetchLatestReferenceApplicationCollectionConcepts() throws Exception {
@@ -758,7 +750,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		assertEquals(5, persisted.size());
 		for (Item p : persisted) {
 			assertEquals(ItemType.MAPPING, p.getType());
-			assertNotNull("updatedOn must round-trip for MAPPING items", p.getUpdatedOn());
+			assertNotNull(p.getUpdatedOn(), "updatedOn must round-trip for MAPPING items");
 			assertEquals(updatedOn.getTime() / 1000, p.getUpdatedOn().getTime() / 1000);
 		}
 	}
@@ -791,7 +783,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 		} catch (Throwable t) {
 			thrown = t;
 		}
-		assertNotNull("Expected an exception when import_id refers to a non-existent row", thrown);
+		assertNotNull(thrown, "Expected an exception when import_id refers to a non-existent row");
 	}
 
 	/**
@@ -853,7 +845,7 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			importIdsToPurge.add(firstImport.getImportId());
 			Integer addedFirst = importService.getImportItemsCount(firstImport,
 					new HashSet<>(EnumSet.of(ItemState.ADDED)));
-			assertEquals("first import should ADD every concept", Integer.valueOf(itemCount), addedFirst);
+			assertEquals(Integer.valueOf(itemCount), addedFirst, "first import should ADD every concept");
 
 			for (Item item : importService.getImportItems(firstImport, 0, itemCount + 10,
 					new HashSet<>(EnumSet.of(ItemState.ADDED)))) {
@@ -869,15 +861,15 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 			Import secondImport = importService.getLastImport();
 			assertNotNull(secondImport);
 			importIdsToPurge.add(secondImport.getImportId());
-			assertFalse("first and second imports must be distinct rows",
-					firstImport.getImportId().equals(secondImport.getImportId()));
+			assertFalse(firstImport.getImportId().equals(secondImport.getImportId()),
+					"first and second imports must be distinct rows");
 
 			// If skipDbItemLookups were true, every concept would be re-ADDED. The fact that the
 			// importer detected previous-import state means it queried the DB for prior items.
 			Integer upToDateSecond = importService.getImportItemsCount(secondImport,
 					new HashSet<>(EnumSet.of(ItemState.UP_TO_DATE)));
-			assertEquals("second import should treat already-imported concepts as UP_TO_DATE",
-					Integer.valueOf(itemCount), upToDateSecond);
+			assertEquals(Integer.valueOf(itemCount), upToDateSecond,
+					"second import should treat already-imported concepts as UP_TO_DATE");
 		} finally {
 			purgeImportsAndConceptsInDaemonTransaction(importIdsToPurge, conceptUuids);
 			if (firstZip != null && firstZip.exists()) {
@@ -920,16 +912,16 @@ public class ImportServiceTest extends BaseModuleContextSensitiveTest {
 					new HashSet<>(EnumSet.of(ItemState.ADDED)));
 			Integer errors = importService.getImportItemsCount(lastImport,
 					new HashSet<>(EnumSet.of(ItemState.ERROR)));
-			assertEquals("all healthy concepts must still be added when one fails",
-					Integer.valueOf(goodCount), added);
-			assertEquals("the unhealthy concept must be recorded as ERROR", Integer.valueOf(1), errors);
+			assertEquals(Integer.valueOf(goodCount), added,
+					"all healthy concepts must still be added when one fails");
+			assertEquals(Integer.valueOf(1), errors, "the unhealthy concept must be recorded as ERROR");
 
 			List<Item> errorItems = importService.getImportItems(lastImport, 0, 5,
 					new HashSet<>(EnumSet.of(ItemState.ERROR)));
 			assertEquals(1, errorItems.size());
-			assertNotNull("ERROR item must carry an errorMessage", errorItems.get(0).getErrorMessage());
-			assertTrue("errorMessage should mention the unknown datatype",
-					errorItems.get(0).getErrorMessage().toLowerCase(Locale.ENGLISH).contains("datatype"));
+			assertNotNull(errorItems.get(0).getErrorMessage(), "ERROR item must carry an errorMessage");
+			assertTrue(errorItems.get(0).getErrorMessage().toLowerCase(Locale.ENGLISH).contains("datatype"),
+					"errorMessage should mention the unknown datatype");
 
 			for (Item item : importService.getImportItems(lastImport, 0, goodCount + 5,
 					new HashSet<>(EnumSet.of(ItemState.ADDED)))) {

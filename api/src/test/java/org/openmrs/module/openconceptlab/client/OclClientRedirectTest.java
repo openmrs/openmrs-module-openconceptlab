@@ -11,8 +11,8 @@ package org.openmrs.module.openconceptlab.client;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,9 +28,9 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -79,7 +79,7 @@ public class OclClientRedirectTest {
 	/** The raw query string observed by the server for each requested path ("" if absent). */
 	private final Map<String, String> queryByPath = new ConcurrentHashMap<String, String>();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws IOException {
 		tempDir = File.createTempFile("ocl", "");
 		FileUtils.deleteQuietly(tempDir);
@@ -97,7 +97,7 @@ public class OclClientRedirectTest {
 		s3BaseUrl = "http://127.0.0.1:" + s3Server.getAddress().getPort();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		if (server != null) {
 			server.stop(0);

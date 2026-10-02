@@ -11,11 +11,11 @@ package org.openmrs.module.openconceptlab.importer;
 
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -33,19 +33,21 @@ import java.lang.reflect.Method;
 import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.hibernate.search.mapper.orm.work.SearchWorkspace;
 import org.hibernate.search.mapper.pojo.work.IndexingPlanSynchronizationStrategy;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -65,8 +67,9 @@ import org.openmrs.module.openconceptlab.client.OclClient.OclResponse;
 import org.openmrs.module.openconceptlab.client.OclConcept;
 import org.openmrs.module.openconceptlab.ValidationType;
 import org.openmrs.module.openconceptlab.client.OclMapping;
-import org.openmrs.test.BaseContextMockTest;
+import org.openmrs.test.jupiter.BaseContextMockTest;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ImporterTest extends BaseContextMockTest {
 
 	@Mock
@@ -99,7 +102,7 @@ public class ImporterTest extends BaseContextMockTest {
 	@Mock
 	SearchWorkspace searchWorkspace;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		TestResources.setupDaemonToken();
 		when(searchSessionFactory.getSearchSession()).thenReturn(searchSession);

@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -31,9 +31,9 @@ import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.openmrs.module.openconceptlab.MockTest;
 import org.openmrs.module.openconceptlab.TestResources;
@@ -54,7 +54,7 @@ public class OclClientTest extends MockTest {
 
 	private static final String URL_WITHOUT_VERSION = "https://api.openconceptlab.org/users/username/collections/collectionname";
 
-	@Before
+	@BeforeEach
 	public void createTempDir() throws IOException {
 		tempDir = File.createTempFile("ocl", "");
 		FileUtils.deleteQuietly(tempDir);
@@ -64,7 +64,7 @@ public class OclClientTest extends MockTest {
 		oclClient = new OclClient(tempDir.getAbsolutePath());
 	}
 	
-	@After
+	@AfterEach
 	public void deleteTempDir() throws IOException {
 		FileUtils.deleteQuietly(tempDir);
 	}

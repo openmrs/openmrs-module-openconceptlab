@@ -32,7 +32,7 @@ import java.util.List;
         parent = ImportResource.class,
         path = "item",
         supportedClass = Item.class,
-        supportedOpenmrsVersions = { "1.8.* - 2.*" }
+        supportedOpenmrsVersions = { "1.8.* - 9.*" }
 )
 public class ItemResource extends DelegatingSubResource<Item, Import, ImportResource>{
 

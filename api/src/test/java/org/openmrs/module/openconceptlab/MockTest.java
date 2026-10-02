@@ -9,14 +9,14 @@
  */
 package org.openmrs.module.openconceptlab;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.MockitoAnnotations;
 
 public class MockTest {
 	
-	@Before
+	@BeforeEach
 	public void atFirstInitMocks() {
-		MockitoAnnotations.initMocks(this);
+		MockitoAnnotations.openMocks(this);
 	}
 	
 }
