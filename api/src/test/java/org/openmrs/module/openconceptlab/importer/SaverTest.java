@@ -1877,6 +1877,109 @@ public class SaverTest extends BaseModuleContextSensitiveTest {
 		assertNull(term.getRetireReason());
 	}
 
+	@Test
+	public void saveMapping_shouldPreserveUnchangedAnswerAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		ConceptAnswer previous = conceptService.getConceptAnswerByUuid(mapping.getExternalId());
+		Integer relationshipId = previous.getConceptAnswerId();
+		Integer answerId = previous.getAnswerConcept().getConceptId();
+		for (int attempt = 0; attempt < 2; attempt++) {
+			Item result = saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+			assertEquals(ItemState.UP_TO_DATE, result.getState());
+			assertEquals(mapping.getUrl(), result.getUrl());
+			importService.saveItem(result);
+			ConceptAnswer preserved = conceptService.getConceptAnswerByUuid(mapping.getExternalId());
+			assertEquals(relationshipId, preserved.getConceptAnswerId());
+			assertEquals(answerId, preserved.getAnswerConcept().getConceptId());
+		}
+	}
+
+	@Test
+	public void saveMapping_shouldPreserveUnchangedSetMemberAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.SET);
+		ConceptSet previous = conceptService.getConceptSetByUuid(mapping.getExternalId());
+		Integer relationshipId = previous.getConceptSetId();
+		Integer memberId = previous.getConcept().getConceptId();
+		Item result = saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+		assertEquals(ItemState.UP_TO_DATE, result.getState());
+		ConceptSet preserved = conceptService.getConceptSetByUuid(mapping.getExternalId());
+		assertEquals(relationshipId, preserved.getConceptSetId());
+		assertEquals(memberId, preserved.getConcept().getConceptId());
+	}
+
+	@Test(expected = ImportException.class)
+	public void saveMapping_shouldResolveChangedMappingAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		mapping.setUpdatedOn(new Date(mapping.getUpdatedOn().getTime() + 1000));
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+	}
+
+	@Test(expected = ImportException.class)
+	public void saveMapping_shouldResolveUnknownMappingAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		mapping.setExternalId(UUID.randomUUID().toString());
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+	}
+
+	@Test(expected = ImportException.class)
+	public void saveMapping_shouldResolveMappingWithoutRevisionAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		mapping.setUpdatedOn(null);
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+	}
+
+	@Test(expected = ImportException.class)
+	public void saveMapping_shouldResolveDeletedAnswerAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		ConceptAnswer answer = conceptService.getConceptAnswerByUuid(mapping.getExternalId());
+		Concept question = answer.getConcept();
+		question.removeAnswer(answer);
+		conceptService.saveConcept(question);
+		Context.flushSession();
+		assertNull(conceptService.getConceptAnswerByUuid(mapping.getExternalId()));
+		saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping);
+	}
+
+	@Test
+	public void saveMapping_shouldNotReuseFailedMappingRevisionAfterOriginChange() throws Exception {
+		OclMapping mapping = mappingAfterOriginChange(MapType.Q_AND_A);
+		mapping.setUpdatedOn(new Date(mapping.getUpdatedOn().getTime() + 1000));
+		importService.saveItem(new Item(anImport, mapping, ItemState.ERROR));
+		importService.saveItem(new Item(anImport, mapping, ItemState.IGNORED_ERROR));
+		Item previous = importService.getLastSuccessfulMappingItemByUuid(mapping.getExternalId());
+		assertEquals(new Date(1700000000000L), previous.getUpdatedOn());
+		assertEquals(ItemState.ADDED, previous.getState());
+	}
+
+	private OclMapping mappingAfterOriginChange(String mapType) throws Exception {
+		OclConcept question = newOclConcept();
+		question.setDatatype(MapType.Q_AND_A.equals(mapType) ? "Coded" : "N/A");
+		OclConcept answer = newOtherOclConcept();
+		String previousOrigin = "https://previous.example";
+		String currentOrigin = "https://institution.example";
+		question.setUrl(previousOrigin + question.getUrl());
+		answer.setUrl(previousOrigin + answer.getUrl());
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, question));
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, answer));
+		OclMapping mapping = newOclMapping();
+		mapping.setUrl(previousOrigin + "/orgs/CIELTEST/sources/CIELTEST/mappings/1/");
+		mapping.setMapType(mapType);
+		mapping.setFromConceptUrl(question.getUrl());
+		mapping.setToConceptUrl(answer.getUrl());
+		mapping.setToSourceName("External catalog");
+		mapping.setToConceptCode("1002");
+		mapping.setUpdatedOn(new Date(1700000000000L));
+		importService.saveItem(saver.saveMapping(new CacheService(conceptService, oclConceptService), anImport, mapping));
+
+		// Initializer reloads the changed source, retaining checksums for the other source.
+		question.setUrl(question.getUrl().replace(previousOrigin, currentOrigin));
+		importService.saveItem(saver.saveConcept(new CacheService(conceptService, oclConceptService), anImport, question));
+		mapping.setUrl(mapping.getUrl().replace(previousOrigin, currentOrigin));
+		mapping.setFromConceptUrl(question.getUrl());
+		mapping.setToConceptUrl(answer.getUrl().replace(previousOrigin, currentOrigin));
+		return mapping;
+	}
+
 	public OclConcept newOclConcept() {
 		OclConcept oclConcept = new OclConcept();
 

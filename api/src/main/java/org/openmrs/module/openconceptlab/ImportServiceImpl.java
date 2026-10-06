@@ -332,6 +332,28 @@ public class ImportServiceImpl implements ImportService {
 	}
 
 	@Override
+	public Item getLastSuccessfulMappingItemByUuid(String uuid) {
+		if (StringUtils.isBlank(uuid)) {
+			return null;
+		}
+		Criteria criteria = getSession().createCriteria(Item.class);
+		criteria.add(Restrictions.eq("uuid", uuid));
+		criteria.add(Restrictions.eq("type", ItemType.MAPPING));
+		criteria.add(Restrictions.not(Restrictions.in("state", new ItemState[] {
+			ItemState.ERROR, ItemState.IGNORED_ERROR
+		})));
+		criteria.addOrder(Order.desc("itemId"));
+		criteria.setMaxResults(1);
+		Item item = (Item) criteria.uniqueResult();
+		if (item == null || (getConceptMapByUuid(uuid) == null
+				&& conceptService.getConceptAnswerByUuid(uuid) == null
+				&& conceptService.getConceptSetByUuid(uuid) == null)) {
+			return null;
+		}
+		return item;
+	}
+
+	@Override
 	public void saveItem(Item item) {
 		getSession().saveOrUpdate(item);
 	}

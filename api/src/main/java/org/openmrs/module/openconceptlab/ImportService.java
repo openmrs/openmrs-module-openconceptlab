@@ -97,6 +97,15 @@ public interface ImportService {
 	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
 	Item getLastSuccessfulItemByUrl(String url, CacheService cacheService);
 
+	/**
+	 * Finds an existing successful mapping by its stable external UUID, independent of the OCL host.
+	 * An absent underlying OpenMRS relationship is not a successful imported mapping.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
+	Item getLastSuccessfulMappingItemByUuid(String uuid);
+
+
     @Transactional
 	@Authorized(PrivilegeConstants.MANAGE_CONCEPTS)
 	void saveItem(Item item);

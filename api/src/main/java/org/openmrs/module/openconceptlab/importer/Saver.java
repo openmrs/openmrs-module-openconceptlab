@@ -347,6 +347,13 @@ public class Saver {
 	public Item saveMapping(final CacheService cacheService, final Import update, final OclMapping oclMapping) throws ImportException {
 		try {
 				Item oldMappingItem = cacheService.getLastSuccessfulItemByUrl(oclMapping.getUrl(), importService);
+				// A host migration changes URLs, but not the external UUID of an imported relationship.
+				// Only reuse a known revision; absent timestamps cannot establish cross-host equivalence.
+				if (oldMappingItem == null && StringUtils.isNotBlank(oclMapping.getExternalId())
+						&& oclMapping.getUpdatedOn() != null) {
+					oldMappingItem = importService.getLastSuccessfulMappingItemByUuid(oclMapping.getExternalId());
+				}
+
 				if (oldMappingItem != null && isMappingUpToDate(oldMappingItem, oclMapping)) {
 					return new Item(update, oclMapping, ItemState.UP_TO_DATE);
 				}
