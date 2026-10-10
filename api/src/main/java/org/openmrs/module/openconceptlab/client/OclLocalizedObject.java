@@ -11,7 +11,7 @@ package org.openmrs.module.openconceptlab.client;
 
 import java.util.Locale;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class OclLocalizedObject {
 

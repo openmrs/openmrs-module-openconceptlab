@@ -11,11 +11,9 @@ package org.openmrs.module.openconceptlab;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.hibernate.Criteria;
-import org.hibernate.Query;
-import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
+import org.hibernate.Session;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptName;
@@ -24,8 +22,8 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
-import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
+import org.openmrs.api.db.hibernate.HibernateUtil;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -70,12 +68,10 @@ public class ImportServiceImpl implements ImportService {
 	 */
 	@Override
 	public List<Import> getImportsInOrder(int first, int max) {
-		Criteria update = getSession().createCriteria(Import.class);
-		update.addOrder(Order.desc("importId"));
+		Query<Import> update = getSession().createQuery("from OclImport i order by i.importId desc", Import.class);
 		update.setFirstResult(first);
 		update.setMaxResults(max);
 
-		@SuppressWarnings("unchecked")
 		List<Import> list = update.list();
 		return list;
 	}
@@ -83,24 +79,19 @@ public class ImportServiceImpl implements ImportService {
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<Import> getInProgressImports() {
-		Criteria c = getSession().createCriteria(Import.class);
-		c.add(Restrictions.isNull("localDateStopped"));
-		c.addOrder(Order.desc("importId"));
-		return c.list();
+		return getSession().createQuery("from OclImport i where i.localDateStopped is null order by i.importId desc", Import.class)
+				.list();
 	}
 
 	@Override
 	public List<Concept> getConceptsByName(String name, Locale locale) {
-		Criteria criteria = getSession().createCriteria(ConceptName.class);
-		criteria.add(Restrictions.eq("voided", false));
-		if (adminService.isDatabaseStringComparisonCaseSensitive()) {
-			criteria.add(Restrictions.eq("name", name).ignoreCase());
-		} else {
-			criteria.add(Restrictions.eq("name", name));
-		}
-		criteria.add(Restrictions.eq("locale", locale));
+		String nameRestriction = adminService.isDatabaseStringComparisonCaseSensitive() ? "lower(cn.name) = lower(:name)"
+				: "cn.name = :name";
+		Query<ConceptName> criteria = getSession().createQuery(
+				"from ConceptName cn where cn.voided = false and " + nameRestriction + " and cn.locale = :locale", ConceptName.class);
+		criteria.setParameter("name", name);
+		criteria.setParameter("locale", locale);
 
-		@SuppressWarnings("unchecked")
         List<ConceptName> conceptNames = criteria.list();
 
 		Set<Concept> concepts = new LinkedHashSet<Concept>();
@@ -133,17 +124,13 @@ public class ImportServiceImpl implements ImportService {
 
 			if (nameToImport.isLocalePreferred() || nameToImport.isFullySpecifiedName()
 					|| nameToImport.equals(nameToImport.getConcept().getName(nameToImport.getLocale()))) {
-				Criteria criteria = getSession().createCriteria(ConceptName.class);
-				criteria.add(Restrictions.eq("voided", false));
-				if (dbCaseSensitive) {
-					criteria.add(Restrictions.eq("name", nameToImport.getName()).ignoreCase());
-				} else {
-					criteria.add(Restrictions.eq("name", nameToImport.getName()));
-				}
-				criteria.add(Restrictions.or(Restrictions.eq("locale", nameToImport.getLocale()), Restrictions.eq("locale", new Locale(nameToImport
-			        .getLocale().getLanguage()))));
+				String nameRestriction = dbCaseSensitive ? "lower(cn.name) = lower(:name)" : "cn.name = :name";
+				Query<ConceptName> criteria = getSession().createQuery("from ConceptName cn where cn.voided = false and "
+						+ nameRestriction + " and (cn.locale = :locale or cn.locale = :languageLocale)", ConceptName.class);
+				criteria.setParameter("name", nameToImport.getName());
+				criteria.setParameter("locale", nameToImport.getLocale());
+				criteria.setParameter("languageLocale", new Locale(nameToImport.getLocale().getLanguage()));
 
-				@SuppressWarnings("unchecked")
 		        List<ConceptName> conceptNames = criteria.list();
 
 				for (ConceptName conceptName : conceptNames) {
@@ -175,7 +162,7 @@ public class ImportServiceImpl implements ImportService {
 	 */
 	@Override
 	public Import getImport(Long id) {
-		Import update = (Import) getSession().get(Import.class, id);
+		Import update = getSession().get(Import.class, id);
 		if (update == null) {
 			throw new IllegalArgumentException("No update with the given id " + id);
 		}
@@ -184,28 +171,26 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Import getImport(String uuid) {
-		Import update = (Import) getSession().createQuery("from OclImport i where i.uuid = :uuid").setString(
+		Import update = getSession().createQuery("from OclImport i where i.uuid = :uuid", Import.class).setParameter(
 				"uuid", uuid).uniqueResult();
 		return update;
 	}
 
 	@Override
 	public Import getLastImport() {
-		Criteria update = getSession().createCriteria(Import.class);
-		update.addOrder(Order.desc("importId"));
+		Query<Import> update = getSession().createQuery("from OclImport i order by i.importId desc", Import.class);
 		update.setMaxResults(1);
-		return (Import) update.uniqueResult();
+		return update.uniqueResult();
 	}
 
 	@Override
 	public Import getLastSuccessfulSubscriptionImport() {
-		Criteria updateCriteria = getSession().createCriteria(Import.class);
-		updateCriteria.add(Restrictions.isNull("errorMessage"));
-		updateCriteria.add(Restrictions.isNotNull("oclDateStarted"));
-		updateCriteria.addOrder(Order.desc("importId"));
+		Query<Import> updateCriteria = getSession().createQuery(
+				"from OclImport i where i.errorMessage is null and i.oclDateStarted is not null order by i.importId desc",
+				Import.class);
 		updateCriteria.setMaxResults(1);
 
-		return (Import) updateCriteria.uniqueResult();
+		return updateCriteria.uniqueResult();
 	}
 
 	@Override
@@ -223,14 +208,14 @@ public class ImportServiceImpl implements ImportService {
 	
 	@Override
 	public void ignoreAllErrors(Import anImport) {
-		Query query = getSession().createQuery("update OclItem i set i.state = :newState where i.anImport = :anImport and i.state = :oldState");
+		MutationQuery query = getSession().createMutationQuery("update OclItem i set i.state = :newState where i.anImport = :anImport and i.state = :oldState");
 		query.setParameter("newState", ItemState.IGNORED_ERROR);
 		query.setParameter("anImport", anImport);
 		query.setParameter("oldState", ItemState.ERROR);
 		query.executeUpdate();
 
 		anImport.setErrorMessage(null);
-		getSession().saveOrUpdate(anImport);
+		HibernateUtil.saveOrUpdate(getSession(), anImport);
 	}
 
 	@Override
@@ -247,7 +232,7 @@ public class ImportServiceImpl implements ImportService {
 		} else {
 			update.setErrorMessage("Errors found");
 		}
-		getSession().saveOrUpdate(update);
+		HibernateUtil.saveOrUpdate(getSession(), update);
 	}
 
 	/**
@@ -259,19 +244,19 @@ public class ImportServiceImpl implements ImportService {
 		if (lastImport != null && !lastImport.isStopped()) {
 			throw new IllegalStateException("Cannot start the import, if there is another import in progress.");
 		}
-		getSession().save(anImport);
+		getSession().persist(anImport);
 	}
 
 	@Override
 	public void updateOclDateStarted(Import update, Date oclDateStarted) {
 		update.setOclDateStarted(oclDateStarted);
-		getSession().save(update);
+		HibernateUtil.saveOrUpdate(getSession(), update);
 	}
 
 	@Override
 	public void updateReleaseVersion(Import anImport, String version) {
 		anImport.setReleaseVersion(version);
-		getSession().save(anImport);
+		HibernateUtil.saveOrUpdate(getSession(), anImport);
 	}
 
 
@@ -292,7 +277,7 @@ public class ImportServiceImpl implements ImportService {
 
 		anImport.stop();
 
-		getSession().saveOrUpdate(anImport);
+		HibernateUtil.saveOrUpdate(getSession(), anImport);
 	}
 
 	@Override
@@ -302,14 +287,16 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Item getLastSuccessfulItemByUrl(String url, CacheService cacheService) {
-		Criteria criteria = getSession().createCriteria(Item.class);
-		criteria.add(Restrictions.eq("hashedUrl", Item.hashUrl(url))); //hashedUrl is indexed to speed up the search
-		criteria.add(Restrictions.eq("url", url));
-		criteria.add(Restrictions.not(Restrictions.eq("state", ItemState.ERROR)));
-		criteria.addOrder(Order.desc("itemId"));
+		//hashedUrl is indexed to speed up the search
+		Query<Item> criteria = getSession().createQuery(
+				"from OclItem i where i.hashedUrl = :hashedUrl and i.url = :url and i.state <> :state order by i.itemId desc",
+				Item.class);
+		criteria.setParameter("hashedUrl", Item.hashUrl(url));
+		criteria.setParameter("url", url);
+		criteria.setParameter("state", ItemState.ERROR);
 		criteria.setMaxResults(1);
 
-		Item item = ((Item) criteria.uniqueResult());
+		Item item = criteria.uniqueResult();
 		if (item != null) {
 			switch (item.getType()) {
 				case MAPPING:
@@ -333,7 +320,7 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public void saveItem(Item item) {
-		getSession().saveOrUpdate(item);
+		HibernateUtil.saveOrUpdate(getSession(), item);
 	}
 
 	@Override
@@ -352,7 +339,7 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public Item getItem(String uuid) {
-		Item item = (Item) getSession().createQuery("from OclItem i where i.uuid = :uuid").setString(
+		Item item = getSession().createQuery("from OclItem i where i.uuid = :uuid", Item.class).setParameter(
 				"uuid", uuid).uniqueResult();
 		return item;
 	}
@@ -399,8 +386,8 @@ public class ImportServiceImpl implements ImportService {
 		return subscription;
 	}
 
-	private DbSession getSession() {
-		return sessionFactory.getCurrentSession();
+	private Session getSession() {
+		return sessionFactory.getHibernateSessionFactory().getCurrentSession();
 	}
 
 	@Override
@@ -485,8 +472,8 @@ public class ImportServiceImpl implements ImportService {
 	@Override
 	public void unsubscribe() {
 		saveSubscription(new Subscription());
-		getSession().createQuery("delete from OclItem").executeUpdate();
-		getSession().createQuery("delete from OclImport").executeUpdate();
+		getSession().createMutationQuery("delete from OclItem").executeUpdate();
+		getSession().createMutationQuery("delete from OclImport").executeUpdate();
 	}
 
 	/**
@@ -498,12 +485,12 @@ public class ImportServiceImpl implements ImportService {
 	@SuppressWarnings("unchecked")
     @Override
     public List<Item> getImportItems(Import anImport, int first, int max, Set<ItemState> states) {
-		Criteria items = getSession().createCriteria(Item.class);
-		items.add(Restrictions.eq("anImport", anImport));
+		Query<Item> items = getSession().createQuery("from OclItem i where i.anImport = :anImport"
+				+ (states.isEmpty() ? "" : " and i.state in (:states)") + " order by i.state desc", Item.class);
+		items.setParameter("anImport", anImport);
 		if (!states.isEmpty()) {
-			items.add(Restrictions.in("state", states));
+			items.setParameterList("states", states);
 		}
-		items.addOrder(Order.desc("state"));
 		items.setFirstResult(first);
 		items.setMaxResults(max);
 
@@ -517,12 +504,13 @@ public class ImportServiceImpl implements ImportService {
 	 */
 	@Override
     public Integer getImportItemsCount(Import anImport, Set<ItemState> states) {
-		Criteria items = getSession().createCriteria(Item.class);
-		items.add(Restrictions.eq("anImport", anImport));
+		Query<Long> items = getSession().createQuery("select count(*) from OclItem i where i.anImport = :anImport"
+				+ (states.isEmpty() ? "" : " and i.state in (:states)"), Long.class);
+		items.setParameter("anImport", anImport);
 		if (!(states.isEmpty())) {
-			items.add(Restrictions.in("state", states));
+			items.setParameterList("states", states);
 		}
-		return ((Long) items.setProjection(Projections.rowCount()).uniqueResult()).intValue();
+		return items.uniqueResult().intValue();
 	}
 
 	/**
@@ -532,10 +520,11 @@ public class ImportServiceImpl implements ImportService {
 	@Override
     public Boolean isSubscribedConcept(String uuid) {
 		boolean isSubscribed = false;
-		Criteria items = getSession().createCriteria(Item.class);
-		items.add(Restrictions.eq("type", ItemType.CONCEPT));
-		items.add(Restrictions.eq("uuid", uuid));
-		if ((Long) (items.setProjection(Projections.rowCount()).uniqueResult()) > 0) {
+		Query<Long> items = getSession().createQuery("select count(*) from OclItem i where i.type = :type and i.uuid = :uuid",
+				Long.class);
+		items.setParameter("type", ItemType.CONCEPT);
+		items.setParameter("uuid", uuid);
+		if (items.uniqueResult() > 0) {
 			isSubscribed = true;
 		}
 
@@ -544,27 +533,26 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public ConceptMap getConceptMapByUuid(String uuid) {
-		Criteria criteria = getSession().createCriteria(ConceptMap.class);
-		criteria.add(Restrictions.eq("uuid", uuid));
-		return (ConceptMap) criteria.uniqueResult();
+		return getSession().createQuery("from ConceptMap cm where cm.uuid = :uuid", ConceptMap.class).setParameter("uuid", uuid)
+				.uniqueResult();
 	}
 
 	@Override
 	public Concept updateConceptWithoutValidation(Concept concept) {
-		getSession().saveOrUpdate(concept);
+		HibernateUtil.saveOrUpdate(getSession(), concept);
 		return concept;
 	}
 
 	@Override
 	public ConceptReferenceTerm updateConceptReferenceTermWithoutValidation(ConceptReferenceTerm term) {
-		getSession().saveOrUpdate(term);
+		HibernateUtil.saveOrUpdate(getSession(), term);
 		return term;
     }
 
 	@Override
 	public void updateSubscriptionUrl(Import anImport, String url) {
 		anImport.setSubscriptionUrl(url);
-		getSession().saveOrUpdate(anImport);
+		HibernateUtil.saveOrUpdate(getSession(), anImport);
 	}
 
 	@Override
@@ -574,7 +562,7 @@ public class ImportServiceImpl implements ImportService {
 
 	@Override
 	public void flushAndClearSession() {
-		DbSession session = getSession();
+		Session session = getSession();
 		session.flush();
 		session.clear();
 	}

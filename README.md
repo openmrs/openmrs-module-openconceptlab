@@ -11,7 +11,7 @@ The module fetches all the items from the subscription URL updating the existing
 
 Please make sure you have the following installed:
 - MySQL 5.6.x
-- JDK 8
+- JDK 21
 - Maven
 - OpenMRS SDK, see [installation instructions](https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation)
 

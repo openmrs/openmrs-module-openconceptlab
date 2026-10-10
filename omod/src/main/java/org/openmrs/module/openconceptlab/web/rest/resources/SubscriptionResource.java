@@ -33,7 +33,7 @@ import java.util.Collections;
 @Resource(
         name = RestConstants.VERSION_1 + OpenConceptLabRestController.OPEN_CONCEPT_LAB_REST_NAMESPACE + "/subscription",
         supportedClass = Subscription.class,
-        supportedOpenmrsVersions = { "1.8.* - 2.*" }
+        supportedOpenmrsVersions = { "1.8.* - 9.*" }
 )
 public class SubscriptionResource extends DelegatingCrudResource<Subscription> {
 

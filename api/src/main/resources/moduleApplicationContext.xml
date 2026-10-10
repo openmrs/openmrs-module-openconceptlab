@@ -9,7 +9,12 @@
 
 	<!-- Add here beans related to the API context -->
 	
-	<task:scheduler id="openconceptlab.scheduler" pool-size="1"/>
+	<!-- not an autowire candidate, so core beans that autowire a TaskExecutor by type (StreamDataService) still resolve
+	     core's single taskExecutor -->
+	<bean id="openconceptlab.scheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
+		  autowire-candidate="false">
+		<property name="poolSize" value="1"/>
+	</bean>
 	
 	<bean id="openconceptlab.importService"
 		class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">

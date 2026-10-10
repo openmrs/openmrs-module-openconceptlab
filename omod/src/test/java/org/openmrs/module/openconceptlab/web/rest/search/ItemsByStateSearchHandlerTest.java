@@ -1,9 +1,9 @@
 package org.openmrs.module.openconceptlab.web.rest.search;
 
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.Import;
 import org.openmrs.module.openconceptlab.ImportService;
@@ -22,7 +22,7 @@ public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest {
 
     private ImportService service;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
         service = Context.getService(ImportService.class);
@@ -34,8 +34,8 @@ public class ItemsByStateSearchHandlerTest extends MainResourceControllerTest {
         req.addParameter("state", "ERROR");
         SimpleObject result = deserialize(handle(req));
         List<Object> results = Util.getResultsList(result);
-        Assert.assertNotNull(results);
-        Assert.assertEquals(getUpdatedItemsCount(), results.size());
+        Assertions.assertNotNull(results);
+        Assertions.assertEquals(getUpdatedItemsCount(), results.size());
     }
 
     @Override

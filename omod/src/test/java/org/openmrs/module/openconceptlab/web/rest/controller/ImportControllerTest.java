@@ -1,8 +1,8 @@
 package org.openmrs.module.openconceptlab.web.rest.controller;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.web.rest.RestTestConstants;
@@ -18,7 +18,7 @@ public class ImportControllerTest extends MainResourceControllerTest{
 
     private ImportService service;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
         service = Context.getService(ImportService.class);
@@ -30,8 +30,8 @@ public class ImportControllerTest extends MainResourceControllerTest{
 
         SimpleObject result = deserialize(handle(req));
         List<Object> results = Util.getResultsList(result);
-        Assert.assertNotNull(results);
-        Assert.assertEquals(2, results.size());
+        Assertions.assertNotNull(results);
+        Assertions.assertEquals(2, results.size());
     }
 
     @Test
@@ -40,9 +40,9 @@ public class ImportControllerTest extends MainResourceControllerTest{
         req.addParameter("v", "full");
         SimpleObject result = deserialize(handle(req));
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(getUuid(), result.get("uuid"));
-        Assert.assertEquals("100", result.get("importProgress"));
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(getUuid(), result.get("uuid"));
+        Assertions.assertEquals("100", result.get("importProgress"));
     }
 
     @Override

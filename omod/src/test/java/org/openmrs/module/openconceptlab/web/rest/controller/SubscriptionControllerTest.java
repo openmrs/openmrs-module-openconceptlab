@@ -1,8 +1,8 @@
 package org.openmrs.module.openconceptlab.web.rest.controller;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Test;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Subscription;
@@ -33,8 +33,8 @@ public class SubscriptionControllerTest extends MainResourceControllerTest{
 
         SimpleObject newSubscription = deserialize(handle(req));
 
-        Assert.assertNotNull(newSubscription);
-        Assert.assertEquals(getUuid(), newSubscription.get("uuid"));
+        Assertions.assertNotNull(newSubscription);
+        Assertions.assertEquals(getUuid(), newSubscription.get("uuid"));
     }
 
     @Test
@@ -42,12 +42,12 @@ public class SubscriptionControllerTest extends MainResourceControllerTest{
         ImportService service = Context.getService(ImportService.class);
         service.saveSubscription(generateSubscription());
 
-        Assert.assertNotNull(service.getSubscription());
+        Assertions.assertNotNull(service.getSubscription());
 
         MockHttpServletRequest req = request(RequestMethod.DELETE, getURI() + "/" + getUuid());
         handle(req);
 
-        Assert.assertNull(service.getSubscription());
+        Assertions.assertNull(service.getSubscription());
     }
 
     @Test
@@ -59,23 +59,26 @@ public class SubscriptionControllerTest extends MainResourceControllerTest{
 
         SimpleObject result = deserialize(handle(req));
         List<Object> results = Util.getResultsList(result);
-        Assert.assertNotNull(results);
-        Assert.assertEquals(1, results.size());
+        Assertions.assertNotNull(results);
+        Assertions.assertEquals(1, results.size());
     }
 
     @Override
+    @Test
     public void shouldGetDefaultByUuid() throws Exception {
         Context.getService(ImportService.class).saveSubscription(generateSubscription());
         super.shouldGetDefaultByUuid();
     }
 
     @Override
+    @Test
     public void shouldGetRefByUuid() throws Exception {
         Context.getService(ImportService.class).saveSubscription(generateSubscription());
         super.shouldGetRefByUuid();
     }
 
     @Override
+    @Test
     public void shouldGetFullByUuid() throws Exception {
         Context.getService(ImportService.class).saveSubscription(generateSubscription());
         super.shouldGetFullByUuid();

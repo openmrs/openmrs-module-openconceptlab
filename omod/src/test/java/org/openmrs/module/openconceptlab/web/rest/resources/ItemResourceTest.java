@@ -1,6 +1,6 @@
 package org.openmrs.module.openconceptlab.web.rest.resources;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.openconceptlab.ImportService;
 import org.openmrs.module.openconceptlab.Item;
@@ -9,7 +9,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.BaseDelegatingResou
 
 public class ItemResourceTest extends BaseDelegatingResourceTest<ItemResource, Item> {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         executeDataSet("test_dataset.xml");
     }
