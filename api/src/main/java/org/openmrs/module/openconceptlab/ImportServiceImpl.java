@@ -24,11 +24,16 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptNameType;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Clock;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -40,6 +45,14 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class ImportServiceImpl implements ImportService {
+
+	private static final Logger log = LoggerFactory.getLogger(ImportServiceImpl.class);
+
+	private static final int ITEM_DELETE_CHUNK_SIZE = 1000;
+
+	private static final String LOCAL_DATE_STOPPED = "localDateStopped";
+
+	private Clock clock = Clock.systemDefaultZone();
 
 	DbSessionFactory sessionFactory;
 
@@ -66,6 +79,14 @@ public class ImportServiceImpl implements ImportService {
 	}
 
 	/**
+	 * Overrides the clock used to compute the retention cutoff in
+	 * {@link #purgeOldImports(int, int)}. Intended for tests.
+	 */
+	public void setClock(Clock clock) {
+		this.clock = clock;
+	}
+
+	/**
 	 * @should return all updates ordered descending by ids
 	 */
 	@Override
@@ -84,7 +105,7 @@ public class ImportServiceImpl implements ImportService {
 	@SuppressWarnings("unchecked")
 	public List<Import> getInProgressImports() {
 		Criteria c = getSession().createCriteria(Import.class);
-		c.add(Restrictions.isNull("localDateStopped"));
+		c.add(Restrictions.isNull(LOCAL_DATE_STOPPED));
 		c.addOrder(Order.desc("importId"));
 		return c.list();
 	}
@@ -577,6 +598,118 @@ public class ImportServiceImpl implements ImportService {
 		DbSession session = getSession();
 		session.flush();
 		session.clear();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<Import> getImportsStoppedBefore(Date cutoff, Long excludedImportId, int firstResult, int maxResults) {
+		Criteria criteria = getSession().createCriteria(Import.class);
+		criteria.add(Restrictions.lt(LOCAL_DATE_STOPPED, cutoff));
+		if (excludedImportId != null) {
+			criteria.add(Restrictions.ne("importId", excludedImportId));
+		}
+		criteria.addOrder(Order.asc(LOCAL_DATE_STOPPED));
+		criteria.setFirstResult(firstResult);
+		criteria.setMaxResults(maxResults);
+		return criteria.list();
+	}
+
+	@Override
+	public boolean purgeImport(Long importId) {
+		Import anImport = getImport(importId);
+		int itemsDeleted = deleteItems(getDeletableItemIds(anImport));
+		int itemsRetained = getImportItemsCount(anImport, Collections.emptySet());
+		if (itemsRetained == 0) {
+			getSession().delete(anImport);
+			log.info("Purged OCL import id={}, uuid={}, started={}, stopped={}, items deleted={}",
+			        anImport.getImportId(), anImport.getUuid(), anImport.getLocalDateStarted(),
+			        anImport.getLocalDateStopped(), itemsDeleted);
+			return true;
+		}
+		log.info("Trimmed OCL import id={}, uuid={}: items deleted={}, items retained={}",
+		        anImport.getImportId(), anImport.getUuid(), itemsDeleted, itemsRetained);
+		return false;
+	}
+
+	// Intentionally not @Transactional: each purgeImport call must commit in its own transaction so
+	// a large import is a bounded unit of work and earlier purges survive if a later one fails.
+	@Override
+	public int purgeOldImports(int retentionDays, int batchSize) {
+		if (retentionDays <= 0) throw new IllegalArgumentException("retentionDays must be greater than 0, given: " + retentionDays);
+		if (batchSize <= 0) throw new IllegalArgumentException("batchSize must be greater than 0, given: " + batchSize);
+
+		ImportService importService = Context.getService(ImportService.class);
+
+		Date cutoff = Date.from(clock.instant().minus(retentionDays, ChronoUnit.DAYS));
+		Import lastSuccessful = importService.getLastSuccessfulSubscriptionImport();
+		Long excludedImportId = (lastSuccessful != null) ? lastSuccessful.getImportId() : null;
+
+		int purged = 0;
+		// Imports we keep (trimmed or failed) stay in the result set, so advance the offset past them;
+		// purged imports are deleted and drop out, so they must not be counted in the offset.
+		int kept = 0;
+		while (purged < batchSize) {
+			List<Import> candidates = importService.getImportsStoppedBefore(cutoff, excludedImportId, kept, batchSize);
+			if (candidates.isEmpty()) {
+				break;
+			}
+			for (Import anImport : candidates) {
+				if (purged >= batchSize) {
+					break;
+				}
+				if (tryPurgeImport(importService, anImport.getImportId())) {
+					purged++;
+				} else {
+					kept++;
+				}
+			}
+		}
+		return purged;
+	}
+
+	/**
+	 * Purges a single import, swallowing any failure so the surrounding batch can continue.
+	 *
+	 * @return {@code true} if the import was purged, {@code false} if it was kept or failed to purge
+	 */
+	private boolean tryPurgeImport(ImportService importService, Long importId) {
+		try {
+			return importService.purgeImport(importId);
+		}
+		catch (Exception e) {
+			log.error("Failed to purge OCL import id={}, skipping it and continuing", importId, e);
+			return false;
+		}
+	}
+
+	/**
+	 * Item ids in the given import no longer needed to resolve OCL URLs: ERROR-state items and items
+	 * superseded by a newer non-error item with the same URL. This is the exact complement of
+	 * {@link #getLastSuccessfulItemByUrl(String)}, so the item that method would return is never returned.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Long> getDeletableItemIds(Import anImport) {
+		Query query = getSession().createQuery("select i.itemId from OclItem i where i.anImport = :anImport"
+		        + " and (i.state = :error or exists (select n.itemId from OclItem n where n.hashedUrl = i.hashedUrl"
+		        + " and n.url = i.url and n.itemId > i.itemId and n.state <> :error))");
+		query.setParameter("anImport", anImport);
+		query.setParameter("error", ItemState.ERROR);
+		return query.list();
+	}
+
+	/**
+	 * Deletes items by id in chunks. MySQL cannot delete from a table referenced in the delete's own
+	 * subquery (error 1093), so deletable ids are selected first and deleted by id here.
+	 */
+	private int deleteItems(List<Long> itemIds) {
+		int deleted = 0;
+		for (int from = 0; from < itemIds.size(); from += ITEM_DELETE_CHUNK_SIZE) {
+			List<Long> chunk = itemIds.subList(from, Math.min(from + ITEM_DELETE_CHUNK_SIZE, itemIds.size()));
+			deleted += getSession().createQuery("delete from OclItem i where i.itemId in (:itemIds)")
+			        .setParameterList("itemIds", chunk)
+			        .executeUpdate();
+		}
+		return deleted;
 	}
 
 }

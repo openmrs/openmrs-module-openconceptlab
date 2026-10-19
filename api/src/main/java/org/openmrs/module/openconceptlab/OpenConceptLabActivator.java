@@ -18,6 +18,7 @@ import org.openmrs.module.DaemonToken;
 import org.openmrs.module.DaemonTokenAware;
 import org.openmrs.module.ModuleActivator;
 import org.openmrs.module.openconceptlab.importer.Importer;
+import org.openmrs.module.openconceptlab.scheduler.ImportCleanupTaskSetup;
 import org.openmrs.module.openconceptlab.scheduler.UpdateScheduler;
 import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
@@ -127,6 +128,7 @@ public class OpenConceptLabActivator extends BaseModuleActivator implements Daem
 	 * @see ModuleActivator#started()
 	 */
 	public void started() {
+		ImportCleanupTaskSetup.registerTask();
 		log.info("Open Concept Lab Module started");
 	}
 
@@ -141,6 +143,7 @@ public class OpenConceptLabActivator extends BaseModuleActivator implements Daem
 	 * @see ModuleActivator#stopped()
 	 */
 	public void stopped() {
+		ImportCleanupTaskSetup.shutdownTask();
 		log.info("Open Concept Lab Module stopped");
 	}
 
